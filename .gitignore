@@ -1,3 +1,1 @@
-
-build/fft-sim
-!build/fft-sim/tcl/test.txt
+fft-sim/build/*
