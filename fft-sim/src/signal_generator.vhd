@@ -25,14 +25,17 @@ end entity signal_generator;
 architecture rtl of signal_generator is
     constant C_BIT_RANGE_1024 : natural                                 := integer(floor(log2(real(1024))));
     signal r_addra            : unsigned(C_BIT_RANGE_1024 - 1 downto 0) := (others => '0');
-    signal r_re_data          : std_logic_vector(15 downto 0);
+    signal w_re_data          : std_logic_vector(15 downto 0);
     signal r_tlast            : std_logic;
     signal r_tvalid           : std_logic;
+    signal r_has_been_tready  : std_logic := '0';
 
 begin
     ----------------------------------------------------------
     ----------------------------------------------------------
-    o_tdata  <= r_re_data & x"0000";
+    -- tData is 16-bits RE and 16-bits IM in one vector
+    -- We do not have any imaginary data.
+    o_tdata  <= x"0000" & w_re_data;
     o_tvalid <= r_tvalid;
     o_tlast  <= r_tlast;
     ----------------------------------------------------------
@@ -41,21 +44,31 @@ begin
     begin
         if rising_edge(clk_50) then
             if (i_reset = '1') then
-                r_tlast  <= '0';
-                r_tvalid <= '0';
-                r_addra  <= (others => '0');
+                r_tlast           <= '0';
+                r_tvalid          <= '0';
+                r_addra           <= (others => '0');
+                r_has_been_tready <= '0';
             else
-                r_tlast  <= '0';
-                r_tvalid <= i_start;
-                if (r_addra = 1023) then
-                    r_addra <= (others => '0');
-                elsif (i_tready = '1') then
-                    -- TODO: logic for when i_tready goes HI to LO --> reset r_addra
+                ------------------------------------
+                if (i_start = '1') then
+                    r_tvalid <= '1';
+                elsif (r_tlast = '1') then
+                    r_tvalid <= '0';
+                end if;
+                ------------------------------------
+                r_tlast <= '0';
+                if (i_tready = '1') and (r_tvalid = '1') then
                     if (r_addra = G_RAM_DEPTH - 2) then
                         r_tlast <= '1';
                     end if;
-                    r_addra <= r_addra + 1;
+                    r_addra           <= r_addra + 1;
+                    r_has_been_tready <= '1';
+                elsif (i_tready = '0') and (r_has_been_tready = '1') then
+                    -- We have gone from tready to low
+                    r_has_been_tready <= '0';
+                    r_addra           <= (others => '0');
                 end if;
+                ------------------------------------
             end if;
         end if;
     end process p_read_mem;
@@ -75,7 +88,7 @@ begin
             i_dina => (others => '0'),
             i_wea   => '0',
             i_ena   => '1',
-            o_douta => r_re_data
+            o_douta => w_re_data
         );
     ----------------------------------------------------------
     ----------------------------------------------------------
