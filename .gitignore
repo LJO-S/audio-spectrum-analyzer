@@ -1,2 +1,3 @@
 fft-sim/scripts/.venv
 fft-sim/test/vunit_out
+fft-sim/builds/signal-generator/sig_gen_with_mem/
