@@ -28,7 +28,6 @@ architecture rtl of signal_generator is
     signal w_re_data          : std_logic_vector(15 downto 0);
     signal r_tlast            : std_logic;
     signal r_tvalid           : std_logic;
-    signal r_has_been_tready  : std_logic := '0';
 
 begin
     ----------------------------------------------------------
@@ -56,12 +55,12 @@ begin
                     r_tvalid <= '0';
                 end if;
                 ------------------------------------
-                r_tlast <= '0';
                 if (i_tready = '1') and (r_tvalid = '1') then
+                    r_tlast <= '0';
+                    r_addra <= r_addra + 1;
                     if (r_addra = G_RAM_DEPTH - 2) then
                         r_tlast <= '1';
                     end if;
-                    r_addra           <= r_addra + 1;
                 end if;
                 ------------------------------------
             end if;
