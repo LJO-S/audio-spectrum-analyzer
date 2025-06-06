@@ -62,11 +62,6 @@ begin
                         r_tlast <= '1';
                     end if;
                     r_addra           <= r_addra + 1;
-                    r_has_been_tready <= '1';
-                elsif (i_tready = '0') and (r_has_been_tready = '1') then
-                    -- We have gone from tready to low
-                    r_has_been_tready <= '0';
-                    r_addra           <= (others => '0');
                 end if;
                 ------------------------------------
             end if;
