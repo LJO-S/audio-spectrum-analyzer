@@ -18,7 +18,7 @@ entity SPmem is
         G_RAM_WIDTH       : integer := 8;               -- Specify RAM data width
         G_RAM_DEPTH       : integer := 64;              -- Specify RAM depth (number of entries)
         G_RAM_PERFORMANCE : string  := "LOW_LATENCY";   -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-        G_INIT_FILE       : string  := "SPmem_init.txt" -- Specify name/location of RAM initialization file if using one (leave blank if not)
+        G_INIT_FILE       : string  := "sin_15khz_16bits.txt" -- Specify name/location of RAM initialization file if using one (leave blank if not)
     );
     port (
         clk     : in std_logic;

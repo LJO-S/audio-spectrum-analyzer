@@ -7,7 +7,7 @@ entity signal_generator is
     generic (
         G_FFT_BIT_SIZE : natural := 16;
         G_RAM_DEPTH    : natural := 1024;
-        G_INIT_FILE    : string  := "SPmem_init.txt"
+        G_INIT_FILE    : string  := "../scripts/data/sin_15khz_16bits.txt"
     );
     port (
         clk_50 : in std_logic;
@@ -42,11 +42,10 @@ begin
     p_read_mem : process (clk_50)
     begin
         if rising_edge(clk_50) then
-            if (i_reset = '1') then
+            if (i_reset = '0') then
                 r_tlast           <= '0';
                 r_tvalid          <= '0';
                 r_addra           <= (others => '0');
-                r_has_been_tready <= '0';
             else
                 ------------------------------------
                 if (i_start = '1') then
