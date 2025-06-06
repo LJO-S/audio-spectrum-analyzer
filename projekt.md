@@ -14,7 +14,8 @@ Idéen är följande:
 
 
 ## Growth
-- Vi kan ta in RAW-I2S/FFT-datan i PS och göra någon behandling. Resultatet muxas med en GPIO, typ PBUTTON.
+- Ta in RAW-I2S/FFT-datan i PS och göra någon behandling. Resultatet muxas med en GPIO, typ PBUTTON.
+- Låta en GPIO m interrupt aktivera ett FIR-filter i PL (interrupten via PS)
 
 ## Notes
 - Kolla hur FFT-ip fungerar? Vadå re/im för audio-data??
