@@ -78,7 +78,11 @@ begin
                 wait for 13 * clk_period;
                 i_start <= '0';
                 wait until o_tlast = '1';
+                i_tready <= '0';
                 wait for 20 * clk_period;
+                i_start  <= '1';
+                i_tready <= '1';
+                wait until o_tlast = '1';
                 test_runner_cleanup(runner);
             end if;
         end loop;
