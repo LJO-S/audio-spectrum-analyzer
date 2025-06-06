@@ -18,7 +18,7 @@ architecture bench of signal_generator_tb is
     -- Generics
     constant G_FFT_BIT_SIZE : natural := 16;
     constant G_RAM_DEPTH    : natural := 1024;
-    constant G_INIT_FILE    : string  := "../../../scripts/data/sinc_15khz_16bits.txt";
+    constant G_INIT_FILE    : string  := "../../../scripts/data/multi_15khz_16bits.txt";
     -- Ports
     signal clk_50   : std_logic := '0';
     signal i_start  : std_logic := '0';
@@ -70,7 +70,15 @@ begin
                 wait for 10 * clk_period;
                 wait for 8 ns;
                 i_tready <= '1';
-                wait for 2*1025 * clk_period;
+                wait for 553 * clk_period;
+                i_tready <= '0';
+                wait for 10 * clk_period;
+                i_tready <= '1';
+                wait for 2 * 1025 * clk_period;
+                wait for 13 * clk_period;
+                i_start <= '0';
+                wait until o_tlast = '1';
+                wait for 20 * clk_period;
                 test_runner_cleanup(runner);
             end if;
         end loop;
