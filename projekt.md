@@ -30,7 +30,7 @@ Idéen är följande:
 
 
 ## Design
-
+När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) av output-spektrumet. Detta pga mer brus från algoritmen hamnar i de låga binsen.
 
 
 
