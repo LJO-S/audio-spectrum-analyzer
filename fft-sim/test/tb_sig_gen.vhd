@@ -33,11 +33,11 @@ architecture bench of signal_generator_tb is
         constant clk_ticks : in integer
     ) is
     begin
-        reset <= '1';
+        reset <= '0';
         for i in 0 to clk_ticks loop
             wait for clk_period;
         end loop;
-        reset <= '0';
+        reset <= '1';
     end procedure;
 
 begin
