@@ -125,7 +125,7 @@ class generateData:
             binStr = format(uVal, f"0{self.numBits}b")
             self.dataTruncBits.append(binStr)
 
-    def plotData(self):
+    def plotData(self, saveFig=False):
         tEnd = self.length * (1 / self.fs)
         time = np.arange(0, tEnd, 1 / self.fs)
         fig, axs = plt.subplots(2, 2)
@@ -167,6 +167,13 @@ class generateData:
         axs[1, 1].set_ylim([magnitudeDB.max() - 50, magnitudeDB.max() + 5])
         axs[1, 1].grid(True)
 
+        if saveFig:
+            plt.savefig(
+                str(Path("data"))
+                + "/"
+                + f"{self.type}_{int(self.freq/1000)}khz_{self.numBits}bits.png",
+                bbox_inches="tight",
+            )
         plt.show()
 
     def writeToFile(self):
@@ -193,4 +200,4 @@ if __name__ == "__main__":
     )
     if args.store:
         obj.writeToFile()
-    obj.plotData()
+    obj.plotData(saveFig=args.store)
