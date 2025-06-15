@@ -11,21 +11,22 @@ use ieee.std_logic_1164.all;
 use std.textio.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
-
-
 entity SPmem is
     generic (
-        G_RAM_WIDTH       : integer := 8;               -- Specify RAM data width
-        G_RAM_DEPTH       : integer := 64;              -- Specify RAM depth (number of entries)
-        G_RAM_PERFORMANCE : string  := "LOW_LATENCY";   -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
-        G_INIT_FILE       : string  := "sin_15khz_16bits.txt" -- Specify name/location of RAM initialization file if using one (leave blank if not)
+        G_RAM_WIDTH       : integer := 8;                                      -- Specify RAM data width
+        G_RAM_DEPTH       : integer := 64;                                     -- Specify RAM depth (number of entries)
+        G_RAM_PERFORMANCE : string  := "LOW_LATENCY";                          -- Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
+        -- Specify name/location of RAM initialization file if using one (leave blank if not)
+        -- NOTE! This is either relative to SRC (then use wrapper module to access .txt file) or to TB
+        -- NOTE! If using TB, then it is relative to e.g. Modelsim vunit_out folder etc.
+        G_INIT_FILE       : string  := "../scripts/data/sin_15khz_16bits.txt";
+        G_DO_NOT_PRELOAD  : std_logic := '0'
     );
     port (
         clk     : in std_logic;
         i_addra : in std_logic_vector(9 downto 0);
         i_dina  : in std_logic_vector(G_RAM_WIDTH - 1 downto 0);
         i_wea   : in std_logic;
-        i_ena   : in std_logic;
 
         o_douta : out std_logic_vector(G_RAM_WIDTH - 1 downto 0)
     );
@@ -72,7 +73,7 @@ architecture rtl of SPmem is
     ------------------------------------------------------------------------
     function init_from_file_or_zeroes(ramfile : string) return ram_type is
     begin
-        if ramfile = C_INIT_FILE then
+        if (ramfile = C_INIT_FILE) and (G_DO_NOT_PRELOAD = '0') then
             return InitRamFromFile(ramfile);
         else
             return (others => (others => '0'));
@@ -83,7 +84,6 @@ architecture rtl of SPmem is
     signal addra     : std_logic_vector(clogb2(C_RAM_DEPTH) - 1 downto 0);            -- Address bus, width determined from RAM_DEPTH
     signal dina      : std_logic_vector(C_RAM_WIDTH - 1 downto 0);                    -- RAM input data
     signal wea       : std_logic;                                                     -- Write enable
-    signal ena       : std_logic;                                                     -- RAM Enable, for additional power savings, disable port when not in use
     signal regcea    : std_logic := '1';                                              -- Output register enable
     signal douta     : std_logic_vector(C_RAM_WIDTH - 1 downto 0);                    -- RAM output data
     signal douta_reg : std_logic_vector(C_RAM_WIDTH - 1 downto 0) := (others => '0'); -- RAM output data when RAM_PERFORMANCE = HIGH_PERFORMANCE
@@ -97,17 +97,14 @@ begin
     dina    <= i_dina;
     addra   <= i_addra;
     wea     <= i_wea;
-    ena     <= i_ena;
     ------------------------------------------------------------------------
     process (clk)
     begin
         if rising_edge(clk) then
-            if (ena = '1') then
-                if (wea = '1') then
-                    ram_data_array(to_integer(unsigned(addra))) <= dina;
-                else
-                    ram_data <= ram_data_array(to_integer(unsigned(addra)));
-                end if;
+            if (wea = '1') then
+                ram_data_array(to_integer(unsigned(addra))) <= dina;
+            else
+                ram_data <= ram_data_array(to_integer(unsigned(addra)));
             end if;
         end if;
     end process;

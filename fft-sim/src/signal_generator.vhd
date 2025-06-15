@@ -7,7 +7,7 @@ entity signal_generator is
     generic (
         G_FFT_BIT_SIZE : natural := 16;
         G_RAM_DEPTH    : natural := 1024;
-        G_INIT_FILE    : string  := "../scripts/data/sin_15khz_16bits.txt"
+        G_INIT_FILE    : string  := "../scripts/data/sinc_15khz_16bits.txt"
     );
     port (
         clk_50 : in std_logic;
@@ -80,7 +80,6 @@ begin
             i_addra => std_logic_vector(r_addra),
             i_dina => (others => '0'),
             i_wea   => '0',
-            i_ena   => '1',
             o_douta => w_re_data
         );
     ----------------------------------------------------------
