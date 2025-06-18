@@ -25,8 +25,10 @@ Idéen är följande:
 
 
 ## TODO
-- Simulera Xilinx FFT IP. Generera input från Python/Matlab och se beteendet. Skapa simpel
-  AXIS modul i VHDL för att leverera datan, valid och last. Splitta utdata (32->16Im, 16Re), sen kan man om man vill beräkna ampl osv... Hursom kan vi studera utdata i Vivado XSim. Kom ihåg att binda fft:s tready till '1' för att få ut data.
+- Skapa en SigGen Mgr som sköter när FFT som beräknas.
+- Simulera hela kedjan med FFT också.
+- Implementera HDMI-drivare som utläsare från ping_pong_memory
+- Skriv egen FFT istället för IP
 
 
 
