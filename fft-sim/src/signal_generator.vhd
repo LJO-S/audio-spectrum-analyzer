@@ -10,7 +10,7 @@ entity signal_generator is
         G_INIT_FILE    : string  := "../scripts/data/sinc_15khz_16bits.txt"
     );
     port (
-        clk_50 : in std_logic;
+        clk_25 : in std_logic;
         -- Enable module
         i_start : in std_logic;
         i_reset : in std_logic;
@@ -39,9 +39,9 @@ begin
     o_tlast  <= r_tlast;
     ----------------------------------------------------------
     ----------------------------------------------------------
-    p_read_mem : process (clk_50)
+    p_read_mem : process (clk_25)
     begin
-        if rising_edge(clk_50) then
+        if rising_edge(clk_25) then
             if (i_reset = '0') then
                 r_tlast           <= '0';
                 r_tvalid          <= '0';
@@ -76,7 +76,7 @@ begin
         )
         port map
         (
-            clk     => clk_50,
+            clk     => clk_25,
             i_addra => std_logic_vector(r_addra),
             i_dina => (others => '0'),
             i_wea   => '0',
