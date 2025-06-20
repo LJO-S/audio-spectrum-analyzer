@@ -37,7 +37,8 @@ architecture rtl of signal_generator_top is
     constant C_PRELOAD_STRING_TB  : t_preload_string_array := C_PRELOAD_STRING_TB;
     -- Internals
     type t_gpio_state is (s_IDLE, s_REQ_PENDING);
-    signal r_STATE_GPIO : t_gpio_state := s_IDLE;
+    signal r_STATE_GPIO : t_gpio_state                 := s_IDLE;
+    signal r_pbuttons   : std_logic_vector(3 downto 0) := (others => '0');
 
     signal r_100ms_counter       : unsigned(22 downto 0) := (others => '0');
     signal r_sig_gen_reset       : std_logic             := '0';
@@ -79,12 +80,15 @@ begin
                             else
                                 r_sig_gen_idx_pending <= to_unsigned(i, r_sig_gen_idx_pending'length);
                             end if;
-                            r_STATE_GPIO <= s_REQ_PENDING;
+                            if (i_pbuttons /= r_pbuttons) then
+                                r_STATE_GPIO <= s_REQ_PENDING;
+                                r_pbuttons   <= i_pbuttons;
+                            end if;
                         end if;
                     end loop;
                     -- 
                 when s_REQ_PENDING =>
-                    if (r_tlast_pending = '0') then
+                    if (r_tlast_pending = '0') and (r_start_strobe_d1 = '0') then
                         r_sig_gen_idx <= r_sig_gen_idx_pending;
                         r_STATE_GPIO  <= s_IDLE;
                     end if;
