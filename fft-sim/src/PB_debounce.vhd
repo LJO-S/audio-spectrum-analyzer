@@ -7,7 +7,7 @@ entity PB_debounce is
         -- 10ms with 25 MHz clk 
         G_DEBOUNCE_LIMIT : natural := 250_000;
         G_DEBUG          : boolean := FALSE
-    )
+    );
     port (
         i_CLK         : in std_logic; -- 25 MHz
         i_PB          : in std_logic;
@@ -25,13 +25,13 @@ begin
         if (G_DEBUG = FALSE) then
             assert (G_DEBOUNCE_LIMIT > 250_000)
             report "Debounce limit is less than 250_000 when DEBUG=FALSE. Currently set to (" & natural'image(G_DEBOUNCE_LIMIT) & ")!"
-                severity error;
+                severity failure;
         else
             assert G_DEBUG = TRUE
             report "PB debounce is currently set to debug!"
                 severity warning;
-
         end if;
+        wait;
     end process;
 
     process (i_CLK)
