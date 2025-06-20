@@ -28,7 +28,7 @@ architecture rtl of signal_generator_wrapper is
 
 begin
     -- =============================================================
-    signal_generator_wrapper_inst : entity work.signal_generator_top
+    signal_generator_top_inst : entity work.signal_generator_top
         generic map(
             G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
             G_RAM_DEPTH    => G_RAM_DEPTH,
