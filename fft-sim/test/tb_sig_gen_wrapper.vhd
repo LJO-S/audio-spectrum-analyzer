@@ -50,6 +50,8 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         while test_suite loop
+            wait until o_reset = '1';
+            i_s_axis_tready <= '1';
             if run("sequential-push-buttons") then
                 wait_clock(100, clk_period);
                 wait until clk_25 = '1';
@@ -67,17 +69,31 @@ begin
                         i_pbuttons(j) <= '0';
                         -- Start strobe
                         wait_clock(G_100MS_CYCLES, clk_period);
-                        -- Data offload
+                        -- Data unload
                         wait_clock(1025, clk_period);
                     end loop;
                 end loop;
                 test_runner_cleanup(runner);
                 -- =============================================
             elsif run("simultaneous-push-buttons") then
+                wait_clock(100, clk_period);
+                wait until clk_25 = '1';
+                i_dip_switch0 <= '0';
+                for j in 0 to 2 loop
+                    i_pbuttons        <= (others => '0');
+                    i_pbuttons(j)     <= '1';
+                    i_pbuttons(j + 1) <= '1';
+                    -- Debounce
+                    wait_clock(1001, clk_period);
+                    i_pbuttons <= (others => '0');
+                    -- Start strobe
+                    wait_clock(G_100MS_CYCLES, clk_period);
+                    -- Data unload
+                    wait_clock(1025, clk_period);
+                end loop;
                 test_runner_cleanup(runner);
                 -- =============================================
             end if;
-
         end loop;
     end process main;
 

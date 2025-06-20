@@ -20,7 +20,7 @@ architecture bench of signal_generator_tb is
     constant G_RAM_DEPTH    : natural := 1024;
     constant G_INIT_FILE    : string  := "../../../scripts/data/multi_15khz_16bits.txt";
     -- Ports
-    signal clk_50   : std_logic := '0';
+    signal clk_25   : std_logic := '0';
     signal i_start  : std_logic := '0';
     signal i_reset  : std_logic := '0';
     signal i_tready : std_logic := '0';
@@ -49,7 +49,7 @@ begin
         )
         port map
         (
-            clk_50   => clk_50,
+            clk_25   => clk_25,
             i_start  => i_start,
             i_reset  => i_reset,
             i_tready => i_tready,
@@ -88,6 +88,6 @@ begin
         end loop;
     end process main;
 
-    clk_50 <= not clk_50 after clk_period/2;
+    clk_25 <= not clk_25 after clk_period/2;
 
 end;
