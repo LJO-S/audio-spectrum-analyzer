@@ -25,7 +25,6 @@ Idéen är följande:
 
 
 ## TODO
-- Skapa en SigGen Mgr som sköter när FFT som beräknas.
 - Simulera hela kedjan med FFT också.
 - Implementera HDMI-drivare som utläsare från ping_pong_memory
 - Skriv egen FFT istället för IP
