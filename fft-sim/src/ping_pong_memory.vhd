@@ -14,8 +14,7 @@ entity ping_pong_memory is
         -- Memory input data
         i_rd_addr : in std_logic_vector(9 downto 0);
         -- Memory output data
-        o_rd_data  : out std_logic_vector(31 downto 0);
-        o_rd_valid : out std_logic
+        o_rd_data  : out std_logic_vector(31 downto 0)
     );
 end entity ping_pong_memory;
 
@@ -43,7 +42,8 @@ begin
     -- ----------------------------------------------------
     --       _____              _____
     --      |     |-->0   RD<--|     |   
-    --      |  0  |    \ /     |  1  |   
+    --      |     |    \ /     |     |   
+    --      |  0  |     X      |  1  |   
     --      |     |    / \     |     |   
     --      |_____|<--WR   0-->|_____|
     -- 
