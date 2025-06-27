@@ -141,9 +141,7 @@ begin
         end if;
     end process p_startup;
     -------------------------------------------------------------
-    -- TODO
     gen_signal_generators : for i in 0 to 7 generate
-        -- TODO 
         signal_generator_inst : entity work.signal_generator
             generic map(
                 G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
