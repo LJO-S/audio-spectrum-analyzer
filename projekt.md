@@ -1,3 +1,4 @@
+## ########################################################
 Idéen är följande:
 
 - Vi nyttjar Zybons audio codec för att koppla mot:
@@ -12,25 +13,33 @@ Idéen är följande:
         - Måste typ kolla lite på resultatet vilket storlek vi får...
 - Resultatet visas på HDMI/VGA protokoll på skärmen i realtid
 
-
-## Growth
+## ########################################################
+## Growth 
 - Ta in RAW-I2S/FFT-datan i PS och göra någon behandling. Resultatet muxas med en GPIO, typ PBUTTON.
 - Låta en GPIO m interrupt aktivera ett FIR-filter i PL (interrupten via PS)
-
+## ########################################################
 ## Notes
 - Kolla hur FFT-ip fungerar? Vadå re/im för audio-data??
     Svar: Vi sätter IM hårt till '0' och använder bara RE.
 - måste vi sätta upp audio-codec?
     Svar: Ja. Vi kan nyttja PS och audio codec drivers. Kod kan tas från Zynq-bok tutorials.
 
+- vad ska evaluator limit vara?
+- SINC MAX: 816 242 585
+- SIN MAX: 1 070 736 097
+- MULTI: 717 045 101
+- PINK: 474 575 933
 
+- Idé: vi kan köra en full pass vara för att hämta maximum-värde. Sedan delar vi det med 512 (right-shift 9 ggr).
+
+## ########################################################
 ## TODO
 - Simulera hela kedjan med FFT också.
 - Implementera HDMI-drivare som utläsare från ping_pong_memory
 - Skriv egen FFT istället för IP
 
 
-
+## ########################################################
 ## Design
 När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) av output-spektrumet. Detta pga mer brus från algoritmen hamnar i de låga binsen.
 
