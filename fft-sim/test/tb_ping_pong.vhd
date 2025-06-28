@@ -19,7 +19,7 @@ architecture bench of ping_pong_memory_tb is
     constant clk_period : time := 20 ns;
     -- Generics
     -- Ports
-    signal clk_50           : std_logic                     := '0';
+    signal clk_25           : std_logic                     := '0';
     signal i_fft_data_magn  : std_logic_vector(31 downto 0) := (others => '0');
     signal i_fft_data_last  : std_logic                     := '0';
     signal i_fft_data_valid : std_logic                     := '0';
@@ -37,12 +37,12 @@ architecture bench of ping_pong_memory_tb is
 
 begin
     --------------------------------------------------
-    clk_50 <= not clk_50 after clk_period/2;
+    clk_25 <= not clk_25 after clk_period/2;
     --------------------------------------------------
     ping_pong_memory_inst : entity work.ping_pong_memory
         port map
         (
-            clk_50           => clk_50,
+            clk_25           => clk_25,
             i_fft_data_magn  => i_fft_data_magn,
             i_fft_data_last  => i_fft_data_last,
             i_fft_data_valid => i_fft_data_valid,
@@ -52,10 +52,10 @@ begin
             o_rd_valid       => o_rd_valid
         );
     --------------------------------------------------
-    p_data_gen : process (clk_50)
+    p_data_gen : process (clk_25)
         variable v_dummy_value : natural := 0;
     begin
-        if rising_edge(clk_50) then
+        if rising_edge(clk_25) then
             if (tb_start_data = '1') then
                 tb_fft_data_d1 <= std_logic_vector(
                     to_unsigned(
@@ -81,10 +81,10 @@ begin
     end process p_data_gen;
     --------------------------------------------------
     i_rd_addr <= std_logic_vector(tb_rd_addr);
-    p_read_data : process (clk_50)
+    p_read_data : process (clk_25)
         variable v_dummy_value : natural := 0;
     begin
-        if rising_edge(clk_50) then
+        if rising_edge(clk_25) then
             if (tb_use_slow_readout = '1') then
                 tb_clk_strobe <= not tb_clk_strobe;
             else
@@ -103,7 +103,7 @@ begin
             if run("slow-readout") then
                 info("Running test of ping_pong memory SLOW readout!");
                 tb_use_slow_readout <= '1';
-                wait until (clk_50 = '1');
+                wait until (clk_25 = '1');
                 wait_clock(10, clk_period);
                 tb_start_data <= '1';
                 wait_clock(2058, clk_period);
@@ -111,7 +111,7 @@ begin
             elsif run("fast-readout") then
                 info("Running test of ping_pong memory FAST readout!");
                 tb_use_slow_readout <= '0';
-                wait until (clk_50 = '1');
+                wait until (clk_25 = '1');
                 wait_clock(10, clk_period);
                 tb_start_data <= '1';
                 wait_clock(2058, clk_period);

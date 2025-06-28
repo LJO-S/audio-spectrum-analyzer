@@ -4,9 +4,6 @@ use ieee.numeric_std.all;
 
 use work.sig_gen_pkg.all;
 
--- TODO This shall instantiate 
--- Note: should probably make a new build out of the generated TCL file
-
 entity video_driver_top is
     port (
         clk_25       : in std_logic;
@@ -138,7 +135,6 @@ begin
             d0_out    => w_TMDS_out_clk_p,
             d0_out_ob => w_TMDS_out_clk_n
         );
-    --------------------------------------------------------------------
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     -- Outputs
