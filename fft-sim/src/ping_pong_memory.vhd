@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity ping_pong_memory is
     port (
-        clk_50 : in std_logic;
+        clk_25 : in std_logic;
 
         -- FFT input data
         i_fft_data_magn  : in std_logic_vector(31 downto 0);
@@ -55,9 +55,9 @@ begin
     -- has written 1024 new values. Therefore, the ping-pong driver is the
     -- FFT which in turn is driven by the sampler.
     -- ----------------------------------------------------
-    p_main : process (clk_50)
+    p_main : process (clk_25)
     begin
-        if rising_edge(clk_50) then
+        if rising_edge(clk_25) then
             r_xk_index    <= i_xk_index;
             r_xk_index_d1 <= r_xk_index;
 
@@ -124,7 +124,7 @@ begin
         )
         port map
         (
-            clk     => clk_50,
+            clk     => clk_25,
             i_addra => r_addr_bram0,
             i_dina  => r_wr_data_bram0,
             i_wea   => r_wr_en_bram0,
@@ -140,7 +140,7 @@ begin
         )
         port map
         (
-            clk     => clk_50,
+            clk     => clk_25,
             i_addra => r_addr_bram1,
             i_dina  => r_wr_data_bram1,
             i_wea   => r_wr_en_bram1,
