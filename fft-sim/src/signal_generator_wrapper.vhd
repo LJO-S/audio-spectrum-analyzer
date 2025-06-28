@@ -3,9 +3,11 @@ use ieee.std_logic_1164.all;
 
 entity signal_generator_wrapper is
     generic (
-        G_FFT_BIT_SIZE : natural := 16;
-        G_RAM_DEPTH    : natural := 1024;
-        G_100MS_CYCLES : natural := 2_500_000
+        G_FFT_BIT_SIZE   : natural := 16;
+        G_RAM_DEPTH      : natural := 1024;
+        G_100MS_CYCLES   : natural := 2_500_000;
+        G_DEBOUNCE_LIMIT : natural := 250_000;
+        G_DEBUG          : boolean := false
     );
     port (
         clk_25 : in std_logic;
@@ -49,8 +51,8 @@ begin
     g_PB_debounce : for i in 0 to 3 generate
         PB_debounce_inst : entity work.PB_debounce
             generic map(
-                G_DEBOUNCE_LIMIT => 1000,
-                G_DEBUG          => true
+                G_DEBOUNCE_LIMIT => G_DEBOUNCE_LIMIT,
+                G_DEBUG          => G_DEBUG
             )
             port map
             (
@@ -62,8 +64,8 @@ begin
     -- =============================================================
     PB_debounce_inst : entity work.PB_debounce
         generic map(
-            G_DEBOUNCE_LIMIT => 1000,
-            G_DEBUG          => true
+            G_DEBOUNCE_LIMIT => G_DEBOUNCE_LIMIT,
+            G_DEBUG          => G_DEBUG
         )
         port map
         (
