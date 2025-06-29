@@ -75,9 +75,10 @@ begin
                 -- Start strobe
                 wait_clock(G_100MS_CYCLES * 5, clk_period);
                 -- Data unload
-                wait_clock(1025*5, clk_period);
+                wait_clock(1025 * 5, clk_period);
             end loop;
         end loop;
+        report "Just Kidding.   Test Done!" severity failure;
     end process p_main;
 
 end;
