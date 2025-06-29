@@ -23,8 +23,9 @@ entity signal_generator is
 end entity signal_generator;
 
 architecture rtl of signal_generator is
-    constant C_BIT_RANGE_1024 : natural                                 := integer(floor(log2(real(1024))));
-    signal r_addra            : unsigned(C_BIT_RANGE_1024 - 1 downto 0) := (others => '0');
+    constant C_BIT_RANGE_1024 : natural                                 := integer(floor(log2(real(G_RAM_DEPTH))));
+    -- signal r_addra            : unsigned(C_BIT_RANGE_1024 - 1 downto 0) := (others => '0');
+    signal r_addra            : unsigned(9 downto 0) := (others => '0');
     signal w_re_data          : std_logic_vector(15 downto 0);
     signal r_tlast            : std_logic;
     signal r_tvalid           : std_logic;
