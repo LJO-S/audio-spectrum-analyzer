@@ -146,7 +146,8 @@ begin
             generic map(
                 G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
                 G_RAM_DEPTH    => G_RAM_DEPTH,
-                G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
+                -- G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
+                G_INIT_FILE    => C_PRELOAD_STRING_SRC(i)
             )
             port map
             (
