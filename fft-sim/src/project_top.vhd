@@ -35,10 +35,6 @@ entity project_top is
 end entity project_top;
 
 architecture rtl of project_top is
-    signal w_S_AXIS_DATA_0_tdata         : std_logic_vector (31 downto 0);
-    signal w_S_AXIS_DATA_0_tlast         : std_logic;
-    signal w_S_AXIS_DATA_0_tready        : std_logic;
-    signal w_S_AXIS_DATA_0_tvalid        : std_logic;
     signal w_event_data_in_channel_halt  : std_logic;
     signal w_event_data_out_channel_halt : std_logic;
     signal w_event_frame_started         : std_logic;
@@ -52,7 +48,6 @@ architecture rtl of project_top is
     signal w_XK_INDEX                    : std_logic_vector (9 downto 0);
     signal w_clk_25                      : std_logic;
     signal w_clk_250                     : std_logic;
-    signal w_sys_clock                   : std_logic;
 
     signal w_reset                       : std_logic;
     signal w_axis_tready_xfft_to_sig_gen : std_logic;
@@ -108,7 +103,7 @@ begin
             o_XK_INDEX                  => w_XK_INDEX,
             o_clk_25                    => w_clk_25,
             o_clk_250                   => w_clk_250,
-            sys_clock                   => w_sys_clock
+            sys_clock                   => i_sys_clk
         );
     ----------------------------------------------------------------------- 
     -----------------------------------------------------------------------
