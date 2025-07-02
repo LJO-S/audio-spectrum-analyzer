@@ -34,8 +34,10 @@ Idéen är följande:
 
 ## ########################################################
 ## TODO
-- Simulera hela kedjan med FFT också.
-- Implementera HDMI-drivare som utläsare från ping_pong_memory
+- Snygga till layout:
+    - Fixa en mindre ruta X:[0,300] Y[0-300].
+    - Fixa INTERNAL/CAPTURE, samt LPF/HPF/BPF
+    - Fixa X-axel
 - Skriv egen FFT istället för IP
 
 
@@ -71,21 +73,32 @@ När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) a
                                                     +----------+      +----------+ 
                                                                
                                                                
+
+
+
+
+
                                                                
-                                                               
-                                                                    
-                                                                    
 
+DISPLAY
 
-
-
-
-
-
-
-
-
-
+         ______________________________________________________________
+        |                                               |              |
+        |                                               |   CAPTURE    |
+        |/\                                             |______________|
+        |  \                                            |              |
+        |   \                                           |   INTERNAL   |
+        |    \  /\                                      |______________|
+        |     \/  \                                     |  MAX: 2 kHz  |
+        |          \_/\                                 |______________|
+        |              |                                |     LPF      |
+        |              |                                |_____________ |
+        |              |/\                /\            |     BPF      |
+        |                 |            /\/  \           |______________|
+        |                  \          /      \          |     HPF      |
+        |_______|________|__\____|___/___|____\__|______|______________|
+        | 0     5       10      15      20      25      | Author:LJO-S |
+        |_______________________________________________|______________|
 
 
 
