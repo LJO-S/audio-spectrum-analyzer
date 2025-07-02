@@ -15,7 +15,7 @@ architecture bench of project_top_tb is
     -- Generics
     constant G_FFT_BIT_SIZE   : natural := 16;
     constant G_RAM_DEPTH      : natural := 1024;
-    constant G_100MS_CYCLES   : natural := 250_000;
+    constant G_100MS_CYCLES   : natural := 50_000;
     constant G_DEBOUNCE_LIMIT : natural := 1000;
     constant G_DEBUG          : boolean := true;
     -- Ports

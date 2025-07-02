@@ -54,7 +54,6 @@ architecture rtl of signal_generator_top is
     type t_tdata_array is array (0 to 7) of std_logic_vector(31 downto 0);
     signal w_tdata_array   : t_tdata_array                := (others => (others => '0'));
     signal w_start_vector  : std_logic_vector(7 downto 0) := (others => '0');
-    signal w_tready_vector : std_logic_vector(7 downto 0);
     signal w_tvalid_vector : std_logic_vector(7 downto 0) := (others => '0');
     signal w_tlast_vector  : std_logic_vector(7 downto 0) := (others => '0');
 begin
