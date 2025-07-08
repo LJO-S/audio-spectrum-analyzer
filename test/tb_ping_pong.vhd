@@ -26,7 +26,6 @@ architecture bench of ping_pong_memory_tb is
     signal i_xk_index       : std_logic_vector(9 downto 0)  := (others => '0');
     signal i_rd_addr        : std_logic_vector(9 downto 0)  := (others => '0');
     signal o_rd_data        : std_logic_vector(31 downto 0);
-    signal o_rd_valid       : std_logic;
     -- Helper signals
     signal tb_fft_data_d1      : std_logic_vector(31 downto 0) := (others => '0');
     signal tb_fft_data_d2      : std_logic_vector(31 downto 0) := (others => '0');
@@ -48,8 +47,7 @@ begin
             i_fft_data_valid => i_fft_data_valid,
             i_xk_index       => i_xk_index,
             i_rd_addr        => i_rd_addr,
-            o_rd_data        => o_rd_data,
-            o_rd_valid       => o_rd_valid
+            o_rd_data        => o_rd_data
         );
     --------------------------------------------------
     p_data_gen : process (clk_25)
