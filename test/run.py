@@ -32,12 +32,14 @@ VU.enable_location_preprocessing(
 
 VU.enable_check_preprocessing()
 
-src_dir = Path(__file__).parent / ".." / "src"
+src_dir = (Path(__file__).parent / ".." / "src").resolve()
 tb_dir = Path(__file__).parent
 
 lib = VU.add_library("lib")
 
-for src_file in src_dir.glob("*.vhd"):
+for src_file in src_dir.rglob("*.vhd"):
+    if src_file.name == "project_top.vhd":
+        continue
     lib.add_source_files(src_file)
 
 for tb_file in tb_dir.glob("tb_*"):
