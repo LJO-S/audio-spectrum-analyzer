@@ -1,0 +1,14 @@
+sig-gen:
+    idk
+
+sig-gen-with-multi-mem:
+    idk
+
+250709_sig-gen-with-gui:
+    Contains:
+    -internal Signal Generator.
+    -XFFT IP
+    -Ping Pong Memory
+    -DVI Drivers
+    -FFT Evaluator
+    -ASCII generator
