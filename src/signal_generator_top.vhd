@@ -22,7 +22,8 @@ entity signal_generator_top is
         i_pbuttons    : in std_logic_vector(3 downto 0);
         i_dip_switch0 : in std_logic;
         -- Misc
-        o_reset : out std_logic;
+        o_100ms_strb : out std_logic;
+        o_reset      : out std_logic;
         -- AXIS
         i_s_axis_tready : in std_logic;
         o_m_axis_tdata  : out std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
@@ -59,6 +60,7 @@ architecture rtl of signal_generator_top is
 begin
     -------------------------------------------------------------
     -- Outputs
+    o_100ms_strb    <= r_start_strobe;
     o_reset         <= r_sig_gen_reset;
     o_m_axis_tdata  <= w_sig_gen_tdata;
     o_m_axis_tvalid <= w_sig_gen_tvalid;
@@ -146,7 +148,7 @@ begin
                 G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
                 G_RAM_DEPTH    => G_RAM_DEPTH,
                 -- G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
-                G_INIT_FILE    => C_PRELOAD_STRING_SRC(i)
+                G_INIT_FILE => C_PRELOAD_STRING_SRC(i)
             )
             port map
             (

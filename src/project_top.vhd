@@ -48,6 +48,7 @@ architecture rtl of project_top is
     signal w_XK_INDEX                    : std_logic_vector (9 downto 0);
     signal w_clk_25                      : std_logic;
     signal w_clk_250                     : std_logic;
+    signal w_100ms_strb                  : std_logic;
 
     signal w_reset                       : std_logic;
     signal w_axis_tready_xfft_to_sig_gen : std_logic;
@@ -73,6 +74,7 @@ begin
             clk_25          => w_clk_25,
             i_pbuttons      => i_pbuttons,
             i_dip_switch0   => i_dip_switch0,
+            o_100ms_strb    => w_100ms_strb,
             o_reset         => open,
             i_s_axis_tready => w_axis_tready_xfft_to_sig_gen,
             o_m_axis_tdata  => w_axis_tdata_sig_gen_to_xfft,
@@ -81,6 +83,7 @@ begin
         );
     ----------------------------------------------------------------------- 
     ----------------------------------------------------------------------- 
+    -- TODO replace this with own FFT
     -- Input: from Signal Generator Wrapper
     -- Output: to ppMem
     top_appl_wrapper_inst : entity work.top_appl_wrapper
@@ -126,8 +129,9 @@ begin
         (
             clk_25       => w_clk_25,
             clk_tmds_250 => w_clk_250,
-            o_rd_addr    => w_rd_addr, 
-            i_rd_data    => w_rd_data, 
+            i_100ms_strb => w_100ms_strb,
+            o_rd_addr    => w_rd_addr,
+            i_rd_data    => w_rd_data,
             o_TMDS_clk_p => o_TMDS_clk_p,
             o_TMDS_clk_n => o_TMDS_clk_n,
             o_video_0_p  => o_video_0_p,

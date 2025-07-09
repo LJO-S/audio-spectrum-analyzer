@@ -15,7 +15,8 @@ entity signal_generator_wrapper is
         i_pbuttons    : in std_logic_vector(3 downto 0);
         i_dip_switch0 : in std_logic;
         -- Misc
-        o_reset : out std_logic;
+        o_reset      : out std_logic;
+        o_100ms_strb : out std_logic;
         -- AXIS
         i_s_axis_tready : in std_logic;
         o_m_axis_tdata  : out std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
@@ -41,6 +42,7 @@ begin
             clk_25          => clk_25,
             i_pbuttons      => w_pb_debounce,
             i_dip_switch0   => w_dip_debounce,
+            o_100ms_strb    => o_100ms_strb,
             o_reset         => o_reset,
             i_s_axis_tready => i_s_axis_tready,
             o_m_axis_tdata  => o_m_axis_tdata,

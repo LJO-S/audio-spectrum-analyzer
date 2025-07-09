@@ -8,6 +8,8 @@ entity video_driver_top is
     port (
         clk_25       : in std_logic;
         clk_tmds_250 : in std_logic;
+        -- Misc
+        i_100ms_strb : in std_logic;
         -- PING_PONG memory I/O ports
         o_rd_addr : out std_logic_vector(9 downto 0);
         -- Memory output data
@@ -65,7 +67,7 @@ architecture rtl of video_driver_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
-    fft_data_evaluator_inst : entity work.fft_data_evaluator
+    image_generator_inst : entity work.image_generator
         port map
         (
             clk_25               => clk_25,
@@ -73,12 +75,23 @@ begin
             i_compare_subtractor => w_subtract_value,
             i_fft_data           => i_rd_data,
             o_rd_addr            => o_rd_addr,
-            o_HSYNC              => w_HSYNC,
-            o_VSYNC              => w_VSYNC,
-            o_draw               => w_draw,
-            o_video_red          => w_video_red,
-            o_video_grn          => w_video_grn,
-            o_video_blu          => w_video_blu
+            i_100ms_strb         => i_100ms_strb,
+            -- TODO implement these
+            i_capture_on => '0',
+            i_lpf_on     => '0',
+            i_lpf_cutoff => (others => '0'),
+            i_bpf_on     => '0',
+            i_bpf_cutoff => (others => '0'),
+            i_hpf_on     => '0',
+            i_hpf_cutoff => (others => '0'),
+            i_ema_on     => '0',
+            -- 
+            o_HSYNC      => w_HSYNC,
+            o_VSYNC      => w_VSYNC,
+            o_draw       => w_draw,
+            o_video_red  => w_video_red,
+            o_video_grn  => w_video_grn,
+            o_video_blu  => w_video_blu
         );
     --------------------------------------------------------------------
     --------------------------------------------------------------------
