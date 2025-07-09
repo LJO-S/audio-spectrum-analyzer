@@ -226,6 +226,24 @@ begin
                 r_video_red_gui <= x"3F";
                 r_video_grn_gui <= x"3F";
                 r_video_blu_gui <= x"3F";
+            elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 16) and
+                ((r_counter_X_d1 = 104) or
+                (r_counter_X_d1 = 216) or
+                (r_counter_X_d1 = 320) or
+                (r_counter_X_d1 = 424)) then
+                r_gui_draw      <= '1';
+                r_video_red_gui <= x"9F";
+                r_video_grn_gui <= x"9F";
+                r_video_blu_gui <= x"9F";
+            elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 8) and
+                ((r_counter_X_d1 = 52) or
+                (r_counter_X_d1 = 160) or
+                (r_counter_X_d1 = 268) or
+                (r_counter_X_d1 = 372)) then
+                r_gui_draw      <= '1';
+                r_video_red_gui <= x"9F";
+                r_video_grn_gui <= x"9F";
+                r_video_blu_gui <= x"9F";
             end if;
         end if;
     end process p_draw_lines;

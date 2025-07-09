@@ -19,6 +19,7 @@ package sig_gen_pkg is
 
     type t_tilemap_long is array (0 to 7) of natural range 0 to 63;
     type t_tilemap_short is array (0 to 3) of natural range 0 to 63;
+    type t_tilemap_minimal is array (0 to 1) of natural range 0 to 63;
 
     -- Tilemaps 
     -- "CAPTURE"
@@ -110,6 +111,23 @@ package sig_gen_pkg is
     1 => 23, -- M
     2 => 11, -- A
     3 => 10  -- :
+    );
+
+    constant C_TILEMAP_10 : t_tilemap_minimal := (
+    0 => 1, -- 1
+    1 => 0  -- 0
+    );
+    constant C_TILEMAP_20 : t_tilemap_minimal := (
+    0 => 2, -- 2
+    1 => 0  -- 0
+    );
+    constant C_TILEMAP_30 : t_tilemap_minimal := (
+    0 => 0, -- 3
+    1 => 3  -- 0
+    );
+    constant C_TILEMAP_40 : t_tilemap_minimal := (
+    0 => 4, -- 4
+    1 => 0  -- 0
     );
 
     type t_font_glyph is array (0 to 15) of std_logic_vector(7 downto 0);

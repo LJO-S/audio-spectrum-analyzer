@@ -31,20 +31,21 @@ end entity ascii_generator;
 
 architecture rtl of ascii_generator is
     ----------------------------------------------------
-    signal w_col_count_div_1_2 : unsigned(8 downto 0);                            -- 80
-    signal w_row_count_div_1_2 : unsigned(8 downto 0);                            -- 60
-    signal w_col_addr          : std_logic_vector(2 downto 0) := (others => '0'); -- [0-7] X
-    signal r_col_addr_d1       : std_logic_vector(2 downto 0) := (others => '0'); -- [0-7] X
-    signal w_col_addr_1_8      : unsigned(2 downto 0)         := (others => '0'); -- 1:8 [0-7] X
-    signal w_col_addr_1_8_half : unsigned(1 downto 0)         := (others => '0'); -- 1:8 [0-3] X
-    signal w_row_addr          : unsigned(3 downto 0)         := (others => '0'); -- [0-15] Y
-    signal r_draw              : std_logic                    := '0';
-    signal r_draw_lpf          : std_logic                    := '0';
-    signal r_draw_bpf          : std_logic                    := '0';
-    signal r_draw_hpf          : std_logic                    := '0';
-    signal r_draw_ema          : std_logic                    := '0';
-    signal r_draw_capture      : std_logic                    := '0';
-    signal r_draw_internal     : std_logic                    := '0';
+    signal w_col_count_div_1_2   : unsigned(8 downto 0);                            -- 80
+    signal w_row_count_div_1_2   : unsigned(8 downto 0);                            -- 60
+    signal w_col_addr            : std_logic_vector(2 downto 0) := (others => '0'); -- [0-7] X
+    signal r_col_addr_d1         : std_logic_vector(2 downto 0) := (others => '0'); -- [0-7] X
+    signal w_col_addr_1_8        : unsigned(2 downto 0)         := (others => '0'); -- 1:8 [0-7] X
+    signal w_col_addr_1_8_half   : unsigned(1 downto 0)         := (others => '0'); -- 1:8 [0-3] X
+    signal w_col_addr_1_8_eighth : unsigned(0 downto 0)         := (others => '0'); -- 1:8 [0-1] X
+    signal w_row_addr            : unsigned(3 downto 0)         := (others => '0'); -- [0-15] Y
+    signal r_draw                : std_logic                    := '0';
+    signal r_draw_lpf            : std_logic                    := '0';
+    signal r_draw_bpf            : std_logic                    := '0';
+    signal r_draw_hpf            : std_logic                    := '0';
+    signal r_draw_ema            : std_logic                    := '0';
+    signal r_draw_capture        : std_logic                    := '0';
+    signal r_draw_internal       : std_logic                    := '0';
     -- Variable frequency tilemaps
     signal r_tilemap_freq_max : t_tilemap_short              := (37, 0, 0, 37);
     signal r_freq_max_1000s   : unsigned(6 downto 0)         := (others => '0');
@@ -59,9 +60,10 @@ begin
     --============================================================================
     --============================================================================
     -- 1:8 for indexing glyphs
-    w_col_addr_1_8 <= i_counter_X(5 downto 3);
+    w_col_addr_1_8 <= i_counter_X(5 downto 3); -- Range: 0-7
     -- 1:8 [0-3] for indexing short words
-    w_col_addr_1_8_half <= i_counter_X(4 downto 3); -- Range: 0-8
+    w_col_addr_1_8_half   <= i_counter_X(4 downto 3); -- Range: 0-3
+    w_col_addr_1_8_eighth <= i_counter_X(3 downto 3); -- Range: 0-1
     -- 1:2 Tile scaling
     w_col_addr          <= std_logic_vector(i_counter_X(2 downto 0)); -- Range: 0-8
     w_row_addr          <= i_counter_Y(3 downto 0);                   -- Range: 0-15
@@ -172,13 +174,32 @@ begin
                 -- "EMA"
                 v_tilemap_index := C_TILEMAP_EMA(to_integer(unsigned(w_col_addr_1_8_half)));
                 r_draw_ema <= '1';
-                ------------------------------------------------------------------------------
+            ------------------------------------------------------------------------------
             elsif (i_counter_Y >= 416) and (i_counter_Y < 432) and
                 (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 64) then
                 -- "CREATOR"
                 v_tilemap_index := C_TILEMAP_CREATOR(to_integer(unsigned(w_col_addr_1_8)));
                 r_draw <= '1';
                 ------------------------------------------------------------------------------
+            elsif (i_counter_Y >= 416) and (i_counter_Y < 432) then
+                -- "10, 20, 30, 40"
+                if (i_counter_X >= 96) and (i_counter_X < 112) then
+                    -- "10:"
+                    v_tilemap_index := C_TILEMAP_10(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                    r_draw <= '1';
+                elsif (i_counter_X >= 208) and (i_counter_X < 224) then
+                    -- "20"
+                    v_tilemap_index := C_TILEMAP_20(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                    r_draw <= '1';
+                elsif (i_counter_X >= 312) and (i_counter_X < 328) then
+                    -- "30"
+                    v_tilemap_index := C_TILEMAP_30(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                    r_draw <= '1';
+                elsif (i_counter_X >= 416) and (i_counter_X < 432) then
+                    -- "40"
+                    v_tilemap_index := C_TILEMAP_40(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                    r_draw <= '1';
+                end if;
             elsif (i_counter_Y >= 432) and (i_counter_Y < 448) and
                 (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 32) then
                 -- "LJOS"
