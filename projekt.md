@@ -34,10 +34,7 @@ Idéen är följande:
 
 ## ########################################################
 ## TODO
-- Snygga till layout:
-    - Fixa en mindre ruta X:[0,300] Y[0-300].
-    - Fixa INTERNAL/CAPTURE, samt LPF/HPF/BPF
-    - Fixa X-axel
+- Snygga till layout:.
     - Fixa BPF fcLo, fcHi
 - Fixa folder structure att använda subdirs
 - Kolla om modelsim kan simulera XilIP?
