@@ -1,8 +1,5 @@
 /*
-* Zynq PS-PL DMA communications test & Audio Codec Setup
-* Steps:
-* 1. Setup DMA and verify that it is working by looping back write/reads with itself via AXI4Stream FIFO.
-* 2. Setup Audio Codec using example code from Zynq book tutorial.
+* Zynq PS-PL DMA communications test
 */
 
 #include <stdio.h>
