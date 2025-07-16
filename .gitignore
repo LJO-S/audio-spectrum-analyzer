@@ -1,8 +1,4 @@
 scripts/.venv
 test/vunit_out
-builds/sig_gen_with_mem/
-builds/sig-gen/
-builds/sig_gen_with_multi_mem/
-builds/sig-gen-with-multi-mem/
-builds/25*
+builds/*
 vitis/
