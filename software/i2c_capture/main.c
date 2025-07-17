@@ -28,10 +28,6 @@
  */
 #define IIC_SCLK_RATE 100000
 
-/************************** Function Prototypes *******************************/
-int IicPsAudioCodecSetup(u16 deviceId);
-int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
-
 /************************** Variable Definitions ******************************/
 XIicPs iic; /* i2c device */
 
@@ -146,7 +142,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
      */
 
     /* Configure PWR MGMT */
-    u8RegAddr = 0x06;
+    u8RegAddr = R6_POWER_MANAGEMENT;
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
     u16Data |= (0 << CLKOUT); /* Power up */
@@ -169,7 +165,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
     /* Leave 0x00-0x05, 0x0F-0x12 as is, defaults are good. */
 
     /* Digital Audio I/F */
-    u8RegAddr = 0x07;
+    u8RegAddr = R7_DIGITAL_AUDIO_I_F;
     u16Data = 0x0000;
     u16Data |= (0 << BCLKINV);   /* Not inv */
     u16Data |= (0 << MS);        /* Slave mode */
@@ -188,7 +184,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
     }
 
     /* Sampling Rate 0x08 */
-    u8RegAddr = 0x08;
+    u8RegAddr = R8_SAMPLING_RATE;
     u16Data = 0x0000;
     u16Data |= (0 << USB);      /* Normal mode */
     u16Data |= (0 << BOSR);     /* Base oversampling support for 256*f_s */
@@ -211,7 +207,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
     usleep(99000);
 
     /* Configure ACTIVE */
-    u8RegAddr = 0x09;
+    u8RegAddr = R9_ACTIVE;
     u16Data = 0x0000;
     u16Data |= (1 << ACTIVE); /* Activate digital core */
 
@@ -225,7 +221,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
     }
 
     /* Configure PWR MGMT */
-    u8RegAddr = 0x06;
+    u8RegAddr = R6_POWER_MANAGEMENT;
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
     u16Data |= (0 << CLKOUT); /* Power up */

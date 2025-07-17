@@ -1,13 +1,14 @@
 
 /******************************************************************************
-* Header file for SSM2603 registers.
-*******************************************************************************/
+ * Header file for SSM2603 registers.
+ *******************************************************************************/
 
 #ifndef SSM_2603_H
 #define SSM_2603_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /* Left Channel ADC Vol 0x00 */
@@ -84,8 +85,31 @@ extern "C" {
 #define NGG 1
 #define NGTH 3
 
+    /************************** Function Prototypes *******************************/
+    int IicPsAudioCodecSetup(u16 deviceId);
+    int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
+
+    /************************** Others *******************************/
+    enum audio_regs
+    {
+        R0_LEFT_CHANNEL_ADC_INPUT_VOLUME = 0x00,
+        R1_RIGHT_CHANNEL_ADC_INPUT_VOLUME = 0x01,
+        R2_LEFT_CHANNEL_DAC_VOLUME = 0x02,
+        R3_RIGHT_CHANNEL_DAC_VOLUME = 0x03,
+        R4_ANALOG_AUDIO_PATH = 0x04,
+        R5_DIGITAL_AUDIO_PATH = 0x05,
+        R6_POWER_MANAGEMENT = 0x06,
+        R7_DIGITAL_AUDIO_I_F = 0x07,
+        R8_SAMPLING_RATE = 0x08,
+        R9_ACTIVE = 0x09,
+        R15_SOFTWARE_RESET = 0x0F,
+        R16_ALC_CONTROL_1 = 0x10,
+        R17_ALC_CONTROL_2 = 0x11,
+        R18_NOISE_GATE = 0x12,
+
+    };
 
 #ifdef __cplusplus
 }
 #endif
-#endif	/* end of protection macro */
+#endif /* end of protection macro */
