@@ -188,10 +188,10 @@ int IicPsAudioCodecSetup(u16 deviceId)
     u16Data = 0x0000;
     u16Data |= (0 << USB);      /* Normal mode */
     u16Data |= (0 << BOSR);     /* Base oversampling support for 256*f_s */
-    u16Data |= (0b0111 << SR);  /* If MCLK=12.288 MHz then
-                                 * 0b0111=96kHz and 0b0000=48kHz
+    u16Data |= (0b0000 << SR);  /* With MCKLK= 12.5 MHz then
+                                 * 0b0111=98 kHz and 0b0000 = 49kHz
                                  */
-    u16Data |= (0 << CLKDIV2);  /* Core CLK is MCLK */
+    u16Data |= (1 << CLKDIV2);  /* Core CLK is MCLK/2 */
     u16Data |= (0 << CLKODIV2); /* CLKOUT is core CLK */
 
     xil_printf("Sending Sampling Rate...\r\n");
