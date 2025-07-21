@@ -32,13 +32,24 @@ Idéen är följande:
 
 - Idé: vi kan köra en full pass vara för att hämta maximum-värde. Sedan delar vi det med 512 (right-shift 9 ggr).
 
+
+
+- I2S
+- Vi behöver 96 000 Hz till LRCLK
+- Vi behöver (96 000 * wordLength * 2) = (96 000 * 16 * 2) = 3 072 000 Hz
+- Vi har en 25 MHz master CLK. Hur får vi dessa frekvenser?
+    --> 25_000_000 / 256 = ~98 000 Hz (close enough)
+    --> (1 / 98 000) = 1/fs. På denna period ska 16*2 bitar klockas ut. Det ger 
+        1/((1/98000)/32) = 3 125 000 Hz. Alltså 25_000_000 / 8.
+    Vi får ut alla klockor på 25 MHz enkelt. Vad är MCLK då?
+
 ## ########################################################
 ## TODO
 - Snygga till layout:.
     - Fixa BPF fcLo, fcHi
-- Fixa folder structure att använda subdirs
 - Kolla om modelsim kan simulera XilIP?
 - Skriv egen FFT istället för IP
+- Fixa filter
 
 
 ## ########################################################
