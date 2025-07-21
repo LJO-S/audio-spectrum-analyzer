@@ -3,8 +3,10 @@
  * Header file for SSM2603 registers.
  *******************************************************************************/
 
-#ifndef SSM_2603_H
-#define SSM_2603_H
+#ifndef _SSM2603_H
+#define _SSM2603_H
+
+#include "xil_types.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -88,6 +90,7 @@ extern "C"
     /************************** Function Prototypes *******************************/
     int IicPsAudioCodecSetup(u16 deviceId);
     int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
+    void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name);
 
     /************************** Others *******************************/
     enum audio_regs

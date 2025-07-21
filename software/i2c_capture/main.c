@@ -12,6 +12,7 @@
 #include "xiicps.h"
 #include "ssm2603.h"
 #include "sleep.h"
+#include "xgpio.h"
 /************************** Constant Definitions ******************************/
 #define IIC_DEVICE_ID XPAR_PS7_I2C_0_DEVICE_ID
 
@@ -28,14 +29,31 @@
  */
 #define IIC_SCLK_RATE 100000
 
-/************************** Variable Definitions ******************************/
-XIicPs iic; /* i2c device */
+#define GPIO_DEVICE_ID XPAR_GPIO_0_DEVICE_ID
 
+/************************** Variable Definitions ******************************/
+XIicPs iic;     /* i2c device */
+XGpio gpioInst; /* gpio instance */
 /*
  * The following buffers are used in this example to send and receive data
  * with the IIC. They are defined as global so that they are not on the stack.
  */
 u8 recvBuffer[2]; /* Buffer for Receiving Data */
+
+/*------------------------------------------------------------------------------*/
+/* 1) Error‑check helper macro                                                  */
+/*------------------------------------------------------------------------------*/
+#define CHECK(x)                           \
+    do                                     \
+    {                                      \
+        int st = (x);                      \
+        if (st != XST_SUCCESS)             \
+        {                                  \
+            xil_printf("Failed at %s\r\n", \
+                       #x);                \
+            return XST_FAILURE;            \
+        }                                  \
+    } while (0)
 
 /******************************************************************************/
 /**
@@ -52,8 +70,18 @@ u8 recvBuffer[2]; /* Buffer for Receiving Data */
 int main(void)
 {
     int status;
-    xil_printf("Configuring Audio Codec... \r\n");
+    xil_printf("Configuring GPIO... \r\n");
+    status = XGpio_Initialize(&gpioInst, GPIO_DEVICE_ID);
+    if (status != XST_SUCCESS)
+    {
+        xil_printf("-- GPIO configuration failed! --\r\n");
+        return XST_FAILURE;
+    }
+    XGpio_SetDataDirection(&gpioInst, 1, 0x00); // Set to output
+    XGpio_DiscreteClear(&gpioInst, 1, 0x01); // clear GPIO(0) 
+    xil_printf("GPIO configured & zeroed!\r\n");
 
+    xil_printf("Configuring Audio Codec... \r\n");
     status = IicPsAudioCodecSetup(IIC_DEVICE_ID);
     if (status != XST_SUCCESS)
     {
@@ -61,6 +89,7 @@ int main(void)
         return XST_FAILURE;
     }
     xil_printf("-- Successfully ran IIC Audio Codec configuration! --\r\n");
+    XGpio_DiscreteWrite(&gpioInst, 1, 0x1);
     return XST_SUCCESS;
 }
 
@@ -141,7 +170,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
      *
      */
 
-    /* Configure PWR MGMT */
+    /* -------------- Configure PWR MGMT START -------------- */
     u8RegAddr = R6_POWER_MANAGEMENT;
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
@@ -152,19 +181,12 @@ int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << ADC);    /* Power up */
     u16Data |= (1 << MIC);    /* Power down */
     u16Data |= (0 << LINEIN); /* Power up */
+    WriteReg(u8RegAddr, u16Data, "PWR MGMT A");
 
-    xil_printf("Sending PWR MGMT A...\r\n");
-    // int status = XIicPs_MasterSendPolled(&iic, sendBuffer, 2, IIC_SLAVE_ADDR);
-    status = AudioWriteToReg(u8RegAddr, u16Data);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("FAILURE: iic send PWR MGMT A\r\n");
-        return XST_FAILURE;
-    }
-
+    /* -------------- -------------- -------------- */
     /* Leave 0x00-0x05, 0x0F-0x12 as is, defaults are good. */
 
-    /* Digital Audio I/F */
+    /* -------------- Digital Audio I/F -------------- */
     u8RegAddr = R7_DIGITAL_AUDIO_I_F;
     u16Data = 0x0000;
     u16Data |= (0 << BCLKINV);   /* Not inv */
@@ -173,17 +195,9 @@ int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << LRP);       /* Pol control */
     u16Data |= (0b00 << WL);     /* Set data-word length to 16 bits */
     u16Data |= (0b10 << FORMAT); /* Set to I2S mode (0b10) */
+    WriteReg(u8RegAddr, u16Data, "Digital Audio I/F");
 
-    xil_printf("Sending Digital Audio I/F...\r\n");
-    // int status = XIicPs_MasterSendPolled(&iic, sendBuffer, 2, IIC_SLAVE_ADDR);
-    status = AudioWriteToReg(u8RegAddr, u16Data);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("FAILURE: iic send Digital Audio I/F\r\n");
-        return XST_FAILURE;
-    }
-
-    /* Sampling Rate 0x08 */
+    /* -------------- Sampling Rate 0x08 -------------- */
     u8RegAddr = R8_SAMPLING_RATE;
     u16Data = 0x0000;
     u16Data |= (0 << USB);      /* Normal mode */
@@ -193,34 +207,20 @@ int IicPsAudioCodecSetup(u16 deviceId)
                                  */
     u16Data |= (1 << CLKDIV2);  /* Core CLK is MCLK/2 */
     u16Data |= (0 << CLKODIV2); /* CLKOUT is core CLK */
+    WriteReg(u8RegAddr, u16Data, "Sampling Rate");
 
-    xil_printf("Sending Sampling Rate...\r\n");
-    // int status = XIicPs_MasterSendPolled(&iic, sendBuffer, 2, IIC_SLAVE_ADDR);
-    status = AudioWriteToReg(u8RegAddr, u16Data);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("FAILURE: iic send Sampling Rate A\r\n");
-        return XST_FAILURE;
-    }
-
-    /* Sleep for 99 ms waiting for VMID 10 uF caps */
+    /* ------------------------------------------
+     * Sleep for 99 ms waiting for VMID 10 uF caps
+     * ------------------------------------------ */
     usleep(99000);
 
-    /* Configure ACTIVE */
+    /* -------------- Configure ACTIVE -------------- */
     u8RegAddr = R9_ACTIVE;
     u16Data = 0x0000;
     u16Data |= (1 << ACTIVE); /* Activate digital core */
+    WriteReg(u8RegAddr, u16Data, "Active");
 
-    xil_printf("Sending Activate Digital Core...\r\n");
-    // int status = XIicPs_MasterSendPolled(&iic, sendBuffer, 2, IIC_SLAVE_ADDR);
-    status = AudioWriteToReg(u8RegAddr, u16Data);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("FAILURE: iic send Activate Digital Core\r\n");
-        return XST_FAILURE;
-    }
-
-    /* Configure PWR MGMT */
+    /* -------------- Configure PWR MGMT END -------------- */
     u8RegAddr = R6_POWER_MANAGEMENT;
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
@@ -231,16 +231,34 @@ int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << ADC);    /* Power up */
     u16Data |= (1 << MIC);    /* Power down */
     u16Data |= (0 << LINEIN); /* Power up */
+    WriteReg(u8RegAddr, u16Data, "PWR MGMT B");
 
-    xil_printf("Sending PWR MGMT B...\r\n");
-    // int status = XIicPs_MasterSendPolled(&iic, sendBuffer, 2, IIC_SLAVE_ADDR);
-    status = AudioWriteToReg(u8RegAddr, u16Data);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("FAILURE: iic send PWR MGMT B\r\n");
-        return XST_FAILURE;
-    }
+    /* Return statement */
     return XST_SUCCESS;
+}
+
+/*------------------------------------------------------------------------------*/
+/*                   Simplified register‑write wrapper                          */
+/*------------------------------------------------------------------------------*/
+
+/**
+ *
+ * Function wrapper of AudioWriteToReg. Calls upon macro to give check status
+ * of write return.
+ *
+ * @param u8Regaddr 8-bit register address
+ *
+ * @param u16Data 16-bit data constitutes of 5 zeros followed by 9-bit data
+ *
+ * @return None.
+ *
+ * @note
+ *
+ */
+void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name)
+{
+    xil_printf("Sending %s (0x%02X <-- 0x%03X) ... \r\n", name, u8RegAddr, u16Data);
+    CHECK(AudioWriteToReg(u8RegAddr, u16Data));
 }
 
 /* ---------------------------------------------------------------------------- *
