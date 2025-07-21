@@ -33,7 +33,7 @@ VU.enable_location_preprocessing(
 VU.enable_check_preprocessing()
 
 src_dir = (Path(__file__).parent / ".." / "src").resolve()
-tb_dir = Path(__file__).parent
+tb_dir = (Path(__file__).parent).resolve()
 
 lib = VU.add_library("lib")
 
@@ -42,7 +42,13 @@ for src_file in src_dir.rglob("*.vhd"):
         continue
     lib.add_source_files(src_file)
 
-for tb_file in tb_dir.glob("tb_*"):
+for tb_file in tb_dir.rglob("tb_*"):
+    if tb_file.parent.name == "xsim-tests":
+        # Vivado XSIM files
+        continue
+    if tb_file.is_relative_to(tb_dir/"vunit_out"):
+        # Skipping vunit_out directory
+        continue
     lib.add_source_files(tb_file)
 
 
