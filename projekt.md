@@ -47,9 +47,10 @@ Idéen är följande:
 ## TODO
 - Snygga till layout:.
     - Fixa BPF fcLo, fcHi
-- Kolla om modelsim kan simulera XilIP?
+- Kolla om modelsim kan simulera XilinxIP?
 - Skriv egen FFT istället för IP
 - Fixa filter
+- Få TCL att ladda rätt Wave.do om de finns givet standardiserad namngivning
 
 
 ## ########################################################

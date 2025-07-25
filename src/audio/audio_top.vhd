@@ -8,7 +8,8 @@ entity audio_top is
         -- PS i/f
         i_i2c_cfg_done : in std_logic;
         -- ctrl i/f
-        i_capture_en : in std_logic;
+        i_capture_en    : in std_logic;
+        o_tlast_pending : out std_logic;
         -- SSM2603 i/f input
         i_sdata : in std_logic;
         -- SSM2603 i/f output 
@@ -16,7 +17,7 @@ entity audio_top is
         o_lrclk : out std_logic; -- left/right clk
         o_bclk  : out std_logic; -- bit clk
         -- FFT i/f
-        o_tdata  : out std_logic_vector(15 downto 0);
+        o_tdata  : out std_logic_vector(31 downto 0);
         o_tvalid : out std_logic;
         o_tlast  : out std_logic;
         i_tready : in std_logic
@@ -30,6 +31,7 @@ architecture rtl of audio_top is
     -- I2S_deser to Audio_buffer
     signal w_i2s_to_buffer_data  : std_logic_vector(15 downto 0);
     signal w_i2s_to_buffer_valid : std_logic;
+    signal w_buffer_to_top_data  : std_logic_vector(15 downto 0);
 begin
     /* ------------------------------------------------------ */
     --  Combinatorial assignments
@@ -44,6 +46,9 @@ begin
     -- 3.125MHz lets us include all invalid bits required in the read operation
     w_bclk <= r_clk_counter(3); -- 3.125 MHz
     o_bclk <= w_bclk;
+
+    -- Fill Imaginary part with 0s and Real part with capture data
+    o_tdata <= x"0000" & w_buffer_to_top_data;
 
     /* ------------------------------------------------------ */
     p_clk_counter : process (clk_25)
@@ -73,14 +78,15 @@ begin
     audio_buffer_inst : entity work.audio_buffer
         port map
         (
-            clk_25       => clk_25,
-            i_capture_en => i_capture_en,
-            i_pdata      => w_i2s_to_buffer_data,
-            i_valid      => w_i2s_to_buffer_valid,
-            i_tready     => i_tready,
-            o_tdata      => o_tdata,
-            o_tvalid     => o_tvalid,
-            o_tlast      => o_tlast
+            clk_25          => clk_25,
+            i_capture_en    => i_capture_en,
+            o_tlast_pending => o_tlast_pending,
+            i_pdata         => w_i2s_to_buffer_data,
+            i_valid         => w_i2s_to_buffer_valid,
+            i_tready        => i_tready,
+            o_tdata         => w_buffer_to_top_data,
+            o_tvalid        => o_tvalid,
+            o_tlast         => o_tlast
         );
     /* ------------------------------------------------------ */
 end architecture;

@@ -20,53 +20,58 @@ architecture bench of audio_top_tb is
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
     -- Ports
-    signal clk_25         : std_logic := '0';
-    signal i_i2c_cfg_done : std_logic;
-    signal i_capture_en   : std_logic;
-    signal i_sdata        : std_logic;
-    signal o_mclk         : std_logic;
-    signal o_lrclk        : std_logic;
-    signal o_bclk         : std_logic;
-    signal o_tdata        : std_logic_vector(15 downto 0);
-    signal o_tvalid       : std_logic;
-    signal o_tlast        : std_logic;
-    signal i_tready       : std_logic;
+    signal clk_25          : std_logic := '0';
+    signal i_i2c_cfg_done  : std_logic;
+    signal i_capture_en    : std_logic;
+    signal i_sdata         : std_logic;
+    signal o_mclk          : std_logic;
+    signal o_lrclk         : std_logic;
+    signal o_bclk          : std_logic;
+    signal o_tdata         : std_logic_vector(31 downto 0);
+    signal o_tvalid        : std_logic;
+    signal o_tlast         : std_logic;
+    signal i_tready        : std_logic;
+    signal o_tlast_pending : std_logic;
+
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
     signal tb_iis_state    : t_TB_IIS_STATE       := LEFT_SEND;
     signal tb_bit_cntr     : unsigned(4 downto 0) := (others => '0');
     signal tb_serial_value : std_logic            := '0';
     signal tb_fft_stall    : std_logic            := '0';
-    signal tb_fft_bit_cntr : unsigned(9 downto 0) := (others => '0');
+    signal tb_tdata_re     : std_logic_vector(15 downto 0);
 begin
+    /* ---------------------------------------------------------------------- */
     audio_top_inst : entity work.audio_top
         port map
         (
-            clk_25         => clk_25,
-            i_i2c_cfg_done => i_i2c_cfg_done,
-            i_capture_en   => i_capture_en,
-            i_sdata        => i_sdata,
-            o_mclk         => o_mclk,
-            o_lrclk        => o_lrclk,
-            o_bclk         => o_bclk,
-            o_tdata        => o_tdata,
-            o_tvalid       => o_tvalid,
-            o_tlast        => o_tlast,
-            i_tready       => (i_tready and not(tb_fft_stall))
+            clk_25          => clk_25,
+            i_i2c_cfg_done  => i_i2c_cfg_done,
+            i_capture_en    => i_capture_en,
+            o_tlast_pending => o_tlast_pending,
+            i_sdata         => i_sdata,
+            o_mclk          => o_mclk,
+            o_lrclk         => o_lrclk,
+            o_bclk          => o_bclk,
+            o_tdata         => o_tdata,
+            o_tvalid        => o_tvalid,
+            o_tlast         => o_tlast,
+            i_tready        => (i_tready and not(tb_fft_stall))
         );
-
+    /* ---------------------------------------------------------------------- */
+    tb_tdata_re <= o_tdata(15 downto 0);
     /* ---------------------------------------------------------------------- */
     clk_25 <= not clk_25 after clk_period/2; -- 25 MHz
     /* ---------------------------------------------------------------------- */
     -- Let tready from FFT engine only be asserted when someone else initializes
     -- communication
     p_tready : process (clk_25)
+        alias tb_audio_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
     begin
         if rising_edge(clk_25) then
             i_tready <= o_tvalid;
             if (i_tready = '1') then
-                tb_fft_bit_cntr <= tb_fft_bit_cntr + 1;
-                if tb_fft_bit_cntr >= 1023 then
+                if (tb_audio_buf_raddr = 1023) then
                     i_tready <= '0';
                 end if;
             end if;
@@ -122,9 +127,11 @@ begin
     end process p_i2s_data;
     /* ---------------------------------------------------------------------- */
     main : process
-        alias tb_i2s_ovalid is << signal audio_top_inst.i2s_deser_inst.o_valid : std_logic >> ;
+        alias tb_i2s_ovalid is << signal audio_top_inst.i2s_deser_inst.o_valid  : std_logic >> ;
+        alias tb_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
     begin
         test_runner_setup(runner, runner_cfg);
+        set_stop_level(error);
         if run("basic") then
             info("Running tb_audio_top-BASIC");
             -- ------------------------------
@@ -137,11 +144,12 @@ begin
             wait_clock(5, clk_period);
             i_i2c_cfg_done <= '1';
             -- Let the deserializer run for a bit
-            -- No buffering should occur
             for i in 0 to 1 loop
                 wait until tb_i2s_ovalid = '1';
                 wait until tb_i2s_ovalid = '0';
             end loop;
+                -- No buffering should occur
+                check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
             wait_clock(5, clk_period);
             -- ------------------------------
             -- Now emulate the user activating capture mode
@@ -151,8 +159,12 @@ begin
                 if (i = 2) then
                     tb_fft_stall <= '1';
                     wait_clock(10, clk_period);
+                    -- Hopefully TLAST is held HI while FFT stalled...
+                    check(o_tlast = '1', LF & "TLAST not held HI on last sample when FFT stalled." & LF);
                     tb_fft_stall <= '0';
                     wait_clock(10, clk_period);
+                    -- ... and releases correctly
+                    check(o_tlast = '0', "TLAST held HI after last sample after stopped FFT stalling.");
                 else
                     wait until o_tlast = '0';
                 end if;
@@ -163,7 +175,10 @@ begin
             wait until tb_i2s_ovalid = '1';
             wait until tb_i2s_ovalid = '0';
             i_capture_en <= '0';
+            wait_clock(10, clk_period);
+            check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
             -- ------------------------------
+            info("Completed tb_audio_top-BASIC");
             test_runner_cleanup(runner);
         end if;
     end process main;
