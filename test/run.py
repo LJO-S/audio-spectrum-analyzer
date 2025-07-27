@@ -65,6 +65,7 @@ for tb in lib.get_test_benches():
     wave_do = wave_dir / f"{tb.name}.do"
     if wave_do.is_file():
         print(f"Found existing .do file at: {wave_do}\r\n")
+        tb.set_sim_option("modelsim.init_file.gui", "launch.tcl")
         tb.set_sim_option(
             "modelsim.vsim_flags.gui", 
             ["-t 1ps", 
