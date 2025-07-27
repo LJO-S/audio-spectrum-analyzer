@@ -23,7 +23,7 @@ begin
     process
     begin
         if (G_DEBUG = FALSE) then
-            assert (G_DEBOUNCE_LIMIT > 250_000)
+            assert (G_DEBOUNCE_LIMIT > 249_999)
             report "Debounce limit is less than 250_000 when DEBUG=FALSE. Currently set to (" & natural'image(G_DEBOUNCE_LIMIT) & ")!"
                 severity failure;
         else

@@ -3,11 +3,12 @@ use ieee.std_logic_1164.all;
 
 entity signal_generator_wrapper is
     generic (
-        G_FFT_BIT_SIZE   : natural := 16;
-        G_RAM_DEPTH      : natural := 1024;
-        G_100MS_CYCLES   : natural := 2_500_000;
-        G_DEBOUNCE_LIMIT : natural := 250_000;
-        G_DEBUG          : boolean := false
+        G_FFT_BIT_SIZE      : natural := 16;
+        G_RAM_DEPTH         : natural := 1024;
+        G_100MS_CYCLES      : natural := 2_500_000;
+        G_DEBOUNCE_LIMIT    : natural := 250_000;
+        G_DEBUG             : boolean := false;
+        G_PRELOAD_DIRECTIVE : string  := "build"
     );
     port (
         clk_25 : in std_logic;
@@ -33,9 +34,10 @@ begin
     -- =============================================================
     signal_generator_top_inst : entity work.signal_generator_top
         generic map(
-            G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
-            G_RAM_DEPTH    => G_RAM_DEPTH,
-            G_100MS_CYCLES => G_100MS_CYCLES
+            G_FFT_BIT_SIZE      => G_FFT_BIT_SIZE,
+            G_RAM_DEPTH         => G_RAM_DEPTH,
+            G_100MS_CYCLES      => G_100MS_CYCLES,
+            G_PRELOAD_DIRECTIVE => G_PRELOAD_DIRECTIVE
         )
         port map
         (

@@ -12,9 +12,10 @@ use work.sig_gen_pkg.all;
 
 entity signal_generator_top is
     generic (
-        G_FFT_BIT_SIZE : natural := 16;
-        G_RAM_DEPTH    : natural := 1024;
-        G_100MS_CYCLES : natural := 2_500_000
+        G_FFT_BIT_SIZE      : natural := 16;
+        G_RAM_DEPTH         : natural := 1024;
+        G_100MS_CYCLES      : natural := 2_500_000;
+        G_PRELOAD_DIRECTIVE : string  := "build"
     );
     port (
         clk_25 : in std_logic;
@@ -141,25 +142,66 @@ begin
             end if;
         end if;
     end process p_startup;
-    -------------------------------------------------------------
-    gen_signal_generators : for i in 0 to 7 generate
-        signal_generator_inst : entity work.signal_generator
-            generic map(
-                G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
-                G_RAM_DEPTH    => G_RAM_DEPTH,
-                -- G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
-                G_INIT_FILE => C_PRELOAD_STRING_SRC(i)
-            )
-            port map
-            (
-                clk_25   => clk_25,
-                i_start  => w_start_vector(i),
-                i_reset  => r_sig_gen_reset,
-                i_tready => i_s_axis_tready,
-                o_tdata  => w_tdata_array(i),
-                o_tvalid => w_tvalid_vector(i),
-                o_tlast  => w_tlast_vector(i)
-            );
-    end generate;
-    -------------------------------------------------------------
-end architecture;
+
+    g_build_or_tb : if G_PRELOAD_DIRECTIVE = "build" generate
+        -------------------------------------------------------------
+        -- Generate Signal Generators with a preload directory
+        -- in relation to /src/
+        assert false
+        report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
+            severity note;
+        gen_signal_generators : for i in 0 to 7 generate
+            signal_generator_inst : entity work.signal_generator
+                generic map(
+                    G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
+                    G_RAM_DEPTH    => G_RAM_DEPTH,
+                    G_INIT_FILE    => C_PRELOAD_STRING_SRC(i)
+                )
+                port map
+                (
+                    clk_25   => clk_25,
+                    i_start  => w_start_vector(i),
+                    i_reset  => r_sig_gen_reset,
+                    i_tready => i_s_axis_tready,
+                    o_tdata  => w_tdata_array(i),
+                    o_tvalid => w_tvalid_vector(i),
+                    o_tlast  => w_tlast_vector(i)
+                );
+        end generate;
+        -------------------------------------------------------------
+    elsif G_PRELOAD_DIRECTIVE = "testbench" generate
+            -------------------------------------------------------------
+            -- Generate Signal Generators with a preload directory
+            -- in relation to /test/vunit_out/
+            assert false
+            report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
+                severity note;
+            gen_signal_generators : for i in 0 to 7 generate
+                signal_generator_inst : entity work.signal_generator
+                    generic map(
+                        G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
+                        G_RAM_DEPTH    => G_RAM_DEPTH,
+                        G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
+                    )
+                    port map
+                    (
+                        clk_25   => clk_25,
+                        i_start  => w_start_vector(i),
+                        i_reset  => r_sig_gen_reset,
+                        i_tready => i_s_axis_tready,
+                        o_tdata  => w_tdata_array(i),
+                        o_tvalid => w_tvalid_vector(i),
+                        o_tlast  => w_tlast_vector(i)
+                    );
+            end generate;
+            -------------------------------------------------------------
+        else
+            generate
+                -- No known G_PRELOAD_DIRECTIVE!
+                assert false
+                report "Expected G_PRELOAD_DIRECTIVE = 'build' || 'testbench', but " &
+                    "got G_PRELOAD_DIRECTIVE = '" & G_PRELOAD_DIRECTIVE & "'"
+                    severity error;
+                -------------------------------------------------------------
+            end generate;
+        end architecture;

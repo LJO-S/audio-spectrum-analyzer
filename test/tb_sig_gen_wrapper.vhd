@@ -17,9 +17,10 @@ architecture bench of signal_generator_wrapper_tb is
     -- Clock period
     constant clk_period : time := 20 ns;
     -- Generics
-    constant G_FFT_BIT_SIZE : natural := 16;
-    constant G_RAM_DEPTH    : natural := 1024;
-    constant G_100MS_CYCLES : natural := 3000;
+    constant G_FFT_BIT_SIZE      : natural := 16;
+    constant G_RAM_DEPTH         : natural := 1024;
+    constant G_100MS_CYCLES      : natural := 3000;
+    constant G_PRELOAD_DIRECTIVE : string  := "testbench";
     -- Ports
     signal clk_25          : std_logic                    := '0';
     signal i_pbuttons      : std_logic_vector(3 downto 0) := (others => '0');
@@ -33,7 +34,8 @@ begin
 
     signal_generator_wrapper_inst : entity work.signal_generator_wrapper
         generic map(
-            G_100MS_CYCLES => G_100MS_CYCLES
+            G_100MS_CYCLES      => G_100MS_CYCLES,
+            G_PRELOAD_DIRECTIVE => G_PRELOAD_DIRECTIVE
         )
         port map
         (
