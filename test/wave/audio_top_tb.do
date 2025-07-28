@@ -18,7 +18,6 @@ add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_lrclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_bclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_tdata
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_tvalid
-add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_tlast_pending
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/o_tlast
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/i_tready
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/r_clk_counter
@@ -26,6 +25,7 @@ add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_lrclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_bclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_i2s_to_buffer_data
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_i2s_to_buffer_valid
+add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_audio_buffer_draining
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/clk_25
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/i_lrclk
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/i_bclk
@@ -44,7 +44,6 @@ add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/r_rdata
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/clk_25
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_capture_en
-add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/o_tlast_pending
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_pdata
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_valid
 add wave -noupdate -expand -group audio_buffer -format Analog-Step -height 80 -min -1.0 /audio_top_tb/audio_top_inst/audio_buffer_inst/o_tdata
@@ -64,7 +63,7 @@ add wave -noupdate -expand -group tb /audio_top_tb/tb_serial_value
 add wave -noupdate -expand -group tb /audio_top_tb/main/tb_i2s_ovalid
 add wave -noupdate -expand -group tb /audio_top_tb/tb_fft_stall
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {84081600000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {27035380000 ps} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 216
 configure wave -valuecolwidth 100
@@ -80,4 +79,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {84037970954 ps} {84124229130 ps}
+WaveRestoreZoom {0 ps} {22396850388 ps}

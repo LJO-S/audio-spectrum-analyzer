@@ -8,8 +8,7 @@ entity audio_top is
         -- PS i/f
         i_i2c_cfg_done : in std_logic;
         -- ctrl i/f
-        i_capture_en    : in std_logic;
-        o_tlast_pending : out std_logic;
+        i_capture_en : in std_logic;
         -- SSM2603 i/f input
         i_sdata : in std_logic;
         -- SSM2603 i/f output 
@@ -32,16 +31,20 @@ architecture rtl of audio_top is
     signal w_i2s_to_buffer_data  : std_logic_vector(15 downto 0);
     signal w_i2s_to_buffer_valid : std_logic;
     signal w_buffer_to_top_data  : std_logic_vector(15 downto 0);
+
+    signal w_audio_buffer_draining : std_logic;
+    signal w_capture_en            : std_logic;
 begin
     /* ------------------------------------------------------ */
     --  Combinatorial assignments
 
-    -- SSM2603 signals
     -- Master clk same as system
     o_mclk <= clk_25; -- 25 MHz
+
     -- Left/right clk same as samling freq, i.e. ~48 kHz with divider: /2/256 = /512
     w_lrclk <= r_clk_counter(9); -- 48 kHz
     o_lrclk <= w_lrclk;
+    
     -- Bit clock >= (fs * 2 * wl) = 48k * 2 * 16 = 1.5 MHz... 
     -- 3.125MHz lets us include all invalid bits required in the read operation
     w_bclk <= r_clk_counter(3); -- 3.125 MHz
@@ -57,6 +60,10 @@ begin
             r_clk_counter <= r_clk_counter + 1;
         end if;
     end process p_clk_counter;
+    /* ------------------------------------------------------ */
+    -- Capture disable guard, to allow for full 1024-sample offload
+    -- before shutting down module
+    w_capture_en <= i_capture_en or w_audio_buffer_draining;
     /* ------------------------------------------------------ */
     -- I2S Deserializer
     i2s_deser_inst : entity work.i2s_deser
@@ -78,15 +85,15 @@ begin
     audio_buffer_inst : entity work.audio_buffer
         port map
         (
-            clk_25          => clk_25,
-            i_capture_en    => i_capture_en,
-            o_tlast_pending => o_tlast_pending,
-            i_pdata         => w_i2s_to_buffer_data,
-            i_valid         => w_i2s_to_buffer_valid,
-            i_tready        => i_tready,
-            o_tdata         => w_buffer_to_top_data,
-            o_tvalid        => o_tvalid,
-            o_tlast         => o_tlast
+            clk_25       => clk_25,
+            i_capture_en => w_capture_en,
+            o_draining   => w_audio_buffer_draining,
+            i_pdata      => w_i2s_to_buffer_data,
+            i_valid      => w_i2s_to_buffer_valid,
+            i_tready     => i_tready,
+            o_tdata      => w_buffer_to_top_data,
+            o_tvalid     => o_tvalid,
+            o_tlast      => o_tlast
         );
     /* ------------------------------------------------------ */
 end architecture;

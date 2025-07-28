@@ -6,8 +6,8 @@ entity audio_buffer is
     port (
         clk_25 : in std_logic;
         -- CTRL logic IF
-        i_capture_en    : in std_logic;
-        o_tlast_pending : out std_logic;
+        i_capture_en : in std_logic;
+        o_draining   : out std_logic;
         -- I2S Deser IF
         i_pdata : in std_logic_vector(15 downto 0);
         i_valid : in std_logic;
@@ -42,9 +42,8 @@ begin
             case s_buffer_state is
                     -- ---------------------------------------------------------------
                 when IDLE =>
-                    r_tlast         <= '0';
-                    r_addr          <= (others => '0');
-                    o_tlast_pending <= '0';
+                    r_tlast <= '0';
+                    r_addr  <= (others => '0');
                     if (i_capture_en = '1') then
                         s_buffer_state <= FILLING;
                     end if;
@@ -66,17 +65,15 @@ begin
                     end if;
                     -- ---------------------------------------------------------------
                 when DRAINING =>
-                    r_tvalid        <= '1';
-                    o_tlast_pending <= '1';
+                    r_tvalid <= '1';
                     -- Only incr address if both MASTR is valid and SLAVE is ready 
                     if (r_tvalid = '1') and (i_tready = '1') then
                         r_addr <= r_addr + 1;
                         if (r_addr >= C_MAX_MEM_IDX) then
-                            r_tvalid        <= '0';
-                            r_tlast         <= '0';
-                            o_tlast_pending <= '0';
-                            r_addr          <= (others => '0');
-                            s_buffer_state  <= FILLING;
+                            r_tvalid       <= '0';
+                            r_tlast        <= '0';
+                            r_addr         <= (others => '0');
+                            s_buffer_state <= FILLING;
                         elsif (r_addr >= C_MAX_MEM_IDX - 1) then
                             r_tlast <= '1';
                         end if;
@@ -94,6 +91,9 @@ begin
     o_tdata  <= w_tdata;
     o_tvalid <= r_tvalid;
     o_tlast  <= r_tlast;
+
+    o_draining <= '1' when (s_buffer_state = DRAINING) else
+        '0';
     /* ------------------------------------------------------------- */
     -- Single Port RAM (vivado infers DistRAM)
     /* ------------------------------------------------------------- */

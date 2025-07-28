@@ -20,18 +20,17 @@ architecture bench of audio_top_tb is
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
     -- Ports
-    signal clk_25          : std_logic := '0';
-    signal i_i2c_cfg_done  : std_logic;
-    signal i_capture_en    : std_logic;
-    signal i_sdata         : std_logic;
-    signal o_mclk          : std_logic;
-    signal o_lrclk         : std_logic;
-    signal o_bclk          : std_logic;
-    signal o_tdata         : std_logic_vector(31 downto 0);
-    signal o_tvalid        : std_logic;
-    signal o_tlast         : std_logic;
-    signal i_tready        : std_logic;
-    signal o_tlast_pending : std_logic;
+    signal clk_25         : std_logic := '0';
+    signal i_i2c_cfg_done : std_logic;
+    signal i_capture_en   : std_logic;
+    signal i_sdata        : std_logic;
+    signal o_mclk         : std_logic;
+    signal o_lrclk        : std_logic;
+    signal o_bclk         : std_logic;
+    signal o_tdata        : std_logic_vector(31 downto 0);
+    signal o_tvalid       : std_logic;
+    signal o_tlast        : std_logic;
+    signal i_tready       : std_logic;
 
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
@@ -45,18 +44,17 @@ begin
     audio_top_inst : entity work.audio_top
         port map
         (
-            clk_25          => clk_25,
-            i_i2c_cfg_done  => i_i2c_cfg_done,
-            i_capture_en    => i_capture_en,
-            o_tlast_pending => o_tlast_pending,
-            i_sdata         => i_sdata,
-            o_mclk          => o_mclk,
-            o_lrclk         => o_lrclk,
-            o_bclk          => o_bclk,
-            o_tdata         => o_tdata,
-            o_tvalid        => o_tvalid,
-            o_tlast         => o_tlast,
-            i_tready        => (i_tready and not(tb_fft_stall))
+            clk_25         => clk_25,
+            i_i2c_cfg_done => i_i2c_cfg_done,
+            i_capture_en   => i_capture_en,
+            i_sdata        => i_sdata,
+            o_mclk         => o_mclk,
+            o_lrclk        => o_lrclk,
+            o_bclk         => o_bclk,
+            o_tdata        => o_tdata,
+            o_tvalid       => o_tvalid,
+            o_tlast        => o_tlast,
+            i_tready       => (i_tready and not(tb_fft_stall))
         );
     /* ---------------------------------------------------------------------- */
     tb_tdata_re <= o_tdata(15 downto 0);
@@ -148,8 +146,8 @@ begin
                 wait until tb_i2s_ovalid = '1';
                 wait until tb_i2s_ovalid = '0';
             end loop;
-                -- No buffering should occur
-                check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
+            -- No buffering should occur
+            check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
             wait_clock(5, clk_period);
             -- ------------------------------
             -- Now emulate the user activating capture mode
@@ -179,6 +177,33 @@ begin
             check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
             -- ------------------------------
             info("Completed tb_audio_top-BASIC");
+            test_runner_cleanup(runner);
+        elsif run("capture-disable") then
+            info("Running tb_audio_top-CAPTURE-DISABLE");
+            -- ------------------------------
+            wait_clock(5, clk_period);
+            wait until clk_25 = '1';
+            -- ------------------------------
+            -- Emulate PS configuring i2c interface
+            i_capture_en   <= '0';
+            i_i2c_cfg_done <= '0';
+            wait_clock(5, clk_period);
+            i_i2c_cfg_done <= '1';
+            wait_clock(5, clk_period);
+            -- ------------------------------
+            -- User activates capture mode
+            i_capture_en <= '1';
+            -- ------------------------------
+            -- Output 24 samples and then stop capture
+            wait until rising_edge(o_tvalid);
+            wait_clock(1, clk_period);
+            i_capture_en <= '0';
+            -- ------------------------------
+            -- Observe shut down 
+            wait until o_tlast = '1';
+            wait_clock(5, clk_period);
+            -- ------------------------------
+            info("Completed tb_audio_top-CAPTURE-DISABLE");
             test_runner_cleanup(runner);
         end if;
     end process main;
