@@ -24,7 +24,7 @@ architecture bench of signal_generator_wrapper_tb is
     -- Ports
     signal clk_25          : std_logic                    := '0';
     signal i_pbuttons      : std_logic_vector(3 downto 0) := (others => '0');
-    signal i_dip_switch0   : std_logic                    := '0';
+    signal i_sel_up_lo     : std_logic                    := '0';
     signal o_reset         : std_logic;
     signal i_s_axis_tready : std_logic;
     signal o_m_axis_tdata  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
@@ -39,14 +39,14 @@ begin
         )
         port map
         (
-            clk_25          => clk_25,
-            i_pbuttons      => i_pbuttons,
-            i_dip_switch0   => i_dip_switch0,
-            o_reset         => o_reset,
-            i_s_axis_tready => i_s_axis_tready,
-            o_m_axis_tdata  => o_m_axis_tdata,
-            o_m_axis_tvalid => o_m_axis_tvalid,
-            o_m_axis_tlast  => o_m_axis_tlast
+            clk_25            => clk_25,
+            i_sig_gen_src_sel => i_pbuttons,
+            i_sel_up_lo       => i_sel_up_lo,
+            o_reset           => o_reset,
+            i_s_axis_tready   => i_s_axis_tready,
+            o_m_axis_tdata    => o_m_axis_tdata,
+            o_m_axis_tvalid   => o_m_axis_tvalid,
+            o_m_axis_tlast    => o_m_axis_tlast
         );
     main : process
     begin
@@ -59,9 +59,9 @@ begin
                 wait until clk_25 = '1';
                 for i in 0 to 1 loop
                     if (i = 0) then
-                        i_dip_switch0 <= '0';
+                        i_sel_up_lo <= '0';
                     else
-                        i_dip_switch0 <= '1';
+                        i_sel_up_lo <= '1';
                     end if;
                     for j in 0 to 3 loop
                         i_pbuttons    <= (others => '0');
@@ -80,7 +80,7 @@ begin
             elsif run("simultaneous-push-buttons") then
                 wait_clock(100, clk_period);
                 wait until clk_25 = '1';
-                i_dip_switch0 <= '0';
+                i_sel_up_lo <= '0';
                 for j in 0 to 2 loop
                     i_pbuttons        <= (others => '0');
                     i_pbuttons(j)     <= '1';

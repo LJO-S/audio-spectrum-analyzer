@@ -20,8 +20,8 @@ entity signal_generator_top is
     port (
         clk_25 : in std_logic;
         -- GPIO
-        i_pbuttons    : in std_logic_vector(3 downto 0);
-        i_dip_switch0 : in std_logic;
+        i_pbuttons  : in std_logic_vector(3 downto 0);
+        i_sel_up_lo : in std_logic;
         -- Misc
         o_100ms_strb : out std_logic;
         o_reset      : out std_logic;
@@ -77,7 +77,7 @@ begin
                 when s_IDLE =>
                     for i in 0 to 3 loop
                         if (xor i_pbuttons = '1') and (i_pbuttons(i) = '1') then
-                            if (i_dip_switch0 = '1') then
+                            if (i_sel_up_lo = '1') then
                                 r_sig_gen_idx_pending <= to_unsigned(4 + i, r_sig_gen_idx_pending'length);
                             else
                                 r_sig_gen_idx_pending <= to_unsigned(i, r_sig_gen_idx_pending'length);

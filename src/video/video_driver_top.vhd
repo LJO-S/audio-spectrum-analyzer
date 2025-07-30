@@ -10,6 +10,12 @@ entity video_driver_top is
         clk_tmds_250 : in std_logic;
         -- Misc
         i_100ms_strb : in std_logic;
+        -- Internal/Capture IF
+        i_capture_en : in std_logic;
+        -- Filter IF
+        i_lpf_en : in std_logic;
+        i_hpf_en : in std_logic;
+        i_ema_en : in std_logic;
         -- PING_PONG memory I/O ports
         o_rd_addr : out std_logic_vector(9 downto 0);
         -- Memory output data
@@ -77,21 +83,21 @@ begin
             o_rd_addr            => o_rd_addr,
             i_100ms_strb         => i_100ms_strb,
             -- TODO implement these
-            i_capture_on => '0',
-            i_lpf_on     => '0',
+            i_capture_on => i_capture_en,
+            i_lpf_on     => i_lpf_en,
             i_lpf_cutoff => (others => '0'),
             i_bpf_on     => '0',
             i_bpf_cutoff => (others => '0'),
-            i_hpf_on     => '0',
+            i_hpf_on     => i_hpf_en,
             i_hpf_cutoff => (others => '0'),
-            i_ema_on     => '0',
+            i_ema_on     => i_ema_en,
             -- 
-            o_HSYNC      => w_HSYNC,
-            o_VSYNC      => w_VSYNC,
-            o_draw       => w_draw,
-            o_video_red  => w_video_red,
-            o_video_grn  => w_video_grn,
-            o_video_blu  => w_video_blu
+            o_HSYNC     => w_HSYNC,
+            o_VSYNC     => w_VSYNC,
+            o_draw      => w_draw,
+            o_video_red => w_video_red,
+            o_video_grn => w_video_grn,
+            o_video_blu => w_video_blu
         );
     --------------------------------------------------------------------
     --------------------------------------------------------------------

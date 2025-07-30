@@ -13,8 +13,8 @@ entity signal_generator_wrapper is
     port (
         clk_25 : in std_logic;
         -- GPIO
-        i_pbuttons    : in std_logic_vector(3 downto 0);
-        i_dip_switch0 : in std_logic;
+        i_sig_gen_src_sel : in std_logic_vector(3 downto 0);
+        i_sel_up_lo       : in std_logic;
         -- Misc
         o_reset      : out std_logic;
         o_100ms_strb : out std_logic;
@@ -27,9 +27,6 @@ entity signal_generator_wrapper is
 end entity signal_generator_wrapper;
 
 architecture rtl of signal_generator_wrapper is
-    signal w_pb_debounce  : std_logic_vector(3 downto 0);
-    signal w_dip_debounce : std_logic;
-
 begin
     -- =============================================================
     signal_generator_top_inst : entity work.signal_generator_top
@@ -42,40 +39,14 @@ begin
         port map
         (
             clk_25          => clk_25,
-            i_pbuttons      => w_pb_debounce,
-            i_dip_switch0   => w_dip_debounce,
+            i_pbuttons      => i_sig_gen_src_sel,
+            i_sel_up_lo     => i_sel_up_lo,
             o_100ms_strb    => o_100ms_strb,
             o_reset         => o_reset,
             i_s_axis_tready => i_s_axis_tready,
             o_m_axis_tdata  => o_m_axis_tdata,
             o_m_axis_tvalid => o_m_axis_tvalid,
             o_m_axis_tlast  => o_m_axis_tlast
-        );
-    -- =============================================================
-    g_PB_debounce : for i in 0 to 3 generate
-        PB_debounce_inst : entity work.PB_debounce
-            generic map(
-                G_DEBOUNCE_LIMIT => G_DEBOUNCE_LIMIT,
-                G_DEBUG          => G_DEBUG
-            )
-            port map
-            (
-                i_CLK         => clk_25,
-                i_PB          => i_pbuttons(i),
-                o_PB_debounce => w_pb_debounce(i)
-            );
-    end generate;
-    -- =============================================================
-    PB_debounce_inst : entity work.PB_debounce
-        generic map(
-            G_DEBOUNCE_LIMIT => G_DEBOUNCE_LIMIT,
-            G_DEBUG          => G_DEBUG
-        )
-        port map
-        (
-            i_CLK         => clk_25,
-            i_PB          => i_dip_switch0,
-            o_PB_debounce => w_dip_debounce
         );
     -- =============================================================
 end architecture;
