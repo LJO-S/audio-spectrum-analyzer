@@ -3,6 +3,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+
+-- TODO needs work
+
+
 use work.tb_pkg.all;
 
 entity project_top_tb is
@@ -21,7 +25,7 @@ architecture bench of project_top_tb is
     -- Ports
     signal i_sys_clk     : std_logic                    := '0';
     signal i_pbuttons    : std_logic_vector(3 downto 0) := (others => '0');
-    signal i_dip_switch0 : std_logic                    := '0';
+    signal i_sel_up_lo : std_logic                    := '0';
     signal o_TMDS_clk_p  : std_logic                    := '0';
     signal o_TMDS_clk_n  : std_logic                    := '0';
     signal o_video_0_p   : std_logic                    := '0';
@@ -45,8 +49,8 @@ begin
         port map
         (
             i_sys_clk     => i_sys_clk,
-            i_pbuttons    => i_pbuttons,
-            i_dip_switch0 => i_dip_switch0,
+            XXX    => i_pbuttons,
+            XXX => i_sel_up_lo,
             o_TMDS_clk_p  => o_TMDS_clk_p,
             o_TMDS_clk_n  => o_TMDS_clk_n,
             o_video_0_p   => o_video_0_p,
@@ -62,9 +66,9 @@ begin
         wait until i_sys_clk = '1';
         for i in 0 to 1 loop
             if (i = 0) then
-                i_dip_switch0 <= '0';
+                i_dip_switch0_XXX <= '0';
             else
-                i_dip_switch0 <= '1';
+                i_dip_switch0_XXX <= '1';
             end if;
             for j in 0 to 3 loop
                 i_pbuttons    <= (others => '0');
