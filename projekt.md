@@ -45,12 +45,11 @@ Idéen är följande:
 
 ## ########################################################
 ## TODO
-- Snygga till layout:.
-    - Fixa BPF fcLo, fcHi
+- Ta bort BPF och ersätt med EMA
+    - Kanske EMA-orig ska va en cursor? Men hur fan styr vi den...
 - Kolla om modelsim kan simulera XilinxIP?
 - Skriv egen FFT istället för IP
 - Fixa filter
-- Få TCL att ladda rätt Wave.do om de finns givet standardiserad namngivning
 
 
 ## ########################################################
