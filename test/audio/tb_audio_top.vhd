@@ -34,11 +34,12 @@ architecture bench of audio_top_tb is
 
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
-    signal tb_iis_state    : t_TB_IIS_STATE       := LEFT_SEND;
-    signal tb_bit_cntr     : unsigned(4 downto 0) := (others => '0');
-    signal tb_serial_value : std_logic            := '0';
-    signal tb_fft_stall    : std_logic            := '0';
-    signal tb_tdata_re     : std_logic_vector(15 downto 0);
+    signal tb_iis_state       : t_TB_IIS_STATE       := LEFT_SEND;
+    signal tb_bit_cntr        : unsigned(4 downto 0) := (others => '0');
+    signal tb_serial_value    : std_logic            := '0';
+    signal tb_fft_stall       : std_logic            := '0';
+    signal tb_tdata_re        : std_logic_vector(15 downto 0);
+    signal tb_tready_override : std_logic := '0';
 begin
     /* ---------------------------------------------------------------------- */
     audio_top_inst : entity work.audio_top
@@ -67,7 +68,7 @@ begin
         alias tb_audio_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
     begin
         if rising_edge(clk_25) then
-            i_tready <= o_tvalid;
+            i_tready <= o_tvalid or tb_tready_override;
             if (i_tready = '1') then
                 if (tb_audio_buf_raddr = 1023) then
                     i_tready <= '0';
@@ -204,6 +205,29 @@ begin
             wait_clock(5, clk_period);
             -- ------------------------------
             info("Completed tb_audio_top-CAPTURE-DISABLE");
+            test_runner_cleanup(runner);
+        elsif run("ready-before-valid") then
+            info("Running tb_audio_top-READY-BEFORE-VALID");
+            -- ------------------------------
+            wait_clock(5, clk_period);
+            wait until clk_25 = '1';
+            -- ------------------------------
+            -- Emulate PS configuring i2c interface
+            i_capture_en   <= '0';
+            i_i2c_cfg_done <= '0';
+            wait_clock(5, clk_period);
+            i_i2c_cfg_done <= '1';
+            wait_clock(5, clk_period);
+            -- ------------------------------
+            -- User activates capture mode
+            i_capture_en       <= '1';
+            tb_tready_override <= '1';
+            -- ------------------------------
+            -- Output 24 samples and then stop capture
+            wait until rising_edge(o_tlast);
+            wait_clock(1, clk_period);
+            -- ------------------------------
+            info("Completed tb_audio_top-READY-BEFORE-VALID");
             test_runner_cleanup(runner);
         end if;
     end process main;

@@ -235,14 +235,15 @@ begin
         );
     -- ============================================================================ 
     -- ============================================================================
-    -- This capture_en will only switch off when a state declares that we are not currently sending audio data  
+    -- This capture_en will only switch ON when a state declares that we are dealing with audio data
+    -- This capture_en will only switch OFF when a state declares that we are not currently sending audio data  
     w_capture_en_drain_guard <= '1' when (s_state_drain_guard = AUDIO_WAITING) or (s_state_drain_guard = AUDIO_DRAINING) else
         '0';
 
     -- This FSM keeps track of internal/capture mode determined by GPIOs.
-    -- If TVALID='1' for Generator/Audio, the data mux will not change the data source when capture_en toggles 
-    -- until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts.
-    -- In other words, never change the data source when it's draining.
+    -- If TVALID='1' for Generator/Audio, the data mux will not change the data source if capture_en should toggle. This 
+    -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts.
+    -- In other words, never change the data source when draining.
     p_drain_guard : process (w_clk_25)
     begin
         if rising_edge(w_clk_25) then

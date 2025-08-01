@@ -114,19 +114,19 @@ package sig_gen_pkg is
     );
 
     constant C_TILEMAP_10 : t_tilemap_minimal := (
+    0 => 37, -- 0
+    1 => 5  -- 5
+    );
+    constant C_TILEMAP_20 : t_tilemap_minimal := (
     0 => 1, -- 1
     1 => 0  -- 0
     );
-    constant C_TILEMAP_20 : t_tilemap_minimal := (
-    0 => 2, -- 2
-    1 => 0  -- 0
-    );
     constant C_TILEMAP_30 : t_tilemap_minimal := (
-    0 => 0, -- 3
-    1 => 3  -- 0
+    0 => 5, -- 1
+    1 => 1  -- 5
     );
     constant C_TILEMAP_40 : t_tilemap_minimal := (
-    0 => 4, -- 4
+    0 => 2, -- 2
     1 => 0  -- 0
     );
 
@@ -178,23 +178,23 @@ package sig_gen_pkg is
     -- SpMem initializations
     type t_preload_string_array is array (0 to 7) of string;
     constant C_PRELOAD_STRING_SRC : t_preload_string_array := (
-    "../../scripts/data/multi_15khz_16bits.txt ",
-    "../../scripts/data/am_15khz_16bits.txt    ",
-    "../../scripts/data/chirp_15khz_16bits.txt ",
-    "../../scripts/data/fm_15khz_16bits.txt    ",
-    "../../scripts/data/pink_15khz_16bits.txt  ",
-    "../../scripts/data/sin_15khz_16bits.txt   ",
-    "../../scripts/data/sinc_15khz_16bits.txt  ",
-    "../../scripts/data/square_15khz_16bits.txt"
+    "../../scripts/data/multi_10khz_16bits.txt ",
+    "../../scripts/data/am_10khz_16bits.txt    ",
+    "../../scripts/data/chirp_10khz_16bits.txt ",
+    "../../scripts/data/fm_10khz_16bits.txt    ",
+    "../../scripts/data/pink_10khz_16bits.txt  ",
+    "../../scripts/data/sin_10khz_16bits.txt   ",
+    "../../scripts/data/sinc_10khz_16bits.txt  ",
+    "../../scripts/data/square_10khz_16bits.txt"
     );
     constant C_PRELOAD_STRING_TB : t_preload_string_array := (
-    "../../../scripts/data/multi_15khz_16bits.txt ",
-    "../../../scripts/data/am_15khz_16bits.txt    ",
-    "../../../scripts/data/chirp_15khz_16bits.txt ",
-    "../../../scripts/data/fm_15khz_16bits.txt    ",
-    "../../../scripts/data/pink_15khz_16bits.txt  ",
-    "../../../scripts/data/sin_15khz_16bits.txt   ",
-    "../../../scripts/data/sinc_15khz_16bits.txt  ",
-    "../../../scripts/data/square_15khz_16bits.txt"
+    "../../../scripts/data/multi_10khz_16bits.txt ",
+    "../../../scripts/data/am_10khz_16bits.txt    ",
+    "../../../scripts/data/chirp_10khz_16bits.txt ",
+    "../../../scripts/data/fm_10khz_16bits.txt    ",
+    "../../../scripts/data/pink_10khz_16bits.txt  ",
+    "../../../scripts/data/sin_10khz_16bits.txt   ",
+    "../../../scripts/data/sinc_10khz_16bits.txt  ",
+    "../../../scripts/data/square_10khz_16bits.txt"
     );
 end package;

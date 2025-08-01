@@ -62,8 +62,9 @@ add wave -noupdate -expand -group tb /audio_top_tb/tb_bit_cntr
 add wave -noupdate -expand -group tb /audio_top_tb/tb_serial_value
 add wave -noupdate -expand -group tb /audio_top_tb/main/tb_i2s_ovalid
 add wave -noupdate -expand -group tb /audio_top_tb/tb_fft_stall
+add wave -noupdate -expand -group tb /audio_top_tb/tb_tready_override
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {27035380000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {41974071856 ps} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 216
 configure wave -valuecolwidth 100
@@ -79,4 +80,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {22396850388 ps}
+WaveRestoreZoom {41973814540 ps} {41975160852 ps}

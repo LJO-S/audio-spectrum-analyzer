@@ -47,9 +47,15 @@ Idéen är följande:
 ## TODO
 - Ta bort BPF och ersätt med EMA
     - Kanske EMA-orig ska va en cursor? Men hur fan styr vi den...
-- Kolla om modelsim kan simulera XilinxIP?
+- Kolla om 3rd party simulator kan simulera XilinxIP?
+    - Jajemen, kör 'compile_simlibs ...' i TCL och få alla bibliotek. 
+    - Exempelvis hade varit att låta python köra ett TCL-skript som bygger upp bd-blocket, sen kompilera simlibs och lägg till i Vunit. 
+      ... Det finns ett Vunit-exempel som Asplund lagt upp i just detta syfte.
+    - Går det med QuestaSim FSE? Ja, med detta fulhack: https://adaptivesupport.amd.com/s/question/0D52E00006q090LSAQ/failed-to-find-the-questasim-simulator-executable-when-i-try-to-compile-vivado-libraries-for-questasim?language=en_US
+    - Problemet är att fulhacket bygger på att vcom är ett .sh-skript. Och inte en .exe. Så gör om detta vid tillfälle för dual-boot. 
 - Skriv egen FFT istället för IP
 - Fixa filter
+- Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
 
 
 ## ########################################################
@@ -59,7 +65,7 @@ När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) a
 
 
 
-
+                     OBSOLETE
 +----------+       +----------+      +--------+     +----------+     +----------+     
 |          |       |          |      | Data   |---->|          |     | Data     |
 |    PS    |--??-->|   DMA    |----->| Parser |     |  FFT IP  |---->| Splitter |       
