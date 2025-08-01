@@ -14,7 +14,7 @@ from pathlib import Path
 class generateData:
     def __init__(self, a_freq: int, a_length: int, a_numBits: int, a_type: str):
         # Sampling freq (SSM2603 uses 96kHz)
-        self.fs = 96e3
+        self.fs = 48e3
         # Length of signal
         self.length = a_length
         # Number of bits to truncate data to
@@ -30,9 +30,7 @@ class generateData:
         self.fftData = np.zeros(a_length)
         self.fftDataTrunc = np.zeros(a_length)
 
-        self._generateData(a_type)
-
-        if args.type not in (
+        allowed_types = (
             "sin",
             "square",
             "sinc",
@@ -41,8 +39,12 @@ class generateData:
             "am",
             "fm",
             "pink",
-        ):
-            raise ValueError(f"Type {args.type} not in allowed types!")
+        )
+
+        if a_type not in allowed_types:
+            raise ValueError(f"Type {a_type} not in allowed types!")
+        else:
+            self._generateData(a_type)
 
     def _generateData(self, a_type: str):
         tEnd = self.length * (1 / self.fs)
@@ -196,7 +198,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     obj = generateData(
-        a_freq=15e3, a_length=1024, a_numBits=args.bits, a_type=args.type
+        a_freq=10e3, a_length=1024, a_numBits=args.bits, a_type=args.type
     )
     if args.store:
         obj.writeToFile()
