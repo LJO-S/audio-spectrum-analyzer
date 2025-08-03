@@ -41,7 +41,7 @@ XGpio gpioInst; /* gpio instance */
 u8 recvBuffer[2]; /* Buffer for Receiving Data */
 
 /*------------------------------------------------------------------------------*/
-/* 1) Error‑check helper macro                                                  */
+/* 1) Error check helper macro                                                  */
 /*------------------------------------------------------------------------------*/
 #define CHECK(x)                           \
     do                                     \
@@ -156,45 +156,82 @@ int IicPsAudioCodecSetup(u16 deviceId)
     /*
      * All done configuring I2C.
      * Now start configuring codec registers. The sequence is the following:
+     * 
+     * 0. Software reset.
+     * 
+     * 1. Sleep for 75 ms.
      *
-     * 1. Enable necessary power mgmt registers in R6, except bit B4.
+     * 2. Enable necessary power mgmt registers in R6, except bit B4.
      *
-     * 2. Configure the rest of the necessary control registers, except R9B0.
+     * 3. Configure the rest of the necessary control registers, except R9B0.
      *    R9B0 should be held at '0' until end of ctrl register setup.
      *
-     * 3. Sleep for ~100 ms to allow decoupling capacitors to charge (VMID pin on schematic)
+     * 4. Sleep for ~100 ms to allow decoupling capacitors to charge (VMID pin on schematic)
      *
-     * 4. Enable R9B0 to activate codec.
+     * 5. Enable R9B0 to activate codec.
      *
-     * 5. Enable R6B4 to activate output.
+     * 6. Enable R6B4 to activate output.
      *
      */
+    /* -------------- Software Reset -------------- */
+    u8RegAddr = R15_SOFTWARE_RESET;
+    u16Data = 0x0000;
+    WriteReg(u8RegAddr, u16Data, "SOFTWARE RESET");
+    usleep(75000);
 
     /* -------------- Configure PWR MGMT START -------------- */
     u8RegAddr = R6_POWER_MANAGEMENT;
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
     u16Data |= (0 << CLKOUT); /* Power up */
-    u16Data |= (1 << OSC);    /* Power up */
+    u16Data |= (1 << OSC);    /* Power down */
     u16Data |= (1 << OUT);    /* Power down */
     u16Data |= (1 << DAC);    /* Power down */
     u16Data |= (0 << ADC);    /* Power up */
-    u16Data |= (1 << MIC);    /* Power down */
+    u16Data |= (0 << MIC);    /* Power down */
     u16Data |= (0 << LINEIN); /* Power up */
     WriteReg(u8RegAddr, u16Data, "PWR MGMT A");
 
-    /* -------------- -------------- -------------- */
-    /* Leave 0x00-0x05, 0x0F-0x12 as is, defaults are good. */
+    /* -------------- Left-Ch ADC input vol -------------- */
+    u8RegAddr = R0_LEFT_CHANNEL_ADC_INPUT_VOLUME;
+    u16Data = 0x0000;
+    u16Data |= (0 << LINMUTE); /* Disable mute */
+    u16Data |= (0b010111 << 0); /* Default volume (0 dB) */
+    WriteReg(u8RegAddr, u16Data, "Left Ch ADC Vol");
+
+    /* -------------- Right-Ch ADC input vol -------------- */
+    u8RegAddr = R1_RIGHT_CHANNEL_ADC_INPUT_VOLUME;
+    u16Data = 0x0000;
+    u16Data |= (0 << RINMUTE); /* Disable mute */
+    u16Data |= (0b010111 << 0); /* Default volume (0 dB) */
+    WriteReg(u8RegAddr, u16Data, "Right Ch ADC Vol");
+
+    /* ------------------------------------------------*/
+    // Skipping R2-R3 (DAC Volumes)
+    /* ------------------------------------------------*/
+
+    /* -------------- Analog Audio Path -------------- */
+    u8RegAddr = R4_ANALOG_AUDIO_PATH;
+    u16Data = 0x0000;
+    u16Data |= (0 << BYPASS); /* Disable bypass  */
+    u16Data |= (0 << INSEL); /* Select line input */
+    u16Data |= (1 << MUTEMIC); /* Enable mute mic */
+    u16Data |= (0 << MICBOOST); /* Disable mic boost */
+    WriteReg(u8RegAddr, u16Data, "Analog Audio Path");
+
+    /* ------------------------------------------------*/
+    // Skipping R5 (DAC Audio Path)
+    /* ------------------------------------------------*/
 
     /* -------------- Digital Audio I/F -------------- */
     u8RegAddr = R7_DIGITAL_AUDIO_I_F;
     u16Data = 0x0000;
-    u16Data |= (0 << BCLKINV);   /* Not inv */
-    u16Data |= (0 << MS);        /* Slave mode */
-    u16Data |= (0 << LRSWAP);    /* Swap DAC data off */
-    u16Data |= (0 << LRP);       /* Pol control */
-    u16Data |= (0b00 << WL);     /* Set data-word length to 16 bits */
-    u16Data |= (0b10 << FORMAT); /* Set to I2S mode (0b10) */
+    u16Data |= (0 << BCLKINV); /* BCLK not inverted */
+    u16Data |= (0 << MS);  /* Enable slave mode */
+    u16Data |= (0 << LRSWAP);  /* Normal L&R DAC data */
+    u16Data |= (0 << LRP); /* Normal PBLRC and RECLRC */
+    u16Data |= (0b00 << WL);  /* 16-bit data */
+    u16Data |= (0b10 << FORMAT); /* I2S mode */
     WriteReg(u8RegAddr, u16Data, "Digital Audio I/F");
 
     /* -------------- Sampling Rate 0x08 -------------- */
@@ -210,9 +247,9 @@ int IicPsAudioCodecSetup(u16 deviceId)
     WriteReg(u8RegAddr, u16Data, "Sampling Rate");
 
     /* ------------------------------------------
-     * Sleep for 99 ms waiting for VMID 10 uF caps
+     * Sleep for 75 ms waiting for VMID 10 uF caps
      * ------------------------------------------ */
-    usleep(99000);
+    usleep(75000);
 
     /* -------------- Configure ACTIVE -------------- */
     u8RegAddr = R9_ACTIVE;
@@ -225,7 +262,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
     u16Data = 0x0000;
     u16Data |= (0 << PWROFF); /* Power up */
     u16Data |= (0 << CLKOUT); /* Power up */
-    u16Data |= (0 << OSC);    /* Power up */
+    u16Data |= (1 << OSC);    /* Power down */
     u16Data |= (0 << OUT);    /* Power up */
     u16Data |= (1 << DAC);    /* Power down */
     u16Data |= (0 << ADC);    /* Power up */
