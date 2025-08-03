@@ -73,6 +73,20 @@ architecture rtl of video_driver_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
+    process (clk_25)
+    begin
+        if rising_edge(clk_25) then
+            if (i_capture_en = '1') then
+                w_comp_limit_value <= TO_UNSIGNED(C_EXTERNAL_COMP_LIMIT, 32);
+                w_subtract_value   <= TO_UNSIGNED(C_EXTERNAL_SUBTRACT, 32);
+            else
+                w_comp_limit_value <= TO_UNSIGNED(C_INTERNAL_COMP_LIMIT, 32);
+                w_subtract_value   <= TO_UNSIGNED(C_INTERNAL_SUBTRACT, 32);
+            end if;
+        end if;
+    end process;
+    --------------------------------------------------------------------
+    --------------------------------------------------------------------
     image_generator_inst : entity work.image_generator
         port map
         (

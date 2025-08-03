@@ -14,8 +14,12 @@ entity project_top is
         G_DEBUG          : boolean := false
     );
     port (
-        -- System clk 125 MHz
-        i_sys_clk : in std_logic;
+        -- Master clock 25 MHz
+        i_clk_25 : in std_logic;
+        -- TMDS clock 250 MHz
+        i_clk_250 : in std_logic;
+        -- PS IF
+        i_i2c_cfg_done : in std_logic;
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
@@ -57,11 +61,6 @@ architecture rtl of project_top is
     signal w_axis_tdata_xfft_in   : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
     signal w_axis_tvalid_xfft_in  : std_logic;
     signal w_axis_tlast_xfft_in   : std_logic;
-
-    -- CLKs
-    signal w_clk_25     : std_logic;
-    signal w_clk_250    : std_logic;
-    signal w_clk_locked : std_logic;
 
     -- Misc
     signal w_100ms_strb : std_logic;
@@ -112,7 +111,7 @@ begin
         )
         port map
         (
-            clk_25            => w_clk_25,
+            clk_25            => i_clk_25,
             i_sig_gen_src_sel => w_sig_gen_src_sel,
             i_sel_up_lo       => w_sel_up_lo,
             o_100ms_strb      => w_100ms_strb,
@@ -127,7 +126,33 @@ begin
     -- TODO replace this with own FFT
     -- Input: from Signal Generator Wrapper or Audio Top
     -- Output: to ppMem
-    xfft_clk_wiz_wrapper_inst : entity work.xfft_clk_wiz_wrapper
+    -- OLD
+    -- xfft_clk_wiz_wrapper_inst : entity work.xfft_clk_wiz_wrapper
+    --     port map
+    --     (
+    --         S_AXIS_DATA_0_tdata         => w_axis_tdata_xfft_in,
+    --         S_AXIS_DATA_0_tlast         => w_axis_tlast_xfft_in,
+    --         S_AXIS_DATA_0_tready        => w_axis_tready_xfft_out,
+    --         S_AXIS_DATA_0_tvalid        => w_axis_tvalid_xfft_in,
+    --         event_data_in_channel_halt  => w_event_data_in_channel_halt,
+    --         event_data_out_channel_halt => w_event_data_out_channel_halt,
+    --         event_frame_started         => w_event_frame_started,
+    --         event_status_channel_halt   => w_event_status_channel_halt,
+    --         event_tlast_missing         => w_event_tlast_missing,
+    --         event_tlast_unexpected      => w_event_tlast_unexpected,
+    --         m_axis_data_tlast           => w_m_axis_data_tlast,
+    --         m_axis_data_tvalid          => w_m_axis_data_tvalid,
+    --         o_BLK_EXP                   => w_BLK_EXP,
+    --         o_FFT_mag                   => w_FFT_mag,
+    --         o_XK_INDEX                  => w_XK_INDEX,
+    --         o_clk_25                    => w_clk_25,
+    --         o_clk_250                   => w_clk_250,
+    --         o_locked                    => w_clk_locked,
+    --         sys_clock                   => i_sys_clk
+    --     );
+
+    -- NEW
+    xfft_mag_wrapper_inst : entity work.xfft_mag_wrapper
         port map
         (
             S_AXIS_DATA_0_tdata         => w_axis_tdata_xfft_in,
@@ -140,22 +165,20 @@ begin
             event_status_channel_halt   => w_event_status_channel_halt,
             event_tlast_missing         => w_event_tlast_missing,
             event_tlast_unexpected      => w_event_tlast_unexpected,
+            i_clk_25                    => i_clk_25,
             m_axis_data_tlast           => w_m_axis_data_tlast,
             m_axis_data_tvalid          => w_m_axis_data_tvalid,
             o_BLK_EXP                   => w_BLK_EXP,
             o_FFT_mag                   => w_FFT_mag,
-            o_XK_INDEX                  => w_XK_INDEX,
-            o_clk_25                    => w_clk_25,
-            o_clk_250                   => w_clk_250,
-            o_locked                    => w_clk_locked,
-            sys_clock                   => i_sys_clk
+            o_XK_INDEX                  => w_XK_INDEX
         );
+
     -- ============================================================================ 
     -- ============================================================================
     ping_pong_memory_inst : entity work.ping_pong_memory
         port map
         (
-            clk_25           => w_clk_25,
+            clk_25           => i_clk_25,
             i_fft_data_magn  => w_FFT_mag,
             i_fft_data_last  => w_m_axis_data_tlast,
             i_fft_data_valid => w_m_axis_data_tvalid,
@@ -169,8 +192,8 @@ begin
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25       => w_clk_25,
-            clk_tmds_250 => w_clk_250,
+            clk_25       => i_clk_25,
+            clk_tmds_250 => i_clk_250,
             i_100ms_strb => w_100ms_strb,
             i_capture_en => w_capture_en_drain_guard,
             i_lpf_en     => w_lpf_en,
@@ -196,7 +219,7 @@ begin
         )
         port map
         (
-            clk_25       => w_clk_25,
+            clk_25       => i_clk_25,
             i_pb_vector  => i_pb_vector,
             i_dip_vector => i_dip_vector,
             -- Internal Src Selection
@@ -221,8 +244,8 @@ begin
     audio_top_inst : entity work.audio_top
         port map
         (
-            clk_25         => w_clk_25,
-            i_i2c_cfg_done => '1',
+            clk_25         => i_clk_25,
+            i_i2c_cfg_done => i_i2c_cfg_done,
             i_capture_en   => w_capture_en_drain_guard,
             i_sdata        => i_sdata,
             o_mclk         => o_mclk,
@@ -244,9 +267,9 @@ begin
     -- If TVALID='1' for Generator/Audio, the data mux will not change the data source if capture_en should toggle. This 
     -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts.
     -- In other words, never change the data source when draining.
-    p_drain_guard : process (w_clk_25)
+    p_drain_guard : process (i_clk_25)
     begin
-        if rising_edge(w_clk_25) then
+        if rising_edge(i_clk_25) then
             case s_state_drain_guard is
                     -- -----------------------------------------------------------
                 when IDLE =>
@@ -288,7 +311,16 @@ begin
     end process p_drain_guard;
 
     -- Combinatorial source mux
-    p_sample_src_mux : process (all)
+    p_sample_src_mux : process (
+        s_state_drain_guard,
+        w_axis_tdata_audio_to_xfft,
+        w_axis_tvalid_audio_to_xfft,
+        w_axis_tlast_audio_to_xfft,
+        w_axis_tready_xfft_out,
+        w_axis_tdata_sig_gen_to_xfft,
+        w_axis_tvalid_sig_gen_to_xfft,
+        w_axis_tlast_sig_gen_to_xfft
+    )
     begin
         w_axis_tdata_xfft_in          <= (others => 'X');
         w_axis_tvalid_xfft_in         <= '0';

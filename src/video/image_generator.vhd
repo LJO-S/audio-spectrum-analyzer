@@ -197,9 +197,9 @@ begin
             if (i_100ms_strb = '1') then
                 r_max_value <= (others => '0');
             end if;
-            -- f_curr = cnt_X * 96 = (cnt_X * 64) + (cnt_X + 32) 
+            -- f_curr = cnt_X * 48 = (cnt_X * 32) + (cnt_X + 16) 
             r_curr_freq <= resize(
-                (r_counter_X & "000000") + (r_counter_X & "00000"),
+                (r_counter_X & "00000") + (r_counter_X & "0000"),
                 r_curr_freq'length
                 );
         end if;

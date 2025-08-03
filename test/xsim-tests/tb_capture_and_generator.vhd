@@ -55,21 +55,24 @@ begin
         )
         port map
         (
-            i_sys_clk    => i_sys_clk,
-            i_pb_vector  => i_pb_vector,
-            i_dip_vector => i_dip_vector,
-            i_sdata      => i_sdata,
-            o_mclk       => o_mclk,
-            o_lrclk      => o_lrclk,
-            o_bclk       => o_bclk,
-            o_TMDS_clk_p => o_TMDS_clk_p,
-            o_TMDS_clk_n => o_TMDS_clk_n,
-            o_video_0_p  => o_video_0_p,
-            o_video_0_n  => o_video_0_n,
-            o_video_1_p  => o_video_1_p,
-            o_video_1_n  => o_video_1_n,
-            o_video_2_p  => o_video_2_p,
-            o_video_2_n  => o_video_2_n
+            i_sys_clk      => i_sys_clk,
+            i_i2c_cfg_done => '1',
+            o_clk_25       => open,
+            o_clk_locked   => open,
+            i_pb_vector    => i_pb_vector,
+            i_dip_vector   => i_dip_vector,
+            i_sdata        => i_sdata,
+            o_mclk         => o_mclk,
+            o_lrclk        => o_lrclk,
+            o_bclk         => o_bclk,
+            o_TMDS_clk_p   => o_TMDS_clk_p,
+            o_TMDS_clk_n   => o_TMDS_clk_n,
+            o_video_0_p    => o_video_0_p,
+            o_video_0_n    => o_video_0_n,
+            o_video_1_p    => o_video_1_p,
+            o_video_1_n    => o_video_1_n,
+            o_video_2_p    => o_video_2_p,
+            o_video_2_n    => o_video_2_n
         );
     /* ------------------------------------------------------------------- */
     i_sys_clk <= not i_sys_clk after clk_period/2;

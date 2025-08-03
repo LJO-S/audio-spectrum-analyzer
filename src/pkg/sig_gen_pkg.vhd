@@ -13,6 +13,9 @@ package sig_gen_pkg is
     constant C_CHAR_HEIGHT         : natural := 16;
     constant C_INTERNAL_COMP_LIMIT : natural := 2 ** 30;
     constant C_INTERNAL_SUBTRACT   : natural := natural(floor(real(C_INTERNAL_COMP_LIMIT / (C_SPECTRUM_Y_UPPER + 1))));
+    constant C_EXTERNAL_COMP_LIMIT : natural := 2 ** 26;
+    constant C_EXTERNAL_SUBTRACT   : natural := natural(floor(real(C_EXTERNAL_COMP_LIMIT / (C_SPECTRUM_Y_UPPER + 1))));
+    -- constant C_EXTERNAL_SUBTRACT   : natural := 0;
     --===============================================================================
     -- Ascii Text
     constant C_WORD_X_LEFT : natural := 512;

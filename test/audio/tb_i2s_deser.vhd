@@ -48,8 +48,8 @@ begin
         );
 
     clk_25  <= not clk_25 after clk_period/2; -- 25 MHz
-    i_lrclk <= tb_counter(9); -- /512 ~ 48 kHz
-    i_bclk  <= tb_counter(3); -- /8 = 3.125 MHz
+    i_lrclk <= tb_counter(8); -- /512 ~ 48 kHz
+    i_bclk  <= tb_counter(2); -- /8 = 3.125 MHz
 
     p_subclk_generator : process (clk_25)
     begin

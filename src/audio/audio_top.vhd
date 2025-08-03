@@ -42,12 +42,12 @@ begin
     o_mclk <= clk_25; -- 25 MHz
 
     -- Left/right clk same as samling freq, i.e. ~48 kHz with divider: /2/256 = /512
-    w_lrclk <= r_clk_counter(9); -- 48 kHz
+    w_lrclk <= r_clk_counter(8); -- 48 kHz
     o_lrclk <= w_lrclk;
     
     -- Bit clock >= (fs * 2 * wl) = 48k * 2 * 16 = 1.5 MHz... 
     -- 3.125MHz lets us include all invalid bits required in the read operation
-    w_bclk <= r_clk_counter(3); -- 3.125 MHz
+    w_bclk <= r_clk_counter(2); -- 3.125 MHz
     o_bclk <= w_bclk;
 
     -- Fill Imaginary part with 0s and Real part with capture data
