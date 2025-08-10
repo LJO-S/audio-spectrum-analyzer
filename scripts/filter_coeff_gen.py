@@ -15,8 +15,17 @@ FC_RESOLUTION = 1000  # Hz
 # ==============================================================================
 
 
+def twos_complement(a_hexstr: str, a_bits: int) -> int:
+    """Convert hexstr to signed n-bit number"""
+    value = int(a_hexstr, a_bits)
+    if value & (1 << (a_bits - 1)):
+        # Negative
+        value -= 1 << a_bits
+    return value
+
+
 class filter_coeff_gen:
-    def __init__(self, a_fs: int, a_nTaps: int, a_qFormat: int):
+    def __init__(self, a_fs: int, a_nTaps: int, a_qFormat: int) -> None:
         """
         Generates FIR coefficients using the window method. The coefficients
         are for LP and HP using a resolution of 1 kHz between (0,24000) Hz.
@@ -32,26 +41,25 @@ class filter_coeff_gen:
         self.nTaps = a_nTaps
         self.qFormat = a_qFormat
 
-    def generateCoefficients(self, a_resolution):
+    def generateCoefficients(self, a_resolution: int):
         """
         Generate coefficients in .coe files between 0-(fs/2) with
         a resolution determined by a_resolution.
 
             Parameters:
-                a_resolution (int): resolution in Hz between filters.
+                a_resolution [int]: resolution in Hz between filters
             Returns:
                 None.
 
         """
+        print("Calculating coefficients...")
         # Clear directory
         shutil.rmtree(Path("fir_filter_coefficients"))
 
         # For plotting
         cutoffs = []
-        lp_float_resps = []
-        lp_trunc_resps = []
-        hp_float_resps = []
-        hp_trunc_resps = []
+        lp_float_coeffs = []
+        hp_float_coeffs = []
 
         # Loop over cutoffs
         for fc in np.arange(1000, 24000, a_resolution):
@@ -95,45 +103,41 @@ class filter_coeff_gen:
             h_hp_s16 = np.clip(h_hp_s16, -(1 << self.qFormat), (1 << self.qFormat) - 1)
             h_hp_s16 = h_hp_s16.astype(np.int16)
             # ===================================================================================
-            # 4) Save frequency response
-            h_lp_trunc = h_lp_s16.astype(np.float64) / (1 << self.qFormat)
-            h_hp_trunc = h_hp_s16.astype(np.float64) / (1 << self.qFormat)
-
-            # freq. response resolution
-            worN = 8192
-
-            # freq response of LP float & trunc
-            w_lp, freqResp_lp_float = freqz(h_lp, worN=worN, fs=SAMPLING_FREQUENCY)
-            _, freqResp_lp_trunc = freqz(h_lp_trunc, worN=worN, fs=SAMPLING_FREQUENCY)
-
-            # freq response of HP float & trunc
-            w_hp, freqResp_hp_float = freqz(h_hp, worN=worN, fs=SAMPLING_FREQUENCY)
-            _, freqResp_hp_trunc = freqz(h_hp_trunc, worN=worN, fs=SAMPLING_FREQUENCY)
-
-            # Save response as tuple in list
-            lp_float_resps.append((w_lp, freqResp_lp_float))
-            lp_trunc_resps.append((w_lp, freqResp_lp_trunc))
-            hp_float_resps.append((w_hp, freqResp_hp_float))
-            hp_trunc_resps.append((w_hp, freqResp_hp_trunc))
+            # 4) Save coefficients for later plotting
+            lp_float_coeffs.append(h_lp)
+            hp_float_coeffs.append(h_hp)
 
             # 5) Write coefficients to .coe files
             for name, coeffs in [("lp", h_lp_s16), ("hp", h_hp_s16)]:
                 h_u16 = coeffs.astype(np.uint16)
                 self.writeToFile_coe(a_type=name, a_freq=fc, a_coeffs=h_u16)
-
             # END-OF-LOOP
+        print("-- Succesfully dumped all coefficients to .coe files! --")
         # ===================================================================================
         # 6) Save .pngs of frequency responses
-        hp_float_resps = hp_float_resps[::-1]
+
+        # Reverse list due to LP fc <---> HP fc=24k-fc
+        hp_float_coeffs = hp_float_coeffs[::-1]
+
         self.writeToFile_png(
-            a_lp_f_fresp=lp_float_resps,
-            a_lp_t_fresp=lp_trunc_resps,
-            a_hp_f_fresp=hp_float_resps,
-            a_hp_t_fresp=hp_trunc_resps,
+            a_lp_f_coeffs=lp_float_coeffs,
+            a_hp_f_coeffs=hp_float_coeffs,
             a_cutoffs=cutoffs,
         )
+        print("-- Succesfully dumped visualization of response to .png files! --")
 
-    def writeToFile_coe(self, a_type, a_freq, a_coeffs):
+    def writeToFile_coe(self, a_type: str, a_freq: int, a_coeffs: list) -> None:
+        """
+        Dump truncated filter coefficients to .coe file.
+
+            Parameters:
+                a_type [str]: "lp" or "hp"
+                a_freq [int]: cutoff frequency
+                a_coeffs [list]: arrays of filter coefficients (uint16)
+            Returns:
+                None
+        """
+        print("Dumping to .coe...")
         frequency = a_freq
         if a_type == "hp":
             frequency = 24000 - a_freq
@@ -142,16 +146,32 @@ class filter_coeff_gen:
             + "/"
             + f"{a_type}"
             + "/"
-            + f"{a_type}_{frequency}hz.coe"
+            + f"{a_type}_{int(frequency)}hz.coe"
         )
         outputPath.parent.mkdir(exist_ok=True, parents=True)
         with open(outputPath, "w") as file:
             file.write("\n".join(f"{(c & 0xFFFF):04X}" for c in a_coeffs))
-        # print(f"Wrote {a_type}_{a_freq}hz.coe \n\r")
 
     def writeToFile_png(
-        self, a_lp_f_fresp, a_hp_f_fresp, a_lp_t_fresp, a_hp_t_fresp, a_cutoffs
-    ):
+        self, a_lp_f_coeffs: list, a_hp_f_coeffs: list, a_cutoffs: list
+    ) -> None:
+        """
+        Visualize frequency response and coefficients plot using both original float
+        coefficients and truncated coefficients read from generated .coe files.
+        Dumped to .png files.
+
+            Parameters:
+                a_lp_f_coeffs [list]: list containing {NUMBER_OF_TAPS} number of arrays of LP coefficients (float64)
+                a_hp_f_coeffs [list]: list containing {NUMBER_OF_TAPS} number of arrays of HP coefficients (float64)
+                a_cutoffs [list]: list of cutoff frequencies used in generating filter coefficients
+            Returns:
+                None
+        """
+
+        print("Dumping to .png...")
+        # freq. response resolution
+        worN = 8192
+
         nPlots = len(a_cutoffs)
         nCols = 6
         nRows = math.ceil(nPlots / nCols)
@@ -165,65 +185,134 @@ class filter_coeff_gen:
             axs = np.asarray(axs)
             return fig, axs
 
-        for filter_type in ("lp", "hp"):
-            fig, axs = _make_fig_axes()
+        def _quantized_to_float(a_coefficients):
+            h_s16_to_f64 = [
+                np.float64(twos_complement(coeff, 16)) / (1 << self.qFormat)
+                for coeff in a_coefficients
+            ]
+            return h_s16_to_f64
 
-            for i, fc in enumerate(a_cutoffs):
-                row = i // nCols
-                col = i % nCols
-                ax = axs[row, col]
+        for plot_type in ("fresp_plot", "coeff_plot"):
+            for filter_type in ("lp", "hp"):
+                fig, axs = _make_fig_axes()
 
-                if filter_type == "lp":
-                    w, Hf = a_lp_f_fresp[i]
-                    _, Ht = a_lp_t_fresp[i]
+                # Frequency responses
+                for i, fc in enumerate(a_cutoffs):
+                    row = i // nCols
+                    col = i % nCols
+                    ax = axs[row, col]
+
+                    if plot_type == "fresp_plot":
+                        if filter_type == "lp":
+                            w, Hf = freqz(
+                                a_lp_f_coeffs[i], worN=worN, fs=SAMPLING_FREQUENCY
+                            )
+                        else:
+                            w, Hf = freqz(
+                                a_hp_f_coeffs[i], worN=worN, fs=SAMPLING_FREQUENCY
+                            )
+                        coeffs_quantized = _quantized_to_float(
+                            self.readFromFile_coe(filter_type, fc)
+                        )
+                        _, Ht = freqz(
+                            coeffs_quantized, worN=worN, fs=SAMPLING_FREQUENCY
+                        )
+
+                        # Constrain magnitude calc to not blow up if H=0
+                        floatMag = 20 * np.log10(np.maximum(np.abs(Hf), 1e-12))
+                        truncMag = 20 * np.log10(np.maximum(np.abs(Ht), 1e-12))
+
+                        ax.plot(w, floatMag, label=f"float")
+                        ax.plot(w, truncMag, label=f"trunc", linestyle="--")
+                        ax.axvline(fc, color="blue", linestyle=":", linewidth=0.8)
+                        ax.set_xlim(0, SAMPLING_FREQUENCY / 2)
+                        ax.set_ylim(-120, 5)
+                        ax.grid(True)
+                        ax.set_title(f"{fc} Hz")
+                        if col == 0:
+                            ax.set_ylabel("Magnitude (dB)")
+                        if row == nRows - 1:
+                            ax.set_xlabel("Frequency (Hz)")
+                        if i == 0:
+                            ax.legend(loc="lower left", fontsize="small")
+                    else:
+                        if filter_type == "lp":
+                            coeffs_float = a_lp_f_coeffs[i]
+                        else:
+                            coeffs_float = a_hp_f_coeffs[i]
+                        coeffs_quantized = _quantized_to_float(
+                            self.readFromFile_coe(filter_type, fc)
+                        )
+                        x_taps = np.arange(NUMBER_OF_TAPS)
+                        ax.plot(x_taps, coeffs_float, label=f"float")
+                        ax.plot(
+                            x_taps, coeffs_quantized, label=f"trunc", linestyle="--"
+                        )
+                        ax.grid(True)
+                        ax.set_title(f"{fc} Hz")
+                        if col == 0:
+                            ax.set_ylabel("Amplitude (1)")
+                        if row == nRows - 1:
+                            ax.set_xlabel("Tap index (n)")
+                        if i == 0:
+                            ax.legend(loc="lower left", fontsize="small")
+
+                # Turn off any unused plots
+                for j in range(nPlots, nRows * nCols):
+                    r = j // nCols
+                    c = j % nCols
+                    axs[r, c].axis("off")
+
+                if plot_type == "fresp_plot":
+                    fig.suptitle(
+                        f"{filter_type.upper()}F frequency responses", fontsize=16
+                    )
+                    outputPath = (
+                        Path(f"fir_filter_coefficients")
+                        / f"{filter_type}"
+                        / f"{filter_type}_frequency_responses.png"
+                    )
                 else:
-                    w, Hf = a_hp_f_fresp[i]
-                    _, Ht = a_hp_t_fresp[i]
+                    fig.suptitle(f"{filter_type.upper()}F coefficients", fontsize=16)
+                    outputPath = (
+                        Path(f"fir_filter_coefficients")
+                        / f"{filter_type}"
+                        / f"{filter_type}_coefficients.png"
+                    )
+                fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-                # Constrain magnitude calc to not blow up if H=0
-                floatMag = 20 * np.log10(np.maximum(np.abs(Hf), 1e-12))
-                truncMag = 20 * np.log10(np.maximum(np.abs(Ht), 1e-12))
+                # Save fig
+                # ensure output dir exists
 
-                ax.plot(w, floatMag, label=f"float")
-                ax.plot(w, truncMag, label=f"trunc", linestyle="--")
-                ax.axvline(fc, color="k", linestyle=":", linewidth=0.8)
-                ax.set_xlim(0, SAMPLING_FREQUENCY / 2)
-                ax.set_ylim(-120, 5)
-                ax.grid(True)
-                ax.set_title(f"{fc} Hz")
-                if col == 0:
-                    ax.set_xlabel("Frequency (Hz)")
-                if row == nRows - 1:
-                    ax.set_ylabel("Magnitude (dB)")
-                if i == 0:
-                    ax.legend(loc="lower left", fontsize="small")
+                outputPath.parent.mkdir(exist_ok=True, parents=True)
+                plt.savefig(
+                    str(outputPath),
+                    bbox_inches="tight",
+                    dpi=200,
+                )
+                plt.close(fig)
 
-            # Turn off any unused plots
-            for j in range(nPlots, nRows * nCols):
-                print(j)
-                r = j // nCols
-                c = j % nCols
-                axs[r, c].axis("off")
+    def readFromFile_coe(self, a_type: str, a_fc: int) -> list:
+        """
+        Read coefficients from .coe file
 
-            fig.suptitle(f"{filter_type.upper()}F frequency responses", fontsize=16)
-            fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+            Parameters:
+                a_type [str]: "lp" or "hp"
+                a_fc [int]: cutoff frequency
+            Returns:
+                coefficients [list]: list of uint16 coefficients
+        """
 
-            # Save fig
-            # ensure output dir exists
-            outputDir = Path(f"fir_filter_coefficients")
-            outputPath = (
-                outputDir / f"{filter_type}" / f"{filter_type}_frequency_responses.png"
-            )
-            outputPath.parent.mkdir(exist_ok=True, parents=True)
-            plt.savefig(
-                str(outputPath),
-                bbox_inches="tight",
-                dpi=200,
-            )
-            plt.close(fig)
-
-    def readFromFile_coe(self, a_inputPath):
-        pass
+        # Fetch data from correct file
+        file_name = (
+            Path(f"fir_filter_coefficients")
+            / f"{a_type}"
+            / f"{a_type}_{int(a_fc)}hz.coe"
+        )
+        # Read all lines
+        with open(str(file_name), "r") as coe_file:
+            coefficients = [line.strip() for line in coe_file]
+        return coefficients
 
 
 if __name__ == "__main__":

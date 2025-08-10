@@ -19,29 +19,6 @@ Idéen är följande:
 - Låta en GPIO m interrupt aktivera ett FIR-filter i PL (interrupten via PS)
 ## ########################################################
 ## Notes
-- Kolla hur FFT-ip fungerar? Vadå re/im för audio-data??
-    Svar: Vi sätter IM hårt till '0' och använder bara RE.
-- måste vi sätta upp audio-codec?
-    Svar: Ja. Vi kan nyttja PS och audio codec drivers. Kod kan tas från Zynq-bok tutorials.
-
-- vad ska evaluator limit vara?
-- SINC MAX: 816 242 585
-- SIN MAX: 1 070 736 097
-- MULTI: 717 045 101
-- PINK: 474 575 933
-
-- Idé: vi kan köra en full pass vara för att hämta maximum-värde. Sedan delar vi det med 512 (right-shift 9 ggr).
-
-
-
-- I2S
-- Vi behöver 96 000 Hz till LRCLK
-- Vi behöver (96 000 * wordLength * 2) = (96 000 * 16 * 2) = 3 072 000 Hz
-- Vi har en 25 MHz master CLK. Hur får vi dessa frekvenser?
-    --> 25_000_000 / 256 = ~98 000 Hz (close enough)
-    --> (1 / 98 000) = 1/fs. På denna period ska 16*2 bitar klockas ut. Det ger 
-        1/((1/98000)/32) = 3 125 000 Hz. Alltså 25_000_000 / 8.
-    Vi får ut alla klockor på 25 MHz enkelt. Vad är MCLK då?
 
 ## ########################################################
 ## TODO
@@ -54,8 +31,10 @@ Idéen är följande:
     - Går det med QuestaSim FSE? Ja, med detta fulhack: https://adaptivesupport.amd.com/s/question/0D52E00006q090LSAQ/failed-to-find-the-questasim-simulator-executable-when-i-try-to-compile-vivado-libraries-for-questasim?language=en_US
     - Problemet är att fulhacket bygger på att vcom är ett .sh-skript. Och inte en .exe. Så gör om detta vid tillfälle för dual-boot. 
 - Skriv egen FFT istället för IP
-- Fixa filter
 - Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
+
+### TODO-filter
+- Gör VHDL modul
 
 
 ## ########################################################
