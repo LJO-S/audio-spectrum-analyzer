@@ -39,6 +39,7 @@ class generateData:
             "am",
             "fm",
             "pink",
+            "2_tone",
         )
 
         if a_type not in allowed_types:
@@ -50,12 +51,16 @@ class generateData:
         tEnd = self.length * (1 / self.fs)
         time = np.arange(0, tEnd, 1 / self.fs)
         omega = 2 * np.pi * self.freq
+
         if a_type == "sin":
             self.data = np.sin(omega * time)
+
         elif a_type == "square":
             self.data = signal.square(omega * time)
+
         elif a_type == "sinc":
             self.data = np.sinc(self.freq * (time - tEnd / 2))
+
         elif a_type == "multi":
             freqs = [
                 np.random.randint(low=1e3, high=45e3)
@@ -67,23 +72,27 @@ class generateData:
             for f, A, phi in zip(freqs, ampls, phases):
                 composite += A * np.sin(2 * np.pi * f * time + phi)
             self.data = composite / max(abs(composite))
+
         elif a_type == "chirp":
             # Bandwidth is 50% of carrier frequency
             B = 0.5 * self.freq
             # Linear chirp formula: f(t) = f0 + (f1 - f0)*(t/T)
             freqChirp = self.freq + (B / 2) * time / time[-1]
             self.data = np.sin(2 * np.pi * freqChirp * time)
+
         elif a_type == "am":
             carrier = np.sin(2 * np.pi * self.freq * time)
             modulator = 0.5 * np.sin(2 * np.pi * 0.2 * self.freq * time)
             amSignal = carrier * (1 + modulator)
             self.data = amSignal / max(abs(amSignal))
+
         elif a_type == "fm":
             beta = 10
             phase = 2 * np.pi * self.freq * time + beta * np.sin(
                 2 * np.pi * (0.1 * self.freq) * time
             )
             self.data = np.cos(phase)
+
         elif a_type == "pink":
             whiteNoise = np.random.randn(self.length)
 
@@ -95,6 +104,22 @@ class generateData:
             # ifft
             pinkNoise = np.fft.irfft(freqData, self.length)
             self.data = pinkNoise / max(abs(pinkNoise))
+
+        elif a_type == "2_tone":
+            # F khz
+            amp1 = 0.5
+            boost1 = 1.5
+            omega1 = omega
+            self.data = amp1 * np.sin((boost1 * omega1) * time)
+            # F/x khz
+            amp2 = 1
+            omega2 = omega1 / 5
+            self.data += amp2 * np.sin(omega2 * time)
+
+            # normalize to 90% of full-scale
+            max_abs = np.max(abs(self.data))
+            if max_abs > 0:
+                self.data = (self.data / max_abs) * 0.9
 
         # Acquire FFT data with real FFT
         self.fftData = np.fft.rfft(self.data, n=self.length)
