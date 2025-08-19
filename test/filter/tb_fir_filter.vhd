@@ -46,7 +46,7 @@ architecture bench of fir_filter_tb is
 
     -- TB signals
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(G_COEFF_WIDTH - 1 downto 0);
-    type t_input_data is array (natural range 0 to 1023) of i_tdata'subtype;
+    type t_input_data is array (natural range 0 to 4095) of i_tdata'subtype;
     signal tb_coefficients      : t_coefficients;
     signal tb_tdata             : t_input_data         := (others => (others => '0'));
     signal tb_enable_input_data : boolean              := FALSE;
@@ -143,6 +143,24 @@ begin
         wait;
     end process p_read_stimuli_file;
     /* ---------------------------------------------------------------*/
+    -- Write output file
+    p_write_output_file : process (clk_25)
+        file v_write_file : text open write_mode is tb_path(runner_cfg) & "/" & "fir_output.txt";
+        variable v_line   : line;
+        variable ok       : boolean;
+        -- variable v_data   : o_tdata'subtype;
+        variable v_wr_idx : natural := 0;
+    begin
+        if rising_edge(clk_25) then
+            if (o_tvalid = '1') then
+                -- v_data := o_tdata;
+                -- write(v_line, v_data,right, v_data'length);
+                write(v_line, o_tdata, right, o_tdata'length);
+                writeline(v_write_file, v_line);
+            end if;
+        end if;
+    end process p_write_output_file;
+    /* ---------------------------------------------------------------*/
     clk_25 <= not clk_25 after clk_period/2;
     /* ---------------------------------------------------------------*/
     -- DUT
@@ -189,7 +207,7 @@ begin
                 -- Detect rising_edge of new sample
                 i_tvalid <= '1';
                 i_tdata  <= tb_tdata(v_rd_idx);
-                if (v_rd_idx = 1023) then
+                if (v_rd_idx = tb_tdata'length - 1) then
                     v_rd_idx := 0;
                 else
                     v_rd_idx := v_rd_idx + 1;
@@ -221,7 +239,7 @@ begin
             if run("filter-cutoffs") then
                 info("Running fir_filter " & tb_cfg.filter_type & "-" & tb_cfg.filter_cutoff);
                 -- set_timeout(runner, 2 ms);
-                
+
                 wait_clock(1, clk_period);
                 check(o_updating_coeffs = '1', "Expected us to update coefficients!");
                 wait until o_updating_coeffs = '0';
@@ -230,10 +248,9 @@ begin
                 for i in 0 to (G_NBR_OF_TAPS - 1) loop
                     wait until rising_edge(o_tvalid);
                 end loop;
-                
+
                 -- Start spitting out data
-                -- TODO increase length of input stimuli. It doesnt have to be 1024 samples for this..
-                for i in tb_tdata'range loop
+                for i in 0 to (tb_tdata'length - G_NBR_OF_TAPS - 1) loop
                     wait until rising_edge(o_tvalid);
                 end loop;
                 test_runner_cleanup(runner);

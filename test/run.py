@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # ============================================================
-import helper_functions
+from helper_functions import fir_data_checker
 from pathlib import Path
 from vunit import VUnit
 
@@ -100,9 +100,13 @@ for tb in lib.get_test_benches():
             ["-t 1ps", "-fsmdebug", '-voptargs="+acc"', "-coverage", "-debugDB"],
         )
 # ============================================================
-# Add generics
+# Add test configs
 # ----------------------------
 # FIR filter
+testbench = lib.entity("fir_filter_tb")
+test = testbench.test("filter-cutoffs")
+
+# Set generic
 filter_configs = [
     dict(filter_type="lp", filter_cutoff="1000"),
     dict(filter_type="lp", filter_cutoff="5000"),
@@ -112,14 +116,16 @@ filter_configs = [
     dict(filter_type="hp", filter_cutoff="15000"),
 ]
 
-testbench = lib.entity("fir_filter_tb")
-test = testbench.test("filter-cutoffs")
-
 for cfg in filter_configs:
     test.add_config(
         name=f"{cfg["filter_type"]}_{cfg["filter_cutoff"]}_hz",
         generics=dict(encoded_tb_cfg=encode(cfg)),
     )
+
+# Add checkers
+fir_checker = fir_data_checker()
+test.set_post_check(fir_checker.post_check)
+
 # ----------------------------
 # Another testbench...
 # ----------------------------
