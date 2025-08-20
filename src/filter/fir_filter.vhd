@@ -32,7 +32,6 @@ entity fir_filter is
         -- from ADC
         i_tvalid : in std_logic;
         i_tdata  : in std_logic_vector(15 downto 0);
-        o_tready : in std_logic;
 
         -- to Audio Buffer
         o_tvalid : out std_logic;

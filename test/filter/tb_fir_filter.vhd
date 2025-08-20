@@ -40,7 +40,6 @@ architecture bench of fir_filter_tb is
     signal i_we              : std_logic;
     signal i_tvalid          : std_logic;
     signal i_tdata           : std_logic_vector(15 downto 0);
-    signal o_tready          : std_logic;
     signal o_tvalid          : std_logic;
     signal o_tdata           : std_logic_vector(15 downto 0);
 
@@ -181,7 +180,6 @@ begin
             i_we              => i_we,
             i_tvalid          => i_tvalid,
             i_tdata           => i_tdata,
-            o_tready          => o_tready,
             o_tvalid          => o_tvalid,
             o_tdata           => o_tdata
         );
