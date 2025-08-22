@@ -101,7 +101,7 @@ for tb in lib.get_test_benches():
         )
 # ============================================================
 # Add test configs
-# ----------------------------
+# --------------------------------------------------
 # FIR filter
 testbench = lib.entity("fir_filter_tb")
 test = testbench.test("filter-cutoffs")
@@ -125,6 +125,26 @@ for cfg in filter_configs:
 # Add checkers
 fir_checker = fir_data_checker()
 test.set_post_check(fir_checker.post_check)
+
+# --------------------------------------------------
+# FIR filter bank
+test = lib.entity("filter_bank_tb").test("filter-combos")
+
+# i wonder what happens if we have 0 here.. vvv
+filter_configs = [
+    dict(filter_1="off", fc_1="0", filter_2="off", fc_2="0"),
+    dict(filter_1="lp", fc_1="5000", filter_2="off", fc_2="5000"),
+    dict(filter_1="lp", fc_1="15000", filter_2="hp", fc_2="15000"),
+    dict(filter_1="lp", fc_1="15000", filter_2="hp", fc_2="5000"),
+    dict(filter_1="lp", fc_1="3000", filter_2="hp", fc_2="18000"),
+]
+
+for cfg in filter_configs:
+    test.add_config(
+        name=f"lp_{"off" if cfg["filter_1"] == "off" else cfg["fc_1"]}"
+        + f"_hp_{"off" if cfg["filter_2"] == "off" else cfg["fc_2"]}_hz",
+        generics=dict(encoded_tb_cfg=encode(cfg)),
+    )
 
 # ----------------------------
 # Another testbench...

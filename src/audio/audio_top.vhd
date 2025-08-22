@@ -78,6 +78,8 @@ begin
             o_valid       => w_i2s_to_buffer_valid
         );
     /* ------------------------------------------------------ */
+    -- Filter Bank (add below)
+    /* ------------------------------------------------------ */
     -- Audio Buffer
     -- Buffers 1024 audio samples and then outputs them to FFT engine.
     -- Might miss 1 or 2 audio samples, negligable. If FFT engine temporarily 

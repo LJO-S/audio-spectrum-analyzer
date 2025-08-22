@@ -34,7 +34,10 @@ Idéen är följande:
 - Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
 
 ### TODO-filter
-- Gör VHDL modul
+- Skriv testbänk för filter_bank.vhd (filter_top.vhd)
+- Integrera i audio_top
+- Fixa mjukvara för BRAM Ctrl och uppdatera TCL script
+- I2S Serializer
 
 
 ## ########################################################
