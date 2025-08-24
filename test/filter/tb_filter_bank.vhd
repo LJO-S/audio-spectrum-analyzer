@@ -48,13 +48,14 @@ architecture bench of filter_bank_tb is
     -- TB signals
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(G_COEFF_WIDTH - 1 downto 0);
     type t_input_data is array (natural range 0 to 4095) of i_tdata'subtype;
-    signal tb_coefficients_lpf : t_coefficients;
-    signal tb_coefficients_hpf : t_coefficients;
-    signal tb_tdata            : t_input_data         := (others => (others => '0'));
-    signal tb_input_enable     : boolean              := FALSE;
-    signal tb_counter          : unsigned(9 downto 0) := (others => '0');
-    signal tb_48khz_strobe     : std_logic            := '0';
-    signal tb_48khz_strobe_d0  : std_logic            := '0';
+    signal tb_coefficients_lpf   : t_coefficients;
+    signal tb_coefficients_hpf   : t_coefficients;
+    signal tb_coefficients_extra : t_coefficients;
+    signal tb_tdata              : t_input_data         := (others => (others => '0'));
+    signal tb_input_enable       : boolean              := FALSE;
+    signal tb_counter            : unsigned(9 downto 0) := (others => '0');
+    signal tb_48khz_strobe       : std_logic            := '0';
+    signal tb_48khz_strobe_d0    : std_logic            := '0';
 
     -- Procedures
     procedure load_coefficients (
@@ -168,6 +169,21 @@ begin
         report "HPF coefficient file read!";
         tb_coefficients_hpf <= v_coeffiecients;
 
+        -- Extra
+        v_rd_idx := 0;
+        file_open(
+        coeff_file,
+        "../../../scripts/fir_filter_coefficients/hp/hp_20000hz.coe",
+        read_mode);
+        while not endfile(coeff_file) loop
+            readline(coeff_file, v_line);
+            HEX_READ(v_line, v_coeffiecients(v_rd_idx));
+            v_rd_idx := v_rd_idx + 1;
+        end loop;
+        FILE_CLOSE(coeff_file);
+        report "HPF coefficient file read!";
+        tb_coefficients_extra <= v_coeffiecients;
+
         wait;
     end process p_read_coeffs_file;
     /* ---------------------------------------------------------------*/
@@ -269,6 +285,35 @@ begin
             o_tdata               => o_tdata
         );
     main : process
+        procedure load_coeffs(
+            constant filter_type  : in string;
+            signal coefficients : in t_coefficients
+        ) is
+        begin
+            if filter_type = "lp" then
+                load_coefficients(
+                i_we_lpf,
+                i_waddr_lpf,
+                i_wdata_lpf,
+                i_new_data_strobe_lpf,
+                coefficients);
+                wait_clock(1, clk_period);
+                check(o_updating_coeffs_lpf = '1', "Expected us to update coefficients on LPF!");
+                wait until o_updating_coeffs_lpf = '0' for 1000 * clk_period;
+                check(o_updating_coeffs_lpf = '0', "LPF is still loading coefficients??");
+            elsif filter_type = "hp" then
+                load_coefficients(
+                i_we_hpf,
+                i_waddr_hpf,
+                i_wdata_hpf,
+                i_new_data_strobe_hpf,
+                coefficients);
+                wait_clock(1, clk_period);
+                check(o_updating_coeffs_hpf = '1', "Expected us to update coefficients on HPF!");
+                wait until o_updating_coeffs_hpf = '0' for 1000 * clk_period;
+                check(o_updating_coeffs_hpf = '0', "HPF is still loading coefficients??");
+            end if;
+        end procedure;
     begin
         test_runner_setup(runner, runner_cfg);
         while test_suite loop
@@ -284,7 +329,7 @@ begin
 
                 -- =========================================================
                 wait until clk_25 = '1';
-                wait for 10 * clk_period;
+                wait_clock(10, clk_period);
                 ----------------------------------------------------
                 -- Load coefficients based on generic set by run.py
                 ----------------------------------------------------
@@ -328,11 +373,11 @@ begin
                 tb_input_enable <= true;
 
                 -- Wait for both FIRs to fill up
-                l_filling_firs_outer : for fill in 0 to 1 loop
-                    l_filling_firs_inner : for i in 0 to (G_NBR_OF_TAPS - 1) loop
+                for fill in 0 to 1 loop
+                    for i in 0 to (G_NBR_OF_TAPS - 1) loop
                         wait until rising_edge(o_tvalid);
-                    end loop l_filling_firs_inner;
-                end loop l_filling_firs_outer;
+                    end loop;
+                end loop;
 
                 -- Start spitting out data
                 for i in 0 to (tb_tdata'length - 2 * (G_NBR_OF_TAPS - 1)) loop
@@ -341,11 +386,60 @@ begin
                 test_runner_cleanup(runner);
                 -- =========================================================
 
-            elsif run("lpf-incr") then
-                -- TODO:
-                -- 1) Start running as ususal
-                -- 2) Halfway through, switch LP input to something else
-                null;
+            elsif run("filter-incr") then
+                -- Read 3rd filter coefficients array
+                info("Running filter_bank cfg: " & LF &
+                tb_cfg.filter_1 & "@" & tb_cfg.fc_1 & " Hz" & LF &
+                tb_cfg.filter_2 & "@" & tb_cfg.fc_2 & " Hz");
+                -- set_timeout(runner, 2 ms);
+
+                -- =========================================================
+                wait until clk_25 = '1';
+                wait_clock(1, clk_period);
+                ----------------------------------------------------
+                -- Load coefficients based on generic set by run.py
+                ----------------------------------------------------
+                -- Load LPF
+                load_coeffs("lp", tb_coefficients_lpf);
+
+                -- Load HPF
+                load_coeffs("hp", tb_coefficients_hpf);
+
+                -- Enable/disable filters
+                if tb_cfg.filter_1 /= "off" then
+                    i_lpf_en <= '1';
+                else
+                    i_lpf_en <= '0';
+                end if;
+                if tb_cfg.filter_2 /= "off" then
+                    i_hpf_en <= '1';
+                else
+                    i_hpf_en <= '0';
+                end if;
+
+                -- Enable input
+                tb_input_enable <= true;
+
+                -- Wait for both FIRs to fill up
+                for fill in 0 to 1 loop
+                    for i in 0 to (G_NBR_OF_TAPS - 1) loop
+                        wait until rising_edge(o_tvalid);
+                    end loop;
+                end loop;
+
+                -- 1) Start spitting out half of the data
+                for i in 0 to ((tb_tdata'length - 2 * (G_NBR_OF_TAPS - 1))/2) loop
+                    wait until rising_edge(o_tvalid);
+                end loop;
+
+                -- 2) Load new HP coeffs
+                load_coeffs("hp", tb_coefficients_extra);
+                
+                -- 3) Spit out the rest of the data
+                for i in 0 to ((tb_tdata'length - 2 * (G_NBR_OF_TAPS - 1))/2) loop
+                    wait until rising_edge(o_tvalid);
+                end loop;
+                test_runner_cleanup(runner);
                 -- =========================================================
             end if;
         end loop;

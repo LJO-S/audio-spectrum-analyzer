@@ -126,7 +126,8 @@ for cfg in filter_configs:
     test.add_config(
         name=f"{cfg["filter_type"]}_{cfg["filter_cutoff"]}_hz",
         generics=dict(encoded_tb_cfg=encode(cfg)),
-        pre_config=fir_checker.pre_config_wrapper(a_type=dual_tone_stimuli),
+        # pre_config=fir_checker.pre_config_wrapper(a_type=dual_tone_stimuli),
+        pre_config=fir_checker.pre_config_wrapper(a_type=noise_stimuli),
         post_check=fir_checker.post_check,
     )
 
@@ -135,7 +136,6 @@ for cfg in filter_configs:
 # FIR filter bank
 test = lib.entity("filter_bank_tb").test("filter-combos")
 
-# i wonder what happens if we have 0 here.. vvv
 filter_configs = [
     dict(filter_1="off", fc_1="0", filter_2="off", fc_2="0"),
     dict(filter_1="lp", fc_1="5000", filter_2="off", fc_2="5000"),
@@ -158,7 +158,18 @@ for cfg in filter_configs:
         post_check=fir_bank_checker.post_check,
     )
 
-
+test = lib.entity("filter_bank_tb").test("filter-incr")
+filter_configs = [
+    dict(filter_1="lp", fc_1="15000", filter_2="hp", fc_2="1000"),
+]
+for cfg in filter_configs:
+    test.add_config(
+        name=f"lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}"
+        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}_switch_10k_hp",
+        generics=dict(encoded_tb_cfg=encode(cfg)),
+        pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
+        post_check=fir_bank_checker.post_check,
+    )
 # ----------------------------
 # Another testbench...
 # ----------------------------
