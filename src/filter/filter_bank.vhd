@@ -140,7 +140,7 @@ begin
             o_tdata           => w_tdata_lpf_out
         );
     -- ==============================================================
-    fir_filter_inst : entity work.fir_filter
+    hpf_inst : entity work.fir_filter
         generic map(
             G_NBR_OF_TAPS => G_NBR_OF_TAPS,
             G_QFORMAT     => G_QFORMAT,

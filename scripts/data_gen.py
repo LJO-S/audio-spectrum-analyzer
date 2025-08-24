@@ -40,6 +40,7 @@ class generateData:
             "fm",
             "pink",
             "2_tone",
+            "white",
         )
 
         if a_type not in allowed_types:
@@ -120,6 +121,12 @@ class generateData:
             max_abs = np.max(abs(self.data))
             if max_abs > 0:
                 self.data = (self.data / max_abs) * 0.9
+        elif a_type == "white":
+            # White noise
+            whiteNoise = np.random.randn(self.length)
+            max_abs = np.max(abs(whiteNoise))
+            if max_abs > 0:
+                self.data = whiteNoise / max_abs
 
         # Acquire FFT data with real FFT
         self.fftData = np.fft.rfft(self.data, n=self.length)

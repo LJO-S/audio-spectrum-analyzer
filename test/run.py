@@ -14,7 +14,7 @@ def encode(config: dict) -> str:
 # ============================================================
 # Setup
 
-VU = VUnit.from_argv()
+VU = VUnit.from_argv(compile_builtins=False)
 VU.add_vhdl_builtins()
 
 # Enable location preprocessing but exclude all but check_false to make the example less bloated
@@ -116,15 +116,20 @@ filter_configs = [
     dict(filter_type="hp", filter_cutoff="15000"),
 ]
 
+noise_stimuli = "white_10khz_16bits.txt"
+dual_tone_stimuli = "2_tone_10khz_16bits.txt"
+
+# Add checker
+fir_checker = fir_data_checker()
+
 for cfg in filter_configs:
     test.add_config(
         name=f"{cfg["filter_type"]}_{cfg["filter_cutoff"]}_hz",
         generics=dict(encoded_tb_cfg=encode(cfg)),
+        pre_config=fir_checker.pre_config_wrapper(a_type=dual_tone_stimuli),
+        post_check=fir_checker.post_check,
     )
 
-# Add checkers
-fir_checker = fir_data_checker()
-test.set_post_check(fir_checker.post_check)
 
 # --------------------------------------------------
 # FIR filter bank
@@ -134,17 +139,25 @@ test = lib.entity("filter_bank_tb").test("filter-combos")
 filter_configs = [
     dict(filter_1="off", fc_1="0", filter_2="off", fc_2="0"),
     dict(filter_1="lp", fc_1="5000", filter_2="off", fc_2="5000"),
+    dict(filter_1="off", fc_1="5000", filter_2="hp", fc_2="5000"),
     dict(filter_1="lp", fc_1="15000", filter_2="hp", fc_2="15000"),
     dict(filter_1="lp", fc_1="15000", filter_2="hp", fc_2="5000"),
     dict(filter_1="lp", fc_1="3000", filter_2="hp", fc_2="18000"),
 ]
 
+noise_stimuli = "white_10khz_16bits.txt"
+
+fir_bank_checker = fir_data_checker()
+
 for cfg in filter_configs:
     test.add_config(
-        name=f"lp_{"off" if cfg["filter_1"] == "off" else cfg["fc_1"]}"
-        + f"_hp_{"off" if cfg["filter_2"] == "off" else cfg["fc_2"]}_hz",
+        name=f"lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}"
+        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}",
         generics=dict(encoded_tb_cfg=encode(cfg)),
+        pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
+        post_check=fir_bank_checker.post_check,
     )
+
 
 # ----------------------------
 # Another testbench...

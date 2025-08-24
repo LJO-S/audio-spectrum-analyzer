@@ -108,7 +108,6 @@ begin
             -- Fetch data
             readline(coeff_file, v_line);
             HEX_READ(v_line, v_coeffiecients(v_rd_idx));
-            -- report "Read coefficient: " & to_hstring(v_coeffiecients(v_rd_idx)) & LF;
             v_rd_idx := v_rd_idx + 1;
         end loop;
         FILE_CLOSE(coeff_file);
@@ -128,12 +127,11 @@ begin
         v_rd_idx := 0;
         file_open(
         v_read_file,
-        "../../../scripts/data/2_tone_10khz_16bits.txt",
+        output_path(runner_cfg) & "/" & "input_stimuli.txt",
         read_mode);
         while not endfile(v_read_file) loop
             readline(v_read_file, v_line);
             BINARY_READ(v_line, v_data(v_rd_idx));
-            -- report "Read data: " & to_bstring(v_data(v_rd_idx)) & LF;
             v_rd_idx := v_rd_idx + 1;
         end loop;
         report "Stimuli file read!";
@@ -144,16 +142,13 @@ begin
     /* ---------------------------------------------------------------*/
     -- Write output file
     p_write_output_file : process (clk_25)
-        file v_write_file : text open write_mode is tb_path(runner_cfg) & "/" & "fir_output.txt";
+        file v_write_file : text open write_mode is output_path(runner_cfg) & "/" & "output_stimuli.txt";
         variable v_line   : line;
         variable ok       : boolean;
-        -- variable v_data   : o_tdata'subtype;
         variable v_wr_idx : natural := 0;
     begin
         if rising_edge(clk_25) then
             if (o_tvalid = '1') then
-                -- v_data := o_tdata;
-                -- write(v_line, v_data,right, v_data'length);
                 write(v_line, o_tdata, right, o_tdata'length);
                 writeline(v_write_file, v_line);
             end if;

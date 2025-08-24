@@ -7,10 +7,18 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import os
+from os.path import join
 
 
-def config(xxx):
-    pass
+def write_data(a_data: list, a_path: str) -> list:
+    with open(file=a_path, mode="w+", encoding="UTF-8") as file:
+        for elem in a_data:
+            file.write(f"{elem}\n")
+
+
+def read_data(a_path: str) -> list:
+    with open(file=a_path, mode="r", encoding="UTF-8") as file:
+        return [line.rstrip("\n") for line in file]
 
 
 def to_signed_16(x):
@@ -25,11 +33,6 @@ class fir_data_checker:
 
     def __init__(self):
         self.Fs = 48828
-
-    def read_data(self, a_path):
-        rd_data = []
-        with open(file=a_path, mode="r", encoding="UTF-8") as file:
-            return [line.rstrip("\n") for line in file]
 
     def do_fft(self, int16_list: list, window: np.ndarray, N: int):
 
@@ -48,13 +51,21 @@ class fir_data_checker:
                 print(f"Skipping invalid line {i}: {line}")
         return signed_ints
 
-    def pre_config(self, output_path):
-        return True
+    def pre_config_wrapper(self, a_type: str) -> object:
+        """
+        This is a fun little trick I saw online on how to make pre_config
+        accept more than the 'output_path' variable
+        """
+
+        def pre_config(output_path) -> bool:
+            path_in = Path(os.getcwd()) / "filter" / "stimuli" / a_type
+            input_data = read_data(path_in)
+            write_data(input_data, join(output_path, "input_stimuli.txt"))
+            return True
+
+        return pre_config
 
     def post_check(self, output_path: str):
-        # TODO
-        # - larger N
-        # - change input stimuli
         def __get_ampl(fft_data, window):
             amplitude = (2.0 * np.abs(fft_data)) / np.sum(window)
             # correct DC
@@ -65,14 +76,11 @@ class fir_data_checker:
             return 20.0 * np.log10(np.maximum(amplitude, 1e-12))
 
         # Fetch input/output data
-        path_in = (
-            Path(os.getcwd()) / ".." / "scripts" / "data" / "2_tone_10khz_16bits.txt"
-        )
-        input_data = self.read_data(path_in)
+        path_in = Path(output_path) / "input_stimuli.txt"
+        input_data = read_data(path_in)
 
-        # (path is in /test/filter, so need to move out of vunit)
-        path_out = Path(output_path) / ".." / ".." / ".." / "filter" / "fir_output.txt"
-        output_data = self.read_data(path_out)
+        path_out = Path(output_path) / "output_stimuli.txt"
+        output_data = read_data(path_out)
 
         # Convert each sample to signed 16-bit
         signed_ints_in = self.get_signed(input_data)
@@ -89,6 +97,7 @@ class fir_data_checker:
         signed_ints_out_norm = [
             float(elem) / max(signed_ints_out) for elem in signed_ints_out
         ]
+
         # input
         freqBins, Y_in = self.do_fft(signed_ints_in_norm, window, N)
 
