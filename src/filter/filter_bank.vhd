@@ -39,7 +39,6 @@ entity filter_bank is
         -- from ADC
         i_tvalid : in std_logic;
         i_tdata  : in std_logic_vector(15 downto 0);
-        o_tready : in std_logic;
         --------------------------------------
         -- PS-to-PL
         -- LPF

@@ -32,7 +32,6 @@ architecture bench of filter_bank_tb is
     signal i_hpf_en              : std_logic := '0';
     signal i_tvalid              : std_logic;
     signal i_tdata               : std_logic_vector(15 downto 0);
-    signal o_tready              : std_logic;
     signal i_new_data_strobe_lpf : std_logic;
     signal o_updating_coeffs_lpf : std_logic;
     signal i_waddr_lpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
@@ -173,7 +172,7 @@ begin
         v_rd_idx := 0;
         file_open(
         coeff_file,
-        "../../../scripts/fir_filter_coefficients/hp/hp_20000hz.coe",
+        "../../../scripts/fir_filter_coefficients/hp/hp_10000hz.coe",
         read_mode);
         while not endfile(coeff_file) loop
             readline(coeff_file, v_line);
@@ -181,7 +180,7 @@ begin
             v_rd_idx := v_rd_idx + 1;
         end loop;
         FILE_CLOSE(coeff_file);
-        report "HPF coefficient file read!";
+        report "Extra coefficient file read!";
         tb_coefficients_extra <= v_coeffiecients;
 
         wait;
@@ -270,7 +269,6 @@ begin
             i_hpf_en              => i_hpf_en,
             i_tvalid              => i_tvalid,
             i_tdata               => i_tdata,
-            o_tready              => o_tready,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             o_updating_coeffs_lpf => o_updating_coeffs_lpf,
             i_waddr_lpf           => i_waddr_lpf,
@@ -286,8 +284,8 @@ begin
         );
     main : process
         procedure load_coeffs(
-            constant filter_type  : in string;
-            signal coefficients : in t_coefficients
+            constant filter_type : in string;
+            signal coefficients  : in t_coefficients
         ) is
         begin
             if filter_type = "lp" then
@@ -434,7 +432,7 @@ begin
 
                 -- 2) Load new HP coeffs
                 load_coeffs("hp", tb_coefficients_extra);
-                
+
                 -- 3) Spit out the rest of the data
                 for i in 0 to ((tb_tdata'length - 2 * (G_NBR_OF_TAPS - 1))/2) loop
                     wait until rising_edge(o_tvalid);

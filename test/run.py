@@ -165,7 +165,7 @@ filter_configs = [
 for cfg in filter_configs:
     test.add_config(
         name=f"lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}"
-        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}_switch_10k_hp",
+        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}_to_10k_hp",
         generics=dict(encoded_tb_cfg=encode(cfg)),
         pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
         post_check=fir_bank_checker.post_check,

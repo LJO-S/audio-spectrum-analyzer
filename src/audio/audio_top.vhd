@@ -1,14 +1,35 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 entity audio_top is
+    generic (
+        G_NBR_OF_TAPS : positive := 101;
+        G_QFORMAT     : positive := 15;
+        G_INPUT_WIDTH : positive := 16;
+        G_COEFF_WIDTH : positive := 16
+    );
     port (
         clk_25 : in std_logic;
         -- PS i/f
-        i_i2c_cfg_done : in std_logic;
+        i_i2c_cfg_done        : in std_logic;
+        i_new_data_strobe_lpf : in std_logic;
+        i_new_data_strobe_hpf : in std_logic;
+        o_updating_coeffs_lpf : out std_logic;
+        o_updating_coeffs_hpf : out std_logic;
+
+        i_waddr_lpf : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+        i_wdata_lpf : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+        i_we_lpf    : in std_logic;
+
+        i_waddr_hpf : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+        i_wdata_hpf : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+        i_we_hpf    : in std_logic;
         -- ctrl i/f
         i_capture_en : in std_logic;
+        i_lpf_en     : in std_logic;
+        i_hpf_en     : in std_logic;
         -- SSM2603 i/f input
         i_sdata : in std_logic;
         -- SSM2603 i/f output 
@@ -24,13 +45,18 @@ entity audio_top is
 end entity audio_top;
 
 architecture rtl of audio_top is
+    -- Constants
     signal r_clk_counter : unsigned(9 downto 0) := (others => '0');
     signal w_lrclk       : std_logic;
     signal w_bclk        : std_logic;
     -- I2S_deser to Audio_buffer
-    signal w_i2s_to_buffer_data  : std_logic_vector(15 downto 0);
-    signal w_i2s_to_buffer_valid : std_logic;
-    signal w_buffer_to_top_data  : std_logic_vector(15 downto 0);
+    signal w_i2s_to_filter_data  : std_logic_vector(15 downto 0);
+    signal w_i2s_to_filter_valid : std_logic;
+
+    signal w_filter_to_buffer_data  : std_logic_vector(15 downto 0);
+    signal w_filter_to_buffer_valid : std_logic;
+
+    signal w_buffer_to_top_data : std_logic_vector(15 downto 0);
 
     signal w_audio_buffer_draining : std_logic;
     signal w_capture_en            : std_logic;
@@ -44,7 +70,7 @@ begin
     -- Left/right clk same as samling freq, i.e. ~48 kHz with divider: /2/256 = /512
     w_lrclk <= r_clk_counter(8); -- 48 kHz
     o_lrclk <= w_lrclk;
-    
+
     -- Bit clock >= (fs * 2 * wl) = 48k * 2 * 16 = 1.5 MHz... 
     -- 3.125MHz lets us include all invalid bits required in the read operation
     w_bclk <= r_clk_counter(2); -- 3.125 MHz
@@ -74,11 +100,44 @@ begin
             i_bclk        => w_bclk,
             i_serial_data => i_sdata,
             i_en          => i_i2c_cfg_done,
-            o_data        => w_i2s_to_buffer_data,
-            o_valid       => w_i2s_to_buffer_valid
+            o_data        => w_i2s_to_filter_data,
+            o_valid       => w_i2s_to_filter_valid
         );
     /* ------------------------------------------------------ */
-    -- Filter Bank (add below)
+
+    -- Filter Bank 
+    filter_bank_inst : entity work.filter_bank
+        generic map(
+            G_NBR_OF_TAPS => G_NBR_OF_TAPS,
+            G_QFORMAT     => G_QFORMAT,
+            G_INPUT_WIDTH => G_INPUT_WIDTH,
+            G_COEFF_WIDTH => G_COEFF_WIDTH
+        )
+        port map
+        (
+            clk_25 => clk_25,
+            -- Filter ctrl
+            i_lpf_en => i_lpf_en,
+            i_hpf_en => i_hpf_en,
+            -- Input data
+            i_tvalid => w_i2s_to_filter_valid,
+            i_tdata  => w_i2s_to_filter_data,
+            -- PS LPF I/F
+            i_new_data_strobe_lpf => i_new_data_strobe_lpf,
+            o_updating_coeffs_lpf => o_updating_coeffs_lpf,
+            i_waddr_lpf           => i_waddr_lpf,
+            i_wdata_lpf           => i_wdata_lpf,
+            i_we_lpf              => i_we_lpf,
+            -- PS HPF I/F
+            i_new_data_strobe_hpf => i_new_data_strobe_hpf,
+            o_updating_coeffs_hpf => o_updating_coeffs_hpf,
+            i_waddr_hpf           => i_waddr_hpf,
+            i_wdata_hpf           => i_wdata_hpf,
+            i_we_hpf              => i_we_hpf,
+            -- Output data
+            o_tvalid => w_filter_to_buffer_valid,
+            o_tdata  => w_filter_to_buffer_data
+        );
     /* ------------------------------------------------------ */
     -- Audio Buffer
     -- Buffers 1024 audio samples and then outputs them to FFT engine.
@@ -90,8 +149,8 @@ begin
             clk_25       => clk_25,
             i_capture_en => w_capture_en,
             o_draining   => w_audio_buffer_draining,
-            i_pdata      => w_i2s_to_buffer_data,
-            i_valid      => w_i2s_to_buffer_valid,
+            i_pdata      => w_filter_to_buffer_data,
+            i_valid      => w_filter_to_buffer_valid,
             i_tready     => i_tready,
             o_tdata      => w_buffer_to_top_data,
             o_tvalid     => o_tvalid,

@@ -167,7 +167,9 @@ begin
                         r_delay_line(r_tap_cntr) <= r_delay_line(r_tap_cntr - 1);
                     end if;
                     -- ---------------------------------------------------
+                    --synthesis translate_off
                     v_coeff_debug := real(to_integer(r_coefficients(r_tap_cntr))) / (2.0 ** 15);
+                    --synthesis translate_on
                     -- ---------------------------------------------------
                     v_sum := resize(r_delay_line(r_tap_cntr) * r_coefficients(r_tap_cntr), v_sum'length);
                     r_accumulator  <= r_accumulator + v_sum;

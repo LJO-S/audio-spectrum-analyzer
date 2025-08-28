@@ -1,9 +1,14 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 entity project_top is
     generic (
+        G_FIR_NBR_OF_TAPS      : positive := 101;
+        G_FIR_COEFF_QFORMAT    : positive := 15;
+        G_FIR_DATA_INPUT_WIDTH : positive := 16;
+        G_FIR_COEFF_WIDTH      : positive := 16;
         -- FFT input data config
         G_FFT_BIT_SIZE : natural := 16;
         G_RAM_DEPTH    : natural := 1024;
@@ -18,8 +23,20 @@ entity project_top is
         i_clk_25 : in std_logic;
         -- TMDS clock 250 MHz
         i_clk_250 : in std_logic;
-        -- PS IF
-        i_i2c_cfg_done : in std_logic;
+        -- PS IF 
+        -- TODO this obviously only need 2 ch rd ports 
+        i_i2c_cfg_done        : in std_logic;
+        i_new_data_strobe_lpf : in std_logic;
+        i_new_data_strobe_hpf : in std_logic;
+        i_waddr_lpf           : in std_logic_vector(12 downto 0);
+        i_wdata_lpf           : in std_logic_vector(31 downto 0);
+        i_we_lpf              : in std_logic_vector(3 downto 0);
+        i_waddr_hpf           : in std_logic_vector(12 downto 0);
+        i_wdata_hpf           : in std_logic_vector(31 downto 0);
+        i_we_hpf              : in std_logic_vector(3 downto 0);
+
+        o_fir_ctrl        : out std_logic_vector(3 downto 0);
+        i_ps_fir_ctrl_ack : in std_logic;
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
@@ -77,6 +94,14 @@ architecture rtl of project_top is
     signal w_axis_tvalid_audio_to_xfft : std_logic;
     signal w_axis_tlast_audio_to_xfft  : std_logic;
 
+    -- AXI Bram Control
+    signal w_waddr_lpf : std_logic_vector(6 downto 0);
+    signal w_wdata_lpf : std_logic_vector(15 downto 0);
+    signal w_we_lpf    : std_logic;
+    signal w_waddr_hpf : std_logic_vector(6 downto 0);
+    signal w_wdata_hpf : std_logic_vector(15 downto 0);
+    signal w_we_hpf    : std_logic;
+
     -- Video-PPmem IF
     signal w_rd_addr : std_logic_vector(9 downto 0);
     signal w_rd_data : std_logic_vector(31 downto 0);
@@ -93,6 +118,8 @@ architecture rtl of project_top is
     signal w_sel_up_lo              : std_logic;
     signal w_capture_en             : std_logic;
     signal w_capture_en_drain_guard : std_logic;
+    signal w_updating_coeffs_lpf    : std_logic;
+    signal w_updating_coeffs_hpf    : std_logic;
 
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
     signal s_state_drain_guard : t_drain_guard := IDLE;
@@ -100,7 +127,14 @@ architecture rtl of project_top is
 begin
     -- ============================================================================ 
     -- ============================================================================ 
-    -- TODO probably an inverted enable to this?
+    -- Combinatorial Assignments
+    o_lpf_incr <= w_lpf_incr;
+    o_lpf_decr <= w_lpf_decr;
+
+    o_hpf_incr <= w_hpf_incr;
+    o_hpf_decr <= w_hpf_decr;
+    -- ============================================================================ 
+    -- ============================================================================ 
     signal_generator_wrapper_inst : entity work.signal_generator_wrapper
         generic map(
             G_FFT_BIT_SIZE   => G_FFT_BIT_SIZE,
@@ -124,34 +158,8 @@ begin
     -- ============================================================================ 
     -- ============================================================================ 
     -- TODO replace this with own FFT
-    -- Input: from Signal Generator Wrapper or Audio Top
+    -- Input: from Signal Generator Wrapper & Audio Top
     -- Output: to ppMem
-    -- OLD
-    -- xfft_clk_wiz_wrapper_inst : entity work.xfft_clk_wiz_wrapper
-    --     port map
-    --     (
-    --         S_AXIS_DATA_0_tdata         => w_axis_tdata_xfft_in,
-    --         S_AXIS_DATA_0_tlast         => w_axis_tlast_xfft_in,
-    --         S_AXIS_DATA_0_tready        => w_axis_tready_xfft_out,
-    --         S_AXIS_DATA_0_tvalid        => w_axis_tvalid_xfft_in,
-    --         event_data_in_channel_halt  => w_event_data_in_channel_halt,
-    --         event_data_out_channel_halt => w_event_data_out_channel_halt,
-    --         event_frame_started         => w_event_frame_started,
-    --         event_status_channel_halt   => w_event_status_channel_halt,
-    --         event_tlast_missing         => w_event_tlast_missing,
-    --         event_tlast_unexpected      => w_event_tlast_unexpected,
-    --         m_axis_data_tlast           => w_m_axis_data_tlast,
-    --         m_axis_data_tvalid          => w_m_axis_data_tvalid,
-    --         o_BLK_EXP                   => w_BLK_EXP,
-    --         o_FFT_mag                   => w_FFT_mag,
-    --         o_XK_INDEX                  => w_XK_INDEX,
-    --         o_clk_25                    => w_clk_25,
-    --         o_clk_250                   => w_clk_250,
-    --         o_locked                    => w_clk_locked,
-    --         sys_clock                   => i_sys_clk
-    --     );
-
-    -- NEW
     xfft_mag_wrapper_inst : entity work.xfft_mag_wrapper
         port map
         (
@@ -239,22 +247,56 @@ begin
             o_capture_en => w_capture_en
         );
     -- ============================================================================ 
+    gpio_ps_interface_inst : entity work.gpio_ps_interface
+        port map
+        (
+            clk_25                => i_clk_25,
+            i_lpf_incr            => w_lpf_incr,
+            i_lpf_decr            => w_lpf_decr,
+            i_hpf_incr            => w_hpf_incr,
+            i_hpf_decr            => w_hpf_decr,
+            i_updating_coeffs_lpf => w_updating_coeffs_lpf,
+            i_updating_coeffs_hpf => w_updating_coeffs_hpf,
+            i_ps_ack              => i_ps_ack,
+            o_fir_ctrl            => o_fir_ctrl
+        );
+
     -- ============================================================================ 
-    -- TODO 
+    -- ============================================================================ 
     audio_top_inst : entity work.audio_top
+        generic map(
+            G_NBR_OF_TAPS => G_FIR_NBR_OF_TAPS,
+            G_QFORMAT     => G_FIR_COEFF_QFORMAT,
+            G_INPUT_WIDTH => G_FIR_DATA_INPUT_WIDTH,
+            G_COEFF_WIDTH => G_FIR_COEFF_WIDTH
+        )
         port map
         (
             clk_25         => i_clk_25,
             i_i2c_cfg_done => i_i2c_cfg_done,
-            i_capture_en   => w_capture_en_drain_guard,
-            i_sdata        => i_sdata,
-            o_mclk         => o_mclk,
-            o_lrclk        => o_lrclk,
-            o_bclk         => o_bclk,
-            o_tdata        => w_axis_tdata_audio_to_xfft,
-            o_tvalid       => w_axis_tvalid_audio_to_xfft,
-            o_tlast        => w_axis_tlast_audio_to_xfft,
-            i_tready       => w_axis_tready_xfft_to_audio
+
+            i_new_data_strobe_lpf => i_new_data_strobe_lpf,
+            i_new_data_strobe_hpf => i_new_data_strobe_hpf,
+            o_updating_coeffs_lpf => w_updating_coeffs_lpf,
+            o_updating_coeffs_hpf => w_updating_coeffs_hpf,
+            i_waddr_lpf           => i_waddr_lpf(integer(ceil(log2(real(G_FIR_NBR_OF_TAPS)))) - 1 downto 0),
+            i_wdata_lpf           => i_wdata_lpf(G_FIR_COEFF_WIDTH - 1 downto 0),
+            i_we_lpf              => i_we_lpf(0),
+            i_waddr_hpf           => i_waddr_hpf(integer(ceil(log2(real(G_FIR_NBR_OF_TAPS)))) - 1 downto 0),
+            i_wdata_hpf           => i_wdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0),
+            i_we_hpf              => i_we_hpf(0),
+            i_lpf_en              => w_lpf_en,
+            i_hpf_en              => w_hpf_en,
+
+            i_capture_en => w_capture_en_drain_guard,
+            i_sdata      => i_sdata,
+            o_mclk       => o_mclk,
+            o_lrclk      => o_lrclk,
+            o_bclk       => o_bclk,
+            o_tdata      => w_axis_tdata_audio_to_xfft,
+            o_tvalid     => w_axis_tvalid_audio_to_xfft,
+            o_tlast      => w_axis_tlast_audio_to_xfft,
+            i_tready     => w_axis_tready_xfft_to_audio
         );
     -- ============================================================================ 
     -- ============================================================================
@@ -320,7 +362,7 @@ begin
         w_axis_tdata_sig_gen_to_xfft,
         w_axis_tvalid_sig_gen_to_xfft,
         w_axis_tlast_sig_gen_to_xfft
-    )
+        )
     begin
         w_axis_tdata_xfft_in          <= (others => 'X');
         w_axis_tvalid_xfft_in         <= '0';

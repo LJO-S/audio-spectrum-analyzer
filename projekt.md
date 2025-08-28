@@ -34,9 +34,10 @@ Idéen är följande:
 - Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
 
 ### TODO-filter
-- Skriv testbänk för filter_bank.vhd (filter_top.vhd)
-- Integrera i audio_top
 - Fixa mjukvara för BRAM Ctrl och uppdatera TCL script
+- Skriv en INCR/DECR block som håller signalen hög tills att PS skickar en ACK
+- Sätt alla INCR/DECR till en slv(3:0) och gör den med interrupt
+- Skriv om BRAM i FIR_FILTER till en BMG i .bd design ---> Verifiera beteende i testbänk med extern BRAM
 - I2S Serializer
 
 
