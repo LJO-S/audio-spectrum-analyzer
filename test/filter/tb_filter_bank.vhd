@@ -42,8 +42,14 @@ architecture bench of filter_bank_tb is
     signal i_waddr_hpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
     signal i_wdata_hpf           : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we_hpf              : std_logic;
-    signal o_tvalid              : std_logic;
-    signal o_tdata               : std_logic_vector(15 downto 0);
+
+    signal w_raddr_lpf : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal w_rdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+    signal w_raddr_hpf : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal w_rdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+
+    signal o_tvalid : std_logic;
+    signal o_tdata  : std_logic_vector(15 downto 0);
     -- TB signals
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(G_COEFF_WIDTH - 1 downto 0);
     type t_input_data is array (natural range 0 to 4095) of i_tdata'subtype;
@@ -271,17 +277,54 @@ begin
             i_tdata               => i_tdata,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             o_updating_coeffs_lpf => o_updating_coeffs_lpf,
-            i_waddr_lpf           => i_waddr_lpf,
-            i_wdata_lpf           => i_wdata_lpf,
-            i_we_lpf              => i_we_lpf,
+            o_raddr_lpf           => w_raddr_lpf,
+            i_rdata_lpf           => w_rdata_lpf,
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
             o_updating_coeffs_hpf => o_updating_coeffs_hpf,
-            i_waddr_hpf           => i_waddr_hpf,
-            i_wdata_hpf           => i_wdata_hpf,
-            i_we_hpf              => i_we_hpf,
+            o_raddr_hpf           => w_raddr_hpf,
+            i_rdata_hpf           => w_rdata_hpf,
             o_tvalid              => o_tvalid,
             o_tdata               => o_tdata
         );
+    /* ---------------------------------------------------------------*/
+    lpf_dpmem_dram_inst : entity work.dpmem_bram
+        generic map(
+            G_RAM_WIDTH      => G_COEFF_WIDTH,
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+        )
+        port map
+        (
+            clk => clk_25,
+            -- Port A (PS)
+            i_addra => i_waddr_lpf,
+            i_dina  => i_wdata_lpf,
+            i_wea   => i_we_lpf,
+            o_douta => open,
+            -- Port B (RTL)
+            i_addrb => std_logic_vector(w_raddr_lpf),
+            i_dinb => (others => '0'),
+            i_web   => '0',
+            o_doutb => w_rdata_lpf);
+
+    hpf_dpmem_dram_inst : entity work.dpmem_bram
+        generic map(
+            G_RAM_WIDTH      => G_COEFF_WIDTH,
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+        )
+        port map
+        (
+            clk => clk_25,
+            -- Port A (PS)
+            i_addra => i_waddr_hpf,
+            i_dina  => i_wdata_hpf,
+            i_wea   => i_we_hpf,
+            o_douta => open,
+            -- Port B (RTL)
+            i_addrb => std_logic_vector(w_raddr_hpf),
+            i_dinb => (others => '0'),
+            i_web   => '0',
+            o_doutb => w_rdata_hpf);
+    /* ---------------------------------------------------------------*/
     main : process
         procedure load_coeffs(
             constant filter_type : in string;

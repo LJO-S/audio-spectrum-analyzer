@@ -17,11 +17,13 @@ entity image_generator is
         i_100ms_strb : in std_logic;
         i_capture_on : in std_logic;
         i_lpf_on     : in std_logic;
-        i_lpf_cutoff : in unsigned(16 downto 0) := (others => '0');
+        i_lpf_incr   : in std_logic;
+        i_lpf_decr   : in std_logic;
         i_bpf_on     : in std_logic;
         i_bpf_cutoff : in unsigned(16 downto 0) := (others => '0');
         i_hpf_on     : in std_logic;
-        i_hpf_cutoff : in unsigned(16 downto 0) := (others => '0');
+        i_hpf_incr   : in std_logic;
+        i_hpf_decr   : in std_logic;
         i_ema_on     : in std_logic;
         -- TMDS
         o_HSYNC : out std_logic;
@@ -36,6 +38,7 @@ end entity image_generator;
 
 architecture rtl of image_generator is
     -- Constants
+    
 
     -- Debug for adjusting levels
     signal r_debug_color_on : std_logic := '0';
@@ -68,6 +71,10 @@ architecture rtl of image_generator is
     signal r_curr_freq          : unsigned(16 downto 0) := (others => '0');
     signal r_max_freq           : unsigned(16 downto 0) := (others => '0');
     signal r_max_value          : unsigned(31 downto 0) := (others => '0');
+
+    -- Filter Signals
+    signal r_lpf_cutoff : unsigned(16 downto 0) := to_unsigned(10_000, 17);
+    signal r_hpf_cutoff : unsigned(16 downto 0) := to_unsigned(10_000, 17);
 
     -- GUI
     signal w_ascii_draw      : std_logic;
@@ -159,6 +166,24 @@ begin
                 '0';
         end if;
     end process p_video_draw;
+    --*****************************************************************************
+    p_update_cutoffs : process (clk_25)
+    begin
+        if rising_edge(clk_25) then
+            -- LPF
+            if (i_lpf_incr = '1') and (r_lpf_cutoff < C_MAX_FILTER_CUTOFF) then
+                r_lpf_cutoff <= r_lpf_cutoff + C_FILTER_STEP;
+            elsif (i_lpf_decr = '1') and (r_lpf_cutoff > C_MIN_FILTER_CUTOFF) then
+                r_lpf_cutoff <= r_lpf_cutoff - C_FILTER_STEP;
+            end if;
+            -- HPF
+            if (i_hpf_incr = '1') and (r_hpf_cutoff < C_MAX_FILTER_CUTOFF) then
+                r_hpf_cutoff <= r_hpf_cutoff + C_FILTER_STEP;
+            elsif (i_hpf_decr = '1') and (r_hpf_cutoff > C_MIN_FILTER_CUTOFF) then
+                r_hpf_cutoff <= r_hpf_cutoff - C_FILTER_STEP;
+            end if;
+        end if;
+    end process p_update_cutoffs;
     --*****************************************************************************
     p_eval_fft_data : process (clk_25)
     begin
@@ -257,11 +282,11 @@ begin
             i_max_freq     => r_max_freq,
             i_capture_on   => i_capture_on,
             i_lpf_on       => i_lpf_on,
-            i_lpf_cutoff   => i_lpf_cutoff,
+            i_lpf_cutoff   => r_lpf_cutoff,
             i_bpf_on       => i_bpf_on,
             i_bpf_cutoff   => i_bpf_cutoff,
             i_hpf_on       => i_hpf_on,
-            i_hpf_cutoff   => i_hpf_cutoff,
+            i_hpf_cutoff   => r_hpf_cutoff,
             i_ema_on       => i_ema_on,
             o_glyph_active => w_ascii_draw,
             o_video_red    => w_video_red_ascii,

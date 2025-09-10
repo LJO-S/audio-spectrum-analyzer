@@ -13,9 +13,14 @@ entity video_driver_top is
         -- Internal/Capture IF
         i_capture_en : in std_logic;
         -- Filter IF
-        i_lpf_en : in std_logic;
-        i_hpf_en : in std_logic;
-        i_ema_en : in std_logic;
+        i_lpf_en   : in std_logic;
+        i_hpf_en   : in std_logic;
+        i_ema_en   : in std_logic;
+        i_lpf_incr : in std_logic;
+        i_lpf_decr : in std_logic;
+        i_hpf_incr : in std_logic;
+        i_hpf_decr : in std_logic;
+
         -- PING_PONG memory I/O ports
         o_rd_addr : out std_logic_vector(9 downto 0);
         -- Memory output data
@@ -96,15 +101,16 @@ begin
             i_fft_data           => i_rd_data,
             o_rd_addr            => o_rd_addr,
             i_100ms_strb         => i_100ms_strb,
-            -- TODO implement these
-            i_capture_on => i_capture_en,
-            i_lpf_on     => i_lpf_en,
-            i_lpf_cutoff => (others => '0'),
-            i_bpf_on     => '0',
+            i_capture_on         => i_capture_en,
+            i_lpf_on             => i_lpf_en,
+            i_lpf_incr           => i_lpf_incr,
+            i_lpf_decr           => i_lpf_decr,
+            i_bpf_on             => '0',
             i_bpf_cutoff => (others => '0'),
-            i_hpf_on     => i_hpf_en,
-            i_hpf_cutoff => (others => '0'),
-            i_ema_on     => i_ema_en,
+            i_hpf_on             => i_hpf_en,
+            i_hpf_incr           => i_hpf_incr,
+            i_hpf_decr           => i_hpf_decr,
+            i_ema_on             => i_ema_en,
             -- 
             o_HSYNC     => w_HSYNC,
             o_VSYNC     => w_VSYNC,

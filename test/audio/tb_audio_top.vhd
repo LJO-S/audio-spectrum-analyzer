@@ -35,21 +35,28 @@ architecture bench of audio_top_tb is
     signal o_updating_coeffs_hpf : std_logic;
     signal i_lpf_en              : std_logic := '0';
     signal i_hpf_en              : std_logic := '0';
-    signal i_waddr_lpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-    signal i_wdata_lpf           : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-    signal i_we_lpf              : std_logic;
-    signal i_waddr_hpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-    signal i_wdata_hpf           : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-    signal i_we_hpf              : std_logic;
-    signal i_capture_en          : std_logic;
-    signal i_sdata               : std_logic;
-    signal o_mclk                : std_logic;
-    signal o_lrclk               : std_logic;
-    signal o_bclk                : std_logic;
-    signal o_tdata               : std_logic_vector(31 downto 0);
-    signal o_tvalid              : std_logic;
-    signal o_tlast               : std_logic;
-    signal i_tready              : std_logic;
+
+    signal i_waddr_lpf : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_wdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+    signal i_we_lpf    : std_logic;
+    signal i_waddr_hpf : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_wdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+    signal i_we_hpf    : std_logic;
+
+    signal o_raddr_lpf : unsigned(6 downto 0);
+    signal i_rdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+    signal o_raddr_hpf : unsigned(6 downto 0);
+    signal i_rdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+
+    signal i_capture_en : std_logic;
+    signal i_sdata      : std_logic;
+    signal o_mclk       : std_logic;
+    signal o_lrclk      : std_logic;
+    signal o_bclk       : std_logic;
+    signal o_tdata      : std_logic_vector(31 downto 0);
+    signal o_tvalid     : std_logic;
+    signal o_tlast      : std_logic;
+    signal i_tready     : std_logic;
 
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
@@ -105,12 +112,10 @@ begin
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
             o_updating_coeffs_lpf => o_updating_coeffs_lpf,
             o_updating_coeffs_hpf => o_updating_coeffs_hpf,
-            i_waddr_lpf           => i_waddr_lpf,
-            i_wdata_lpf           => i_wdata_lpf,
-            i_we_lpf              => i_we_lpf,
-            i_waddr_hpf           => i_waddr_hpf,
-            i_wdata_hpf           => i_wdata_hpf,
-            i_we_hpf              => i_we_hpf,
+            o_raddr_lpf           => o_raddr_lpf,
+            i_rdata_lpf           => i_rdata_lpf,
+            o_raddr_hpf           => o_raddr_hpf,
+            i_rdata_hpf           => i_rdata_hpf,
             i_capture_en          => i_capture_en,
             i_lpf_en              => i_lpf_en,
             i_hpf_en              => i_hpf_en,
@@ -123,6 +128,44 @@ begin
             o_tlast               => o_tlast,
             i_tready              => (i_tready and not(tb_fft_stall))
         );
+    /* ---------------------------------------------------------------*/
+    lpf_dpmem_dram_inst : entity work.dpmem_bram
+        generic map(
+            G_RAM_WIDTH      => G_COEFF_WIDTH,
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+        )
+        port map
+        (
+            clk => clk_25,
+            -- Port A (PS)
+            i_addra => i_waddr_lpf,
+            i_dina  => i_wdata_lpf,
+            i_wea   => i_we_lpf,
+            o_douta => open,
+            -- Port B (RTL)
+            i_addrb => std_logic_vector(o_raddr_lpf),
+            i_dinb => (others => '0'),
+            i_web   => '0',
+            o_doutb => i_rdata_lpf);
+
+    hpf_dpmem_dram_inst : entity work.dpmem_bram
+        generic map(
+            G_RAM_WIDTH      => G_COEFF_WIDTH,
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+        )
+        port map
+        (
+            clk => clk_25,
+            -- Port A (PS)
+            i_addra => i_waddr_hpf,
+            i_dina  => i_wdata_hpf,
+            i_wea   => i_we_hpf,
+            o_douta => open,
+            -- Port B (RTL)
+            i_addrb => std_logic_vector(o_raddr_hpf),
+            i_dinb => (others => '0'),
+            i_web   => '0',
+            o_doutb => i_rdata_hpf);
     /* ---------------------------------------------------------------*/
     -- Read coefficients file
     p_read_coeffs_file : process

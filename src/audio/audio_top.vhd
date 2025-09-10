@@ -15,17 +15,13 @@ entity audio_top is
         -- PS i/f
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
-        i_new_data_strobe_hpf : in std_logic;
         o_updating_coeffs_lpf : out std_logic;
+        o_raddr_lpf           : out unsigned(6 downto 0);
+        i_rdata_lpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
+        i_new_data_strobe_hpf : in std_logic;
         o_updating_coeffs_hpf : out std_logic;
-
-        i_waddr_lpf : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-        i_wdata_lpf : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-        i_we_lpf    : in std_logic;
-
-        i_waddr_hpf : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-        i_wdata_hpf : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-        i_we_hpf    : in std_logic;
+        o_raddr_hpf           : out unsigned(6 downto 0);
+        i_rdata_hpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         -- ctrl i/f
         i_capture_en : in std_logic;
         i_lpf_en     : in std_logic;
@@ -125,15 +121,13 @@ begin
             -- PS LPF I/F
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             o_updating_coeffs_lpf => o_updating_coeffs_lpf,
-            i_waddr_lpf           => i_waddr_lpf,
-            i_wdata_lpf           => i_wdata_lpf,
-            i_we_lpf              => i_we_lpf,
+            o_raddr_lpf           => o_raddr_lpf,
+            i_rdata_lpf           => i_rdata_lpf,
             -- PS HPF I/F
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
             o_updating_coeffs_hpf => o_updating_coeffs_hpf,
-            i_waddr_hpf           => i_waddr_hpf,
-            i_wdata_hpf           => i_wdata_hpf,
-            i_we_hpf              => i_we_hpf,
+            o_raddr_hpf           => o_raddr_hpf,
+            i_rdata_hpf           => i_rdata_hpf,
             -- Output data
             o_tvalid => w_filter_to_buffer_valid,
             o_tdata  => w_filter_to_buffer_data

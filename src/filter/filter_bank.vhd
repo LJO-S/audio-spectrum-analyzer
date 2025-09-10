@@ -2,16 +2,16 @@
 -- FIR Filter bank
 -- Holds a LPF and a HPF that can be used together or separately.
 -- The filter coefficients are written down to PL from the PS.
---                                               +------------------------+                  
---                                               | Filter                 |
---                                               | +-----+       +-----+  |             
---    +-----+         +---------------+          | |LPF  |       |HPF  |  |                                     
---    |     |========>| AXI BRAM ctrl | =======> | |BRAM |       |BRAM |  |                                                   
---    | PS  |         +---------------+          | +-----+       +-----+  |                                
---    |     |         +----------+               |    |            |      |            
---    |     |<========| AXI GPIO |-+             |    V            V      |    
---    |     |         +----------+ |             | +-----+       +-----+  |                     
---    +-----+           +----------+             | |LPF  |       |HPF  |  |             
+--                                                            
+--                            IP                     IP            IP
+--                      +--------------+           +-----+       +-----+               
+--    +-----+         +---------------+|           |LPF  |       |HPF  |                                       
+--    |     |========>| AXI BRAM ctrl | =======>   |BRAM |       |BRAM |                                                     
+--    | PS  |         +---------------+            +-----+       +-----+                                  
+--    |     |         +----------+                    |            |                  
+--    |     |<========| AXI GPIO |-+             +----|------------|------+    
+--    |     |         +----------+ |             |    V   Filters  V      |            
+--    +-----+           +----------+             | +-----+       +-----+  |             
 --                        /\                     | |FIR  |======>|FIR  |=======>            
 --                        || LPF incr/decr       | +-----+       +-----+  | 
 --                        || HPF incr/decr       +------------------------+           
@@ -44,15 +44,13 @@ entity filter_bank is
         -- LPF
         i_new_data_strobe_lpf : in std_logic;
         o_updating_coeffs_lpf : out std_logic;
-        i_waddr_lpf           : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-        i_wdata_lpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-        i_we_lpf              : in std_logic;
+        o_raddr_lpf           : out unsigned(6 downto 0);
+        i_rdata_lpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         -- HPF
         i_new_data_strobe_hpf : in std_logic;
         o_updating_coeffs_hpf : out std_logic;
-        i_waddr_hpf           : in std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
-        i_wdata_hpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-        i_we_hpf              : in std_logic;
+        o_raddr_hpf           : out unsigned(6 downto 0);
+        i_rdata_hpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         -----------------------------------------
         -- to Audio Buffer
         o_tvalid : out std_logic;
@@ -130,9 +128,8 @@ begin
             clk_25            => clk_25,
             i_new_data_strobe => i_new_data_strobe_lpf,
             o_updating_coeffs => o_updating_coeffs_lpf,
-            i_waddr           => i_waddr_lpf,
-            i_wdata           => i_wdata_lpf,
-            i_we              => i_we_lpf,
+            o_raddr           => o_raddr_lpf,
+            i_rdata           => i_rdata_lpf,
             i_tvalid          => w_tvalid_lpf_in,
             i_tdata           => w_tdata_lpf_in,
             o_tvalid          => w_tvalid_lpf_out,
@@ -151,9 +148,8 @@ begin
             clk_25            => clk_25,
             i_new_data_strobe => i_new_data_strobe_hpf,
             o_updating_coeffs => o_updating_coeffs_hpf,
-            i_waddr           => i_waddr_hpf,
-            i_wdata           => i_wdata_hpf,
-            i_we              => i_we_hpf,
+            o_raddr           => o_raddr_hpf,
+            i_rdata           => i_rdata_hpf,
             i_tvalid          => w_tvalid_hpf_in,
             i_tdata           => w_tdata_hpf_in,
             o_tvalid          => w_tvalid_hpf_out,

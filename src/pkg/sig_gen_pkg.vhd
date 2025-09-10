@@ -16,6 +16,11 @@ package sig_gen_pkg is
     constant C_EXTERNAL_COMP_LIMIT : natural := 2 ** 26;
     constant C_EXTERNAL_SUBTRACT   : natural := natural(floor(real(C_EXTERNAL_COMP_LIMIT / (C_SPECTRUM_Y_UPPER + 1))));
     -- constant C_EXTERNAL_SUBTRACT   : natural := 0;
+
+    -- Filter
+    constant C_MAX_FILTER_CUTOFF : natural := 23000;
+    constant C_MIN_FILTER_CUTOFF : natural := 1000;
+    constant C_FILTER_STEP       : natural := 1000;
     --===============================================================================
     -- Ascii Text
     constant C_WORD_X_LEFT : natural := 512;

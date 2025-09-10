@@ -4,6 +4,8 @@ from pathlib import Path
 import shutil
 import matplotlib.pyplot as plt
 import math
+from typing import Union
+import re as re
 
 # ==============================================================================
 # Parameters
@@ -314,6 +316,132 @@ class filter_coeff_gen:
             coefficients = [line.strip() for line in coe_file]
         return coefficients
 
+    def generateHeaderFile(self):
+        """
+        Creates two arrays (hp + lp) in a .h file for use in Vitis.
+        Reads the generate coefficients in the .coe file and add to
+        """
+
+        # =====================================================
+        def token_into_c_hex(token: str) -> str:
+            HEX_RE_NO_PREFIX = re.compile(r"^[0-9A-Fa-f]{1,4}$")
+            if not token:
+                raise ValueError("Empty token!")
+
+            # Accept tokens starting with 0x/0X
+            if token.startswith(("0x", "0X")):
+                body = token[2:]
+                if not HEX_RE_NO_PREFIX.match(body):
+                    raise ValueError(
+                        f"Token has 0x prefix but body is not 1-4 hex digits: '{token}'"
+                    )
+                return token
+
+            # Accept plain tokens
+            if HEX_RE_NO_PREFIX.match(token):
+                return "0x" + token
+
+            # Else fail
+            raise ValueError(
+                f"Bad token (expected 1-4 hex digits or 0xNNNN): '{token}'"
+            )
+
+        # =====================================================
+        def _extract_first_number_from_name(name: str):
+            m = re.search(r"(\d+)", name)
+            if m:
+                return int(m.group(1))
+            else:
+                raise ValueError("No cutoff integer in .coe file name!")
+
+        # =====================================================
+        def _list_coe_sorted(folder: Path):
+            if not folder.exists() or not folder.is_dir():
+                return []
+            files = [p for p in folder.iterdir() if p.suffix.lower() == ".coe"]
+            # Sort by (first-number-in-filename, filename) to be stable
+            files_sorted = sorted(
+                files, key=lambda p: (_extract_first_number_from_name(p.name), p.name)
+            )
+            return files_sorted
+
+        # =====================================================
+        def _read_directory(sub_dir: str):
+            parent_dir = Path(f"fir_filter_coefficients")
+            folder = parent_dir / sub_dir
+            files = _list_coe_sorted(folder)
+            print(files)
+            sets = []
+            names = []
+            for p in files:
+                toks = []
+                text = p.read_text(encoding="utf-8", errors="ignore")
+                for line_nbr, raw in enumerate(text.splitlines(), start=1):
+                    s = raw.strip()
+                    if not s:
+                        continue
+                    try:
+                        c_hex = token_into_c_hex(s)
+                    except ValueError as e:
+                        raise SystemExit(f"Error parsing {s} line {line_nbr}: {e}")
+                    toks.append(c_hex)
+                sets.append(toks)
+                names.append(p.stem)
+            return names, sets
+
+        # =====================================================
+        _, lpf_sets = _read_directory("lp")
+        _, hpf_sets = _read_directory("hp")
+
+        # Check lengths
+        all_lengths = set(len(s) for s in (lpf_sets + hpf_sets) if s)
+        if len(all_lengths) == 0:
+            raise SystemExit("No .coe files found.")
+        if len(all_lengths) != 1:
+            raise SystemExit(
+                f"Inconsistent coefficient lengths found: {sorted(all_lengths)}"
+            )
+
+        coeff_len = all_lengths.pop()
+
+        # Write Header
+
+        out_path = Path("fir_filter_coefficients/fir_coeffs.h")
+        guard = out_path.stem.upper() + "_H"
+        with out_path.open("w", encoding="utf-8") as f:
+            f.write(f"#ifndef {guard}\n#define {guard}\n\n")
+            f.write(f"#include <stdint.h>\n\n")
+
+            # LPF
+            f.write(f"// LPF Coefficient Sets (lower 16 bits valid)\n")
+            f.write(f"#define LPF_SETS {len(lpf_sets)}\n")
+            f.write(f"#define LPF_LEN {coeff_len}\n\n")
+            f.write(f"static const uint32_t lpf_coeffs[LPF_SETS][LPF_LEN] = {{\n")
+            for s in lpf_sets:
+                f.write(f"\t{{")
+                f.write(", ".join(s))
+                f.write(f"}},\n")
+            f.write(f"}};\n\n")
+            f.write(f"")
+
+            # HPF
+            f.write(f"// HPF Coefficient Sets (lower 16 bits valid)\n")
+            f.write(f"#define HPF_SETS {len(hpf_sets)}\n")
+            f.write(f"#define HPF_LEN {coeff_len}\n")
+            f.write(f"static const uint32_t hpf_coeffs[HPF_SETS][HPF_LEN] = {{\n")
+            for s in hpf_sets:
+                f.write(f"\t{{")
+                f.write(", ".join(s))
+                f.write(f"}},\n")
+            f.write(f"}};\n\n")
+            f.write(f"")
+
+            f.write(f"#endif //" + guard + "\n")
+
+        print(
+            f"Wrote combined header file: {out_path} (LPF sets={len(lpf_sets)}, HPF sets={len(hpf_sets)}, len={coeff_len})"
+        )
+
 
 if __name__ == "__main__":
     # Create instance
@@ -322,3 +450,4 @@ if __name__ == "__main__":
     )
     # Generate coefficients
     filter_coeff_gen.generateCoefficients(a_resolution=FC_RESOLUTION)
+    filter_coeff_gen.generateHeaderFile()

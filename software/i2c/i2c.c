@@ -1,6 +1,5 @@
 /*
  * Settings up Audio Codec using I2C PS Peripheral.
- * Verify on some kind of read functionality? The codec should have some sort of readback no?
  */
 
 /***************************** Include Files **********************************/
@@ -67,7 +66,7 @@ u8 recvBuffer[2]; /* Buffer for Receiving Data */
  * @note		None.
  *
  *******************************************************************************/
-int main(void)
+int IicInitialize(void)
 {
     int status;
     xil_printf("Configuring GPIO... \r\n");
@@ -108,7 +107,7 @@ int main(void)
  * @note
  *
  *******************************************************************************/
-int IicPsAudioCodecSetup(u16 deviceId)
+static int IicPsAudioCodecSetup(u16 deviceId)
 {
     int status;
     u32 temp;
@@ -292,7 +291,7 @@ int IicPsAudioCodecSetup(u16 deviceId)
  * @note
  *
  */
-void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name)
+static void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name)
 {
     xil_printf("Sending %s (0x%02X <-- 0x%03X) ... \r\n", name, u8RegAddr, u16Data);
     CHECK(AudioWriteToReg(u8RegAddr, u16Data));
@@ -314,7 +313,7 @@ void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name)
  * @note Hard-coded to support SSM2603 I2C data TX/RX structure
  *
  * ---------------------------------------------------------------------------- */
-int AudioWriteToReg(u8 u8RegAddr, u16 u16Data)
+static int AudioWriteToReg(u8 u8RegAddr, u16 u16Data)
 {
     int status;
     unsigned char u8TxData[2];

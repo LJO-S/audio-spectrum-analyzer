@@ -24,19 +24,18 @@ entity project_top is
         -- TMDS clock 250 MHz
         i_clk_250 : in std_logic;
         -- PS IF 
-        -- TODO this obviously only need 2 ch rd ports 
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
         i_new_data_strobe_hpf : in std_logic;
-        i_waddr_lpf           : in std_logic_vector(12 downto 0);
-        i_wdata_lpf           : in std_logic_vector(31 downto 0);
-        i_we_lpf              : in std_logic_vector(3 downto 0);
-        i_waddr_hpf           : in std_logic_vector(12 downto 0);
-        i_wdata_hpf           : in std_logic_vector(31 downto 0);
-        i_we_hpf              : in std_logic_vector(3 downto 0);
+        i_ps_fir_ctrl_ack     : in std_logic;
+        o_fir_ctrl            : out std_logic_vector(3 downto 0);
 
-        o_fir_ctrl        : out std_logic_vector(3 downto 0);
-        i_ps_fir_ctrl_ack : in std_logic;
+        -- BRAM Controller IF
+        o_raddr_hpf : out std_logic_vector(31 downto 0);
+        i_rdata_hpf : in std_logic_vector(31 downto 0);
+        o_raddr_lpf : out std_logic_vector(31 downto 0);
+        i_rdata_lpf : in std_logic_vector(31 downto 0);
+
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
@@ -110,16 +109,27 @@ architecture rtl of project_top is
     signal w_sig_gen_src_sel        : std_logic_vector(3 downto 0);
     signal w_lpf_en                 : std_logic;
     signal w_lpf_incr               : std_logic;
+    signal w_lpf_incr_to_video      : std_logic;
     signal w_lpf_decr               : std_logic;
+    signal w_lpf_decr_to_video      : std_logic;
     signal w_hpf_en                 : std_logic;
     signal w_hpf_incr               : std_logic;
+    signal w_hpf_incr_to_video      : std_logic;
     signal w_hpf_decr               : std_logic;
+    signal w_hpf_decr_to_video      : std_logic;
     signal w_ema_en                 : std_logic;
     signal w_sel_up_lo              : std_logic;
     signal w_capture_en             : std_logic;
     signal w_capture_en_drain_guard : std_logic;
     signal w_updating_coeffs_lpf    : std_logic;
     signal w_updating_coeffs_hpf    : std_logic;
+    signal w_new_data_strobe_lpf    : std_logic;
+    signal w_new_data_strobe_hpf    : std_logic;
+
+    signal w_raddr_hpf : unsigned(6 downto 0);
+    signal w_rdata_hpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
+    signal w_raddr_lpf : unsigned(6 downto 0);
+    signal w_rdata_lpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
 
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
     signal s_state_drain_guard : t_drain_guard := IDLE;
@@ -128,11 +138,7 @@ begin
     -- ============================================================================ 
     -- ============================================================================ 
     -- Combinatorial Assignments
-    o_lpf_incr <= w_lpf_incr;
-    o_lpf_decr <= w_lpf_decr;
 
-    o_hpf_incr <= w_hpf_incr;
-    o_hpf_decr <= w_hpf_decr;
     -- ============================================================================ 
     -- ============================================================================ 
     signal_generator_wrapper_inst : entity work.signal_generator_wrapper
@@ -207,6 +213,10 @@ begin
             i_lpf_en     => w_lpf_en,
             i_hpf_en     => w_hpf_en,
             i_ema_en     => w_ema_en,
+            i_lpf_incr   => w_lpf_incr_to_video,
+            i_lpf_decr   => w_lpf_decr_to_video,
+            i_hpf_incr   => w_hpf_incr_to_video,
+            i_hpf_decr   => w_hpf_decr_to_video,
             o_rd_addr    => w_rd_addr,
             i_rd_data    => w_rd_data,
             o_TMDS_clk_p => o_TMDS_clk_p,
@@ -246,18 +256,31 @@ begin
             -- Capture/Internal
             o_capture_en => w_capture_en
         );
-    -- ============================================================================ 
+
     gpio_ps_interface_inst : entity work.gpio_ps_interface
         port map
         (
-            clk_25                => i_clk_25,
-            i_lpf_incr            => w_lpf_incr,
-            i_lpf_decr            => w_lpf_decr,
-            i_hpf_incr            => w_hpf_incr,
-            i_hpf_decr            => w_hpf_decr,
+            clk_25 => i_clk_25,
+            -- GPIO PB Presses
+            i_lpf_incr => w_lpf_incr,
+            i_lpf_decr => w_lpf_decr,
+            i_hpf_incr => w_hpf_incr,
+            i_hpf_decr => w_hpf_decr,
+            -- Successful incr/decr to video
+            o_lpf_incr => w_lpf_incr_to_video,
+            o_lpf_decr => w_lpf_decr_to_video,
+            o_hpf_incr => w_hpf_incr_to_video,
+            o_hpf_decr => w_hpf_decr_to_video,
+            -- To Filters
+            o_new_data_strobe_lpf => w_new_data_strobe_lpf,
+            o_new_data_strobe_hpf => w_new_data_strobe_hpf,
+            -- Busy signals from filters
             i_updating_coeffs_lpf => w_updating_coeffs_lpf,
             i_updating_coeffs_hpf => w_updating_coeffs_hpf,
-            i_ps_ack              => i_ps_ack,
+            -- Request to/acknowledge from PS
+            i_new_data_strobe_lpf => i_new_data_strobe_lpf,
+            i_new_data_strobe_hpf => i_new_data_strobe_hpf,
+            i_ps_ack              => i_ps_fir_ctrl_ack,
             o_fir_ctrl            => o_fir_ctrl
         );
 
@@ -275,18 +298,17 @@ begin
             clk_25         => i_clk_25,
             i_i2c_cfg_done => i_i2c_cfg_done,
 
-            i_new_data_strobe_lpf => i_new_data_strobe_lpf,
-            i_new_data_strobe_hpf => i_new_data_strobe_hpf,
+            i_new_data_strobe_lpf => w_new_data_strobe_lpf,
+            i_new_data_strobe_hpf => w_new_data_strobe_hpf,
             o_updating_coeffs_lpf => w_updating_coeffs_lpf,
             o_updating_coeffs_hpf => w_updating_coeffs_hpf,
-            i_waddr_lpf           => i_waddr_lpf(integer(ceil(log2(real(G_FIR_NBR_OF_TAPS)))) - 1 downto 0),
-            i_wdata_lpf           => i_wdata_lpf(G_FIR_COEFF_WIDTH - 1 downto 0),
-            i_we_lpf              => i_we_lpf(0),
-            i_waddr_hpf           => i_waddr_hpf(integer(ceil(log2(real(G_FIR_NBR_OF_TAPS)))) - 1 downto 0),
-            i_wdata_hpf           => i_wdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0),
-            i_we_hpf              => i_we_hpf(0),
-            i_lpf_en              => w_lpf_en,
-            i_hpf_en              => w_hpf_en,
+
+            o_raddr_lpf => w_raddr_lpf,
+            i_rdata_lpf => w_rdata_lpf,
+            o_raddr_hpf => w_raddr_hpf,
+            i_rdata_hpf => w_rdata_hpf,
+            i_lpf_en    => w_lpf_en,
+            i_hpf_en    => w_hpf_en,
 
             i_capture_en => w_capture_en_drain_guard,
             i_sdata      => i_sdata,
@@ -298,6 +320,13 @@ begin
             o_tlast      => w_axis_tlast_audio_to_xfft,
             i_tready     => w_axis_tready_xfft_to_audio
         );
+
+    -- Resize to fit output
+    o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));
+    w_rdata_lpf <= i_rdata_lpf(G_FIR_COEFF_WIDTH - 1 downto 0);
+
+    o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
+    w_rdata_hpf <= i_rdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0);
     -- ============================================================================ 
     -- ============================================================================
     -- This capture_en will only switch ON when a state declares that we are dealing with audio data

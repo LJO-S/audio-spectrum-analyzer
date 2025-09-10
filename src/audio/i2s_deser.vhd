@@ -59,8 +59,6 @@ begin
     -- where N is set by the I2C setup. Notice that in the datasheet
     -- the 1st bit clocked out after LRCLK toggles is INVALID, so we
     -- skip the 1st BCLK bit.
-    --
-    -- TODO: probably counts too much 
     p_deserializer_fsm : process (clk_25)
     begin
         if rising_edge(clk_25) then
