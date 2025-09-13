@@ -35,11 +35,11 @@ int bram_write_coeffs(uint32_t bram_base_addr,
                       const uint32_t *coeffs,
                       size_t n_taps)
 {
-    // volatile uint32_t *bram = (volatile uint32_t *)bram_base_addr;
 
     // 1) Sanity check
     if (!coeffs || n_taps == 0)
     {
+        xil_printf("Empty coefficients or 0 taps specified!\n");
         return XST_FAILURE;
     }
 

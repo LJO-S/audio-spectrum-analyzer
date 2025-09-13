@@ -38,17 +38,6 @@ Idéen är följande:
 - Sätt alla INCR/DECR slv(3:0) med interrupt
 - I2S Serializer
 
-- Lägg till allt i 250906-bygget (AXI GPIO, BMEM, BRAM CTRL...)
-
-- SW:
-  - Kalla på i2c-setup
-  - Skapa en interrupt handler
-  - Fixa arrays av filter_data
-  - Vid interrupt:
-    1. Skriv till PS_ACK vid interrupt,
-    2. Skriv till LPF/HPF BRAM
-    3. Skriv 
-
 
 
 ## ########################################################

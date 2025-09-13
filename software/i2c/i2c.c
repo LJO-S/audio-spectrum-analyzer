@@ -66,7 +66,7 @@ u8 recvBuffer[2]; /* Buffer for Receiving Data */
  * @note		None.
  *
  *******************************************************************************/
-int IicInitialize(void)
+int iic_init(void)
 {
     int status;
     xil_printf("Configuring GPIO... \r\n");

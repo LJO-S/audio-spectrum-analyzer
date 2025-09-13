@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-int IicInitialize(void); // prototype for use by other .c files
+int iic_init(void); // prototype for use by other .c files
 
 #endif I2C_H

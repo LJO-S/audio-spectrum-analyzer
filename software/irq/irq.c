@@ -41,7 +41,7 @@ static XScuGic Intc;
  */
 static void gpio_isr(void *InstancePtr)
 {
-    // 1) Disable interrupt for the bits we will service now
+    // 1) Disable interrupt for GPIO that will be serviced now
     XGpio_InterruptDisable(&GpioIn, GPIO_INT_CH_MASK);
 
     uint32_t status = XGpio_InterruptGetStatus(&GpioIn);
@@ -52,15 +52,15 @@ static void gpio_isr(void *InstancePtr)
     }
 
     // Read lower 4-bits (1 bit for each btn)
-    u32 data = XGpio_DiscreteRead(&GpioIn, 1) & GPIO_INPUT_MASK;
+    uint32_t data = XGpio_DiscreteRead(&GpioIn, 1) & GPIO_INPUT_MASK;
 
     // 2) Send request ACK to PL
     XGpio_DiscreteWrite(&GpioOut, 1, 0x1);
     (void) XGpio_DiscreteRead(&GpioOut, 1);
+    XGpio_DiscreteWrite(&GpioOut, 1, 0);
 
     // 3) Clear channel interrupt & ACK
     (void)XGpio_InterruptClear(&GpioIn, GPIO_INT_CH_MASK);
-    XGpio_DiscreteWrite(&GpioOut, 1, 0);
 
     // 4) Set flags for main to handle
     if (data == 0)
@@ -106,20 +106,26 @@ int irq_init(void)
     // Initialize GpioOut
     status = XGpio_Initialize(&GpioOut, GPIO_OUT_DEVICE_ID);
     if (status != XST_SUCCESS)
+    {
         return XST_FAILURE;
-    XGpio_SetDataDirection(&GpioOut, 0, 0x1); // ch1, 1st bit
+    }
+    XGpio_SetDataDirection(&GpioOut, 1, 0x00); // ACK signal
 
     // Initialize GpioIn
     status = XGpio_Initialize(&GpioIn, GPIO_IN_DEVICE_ID);
     if (status != XST_SUCCESS)
+    {
         return XST_FAILURE;
-    XGpio_SetDataDirection(&GpioIn, 1, 0xF); // ch1, lower 4 bits
+    }
+    XGpio_SetDataDirection(&GpioIn, 1, 0xF); // FIR CTRL signal
 
     // Initialize GIC
     XScuGic_Config *intc_cfg = XScuGic_LookupConfig(INTC_DEVICE_ID);
     status = XScuGic_CfgInitialize(&Intc, intc_cfg, intc_cfg->CpuBaseAddress);
     if (status != XST_SUCCESS)
+    {
         return XST_FAILURE;
+    }
 
     // Register handler for SCU GIC
     Xil_ExceptionInit(); // not really needed, is legacy
@@ -133,9 +139,11 @@ int irq_init(void)
     status = XScuGic_Connect(&Intc,
                              INTC_GPIO_INTERRUPT_ID,
                              (Xil_ExceptionHandler)gpio_isr,
-                             &GpioIn); // does this not work? try the one above
+                             (void *)&GpioIn); 
     if (status != XST_SUCCESS)
+    {
         return XST_FAILURE;
+    }
 
     // Enable everything
     XGpio_InterruptEnable(&GpioIn, GPIO_INT_CH_MASK);
