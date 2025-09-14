@@ -2,6 +2,7 @@
 #define BRAM_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define N_TAPS 101
 

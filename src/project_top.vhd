@@ -322,10 +322,12 @@ begin
         );
 
     -- Resize to fit output
-    o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));
+    -- o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));
+    o_raddr_lpf <= x"000000" & '0' & std_logic_vector(w_raddr_lpf);
     w_rdata_lpf <= i_rdata_lpf(G_FIR_COEFF_WIDTH - 1 downto 0);
 
-    o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
+    -- o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
+    o_raddr_hpf <= x"000000" & '0' & std_logic_vector(w_raddr_hpf);
     w_rdata_hpf <= i_rdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0);
     -- ============================================================================ 
     -- ============================================================================

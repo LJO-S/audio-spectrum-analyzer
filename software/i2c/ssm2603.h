@@ -88,9 +88,9 @@ extern "C"
 #define NGTH 3
 
     /************************** Function Prototypes *******************************/
-    int IicPsAudioCodecSetup(u16 deviceId);
-    int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
-    void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name);
+    // int IicPsAudioCodecSetup(u16 deviceId);
+    // int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
+    // void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name);
 
     /************************** Others *******************************/
     enum audio_regs

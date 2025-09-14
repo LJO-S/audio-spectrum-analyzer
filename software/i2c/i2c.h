@@ -5,4 +5,4 @@
 
 int iic_init(void); // prototype for use by other .c files
 
-#endif I2C_H
+#endif //I2C_H

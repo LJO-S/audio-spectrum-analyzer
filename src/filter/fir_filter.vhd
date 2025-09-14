@@ -51,7 +51,7 @@ architecture rtl of fir_filter is
     -- Types
     -- ----------------------------------
     type t_fir_fsm is (IDLE, RUNNING);
-    type t_read_coefficients is (IDLE, READ_DATA, SETTLE_1CC);
+    type t_read_coefficients is (IDLE, READ_DATA, SETTLE_1CC, SETTLE_2CC);
     type t_output_stage is (IDLE, ROUND, SCALE, CLIP);
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(C_COEFF_WIDTH - 1 downto 0);
     type t_delay_line is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(C_INPUT_WIDTH - 1 downto 0);
@@ -60,14 +60,115 @@ architecture rtl of fir_filter is
     -- Signals
     -- ----------------------------------
     -- FIR
-    signal s_FIR_CTRL     : t_fir_fsm                                    := IDLE;
-    signal r_coefficients : t_coefficients                               := (t_coefficients'range => (others => '0'));
-    signal r_delay_line   : t_delay_line                                 := (others => (others => '0'));
-    signal r_tap_cntr     : integer                                      := G_NBR_OF_TAPS - 1;
-    signal r_acc_strobe   : std_logic                                    := '0';
-    signal r_tdata_in     : std_logic_vector(C_INPUT_WIDTH - 1 downto 0) := (others => '0');
-    signal r_tdata_acc    : signed(C_BIT_WIDTH - 1 downto 0)             := (others => '0');
-    signal r_accumulator  : signed(C_BIT_WIDTH - 1 downto 0)             := (others => '0');
+    signal s_FIR_CTRL : t_fir_fsm := IDLE;
+    -- signal r_coefficients : t_coefficients                               := (t_coefficients'range => (others => '0'));
+    signal r_coefficients : t_coefficients := (x"0008",
+    x"0003",
+    x"FFF5",
+    x"FFF5",
+    x"0008",
+    x"0016",
+    x"0003",
+    x"FFE4",
+    x"FFEA",
+    x"0018",
+    x"002C",
+    x"FFFD",
+    x"FFC5",
+    x"FFDE",
+    x"0035",
+    x"004C",
+    x"FFEC",
+    x"FF96",
+    x"FFD6",
+    x"0068",
+    x"0073",
+    x"FFC8",
+    x"FF52",
+    x"FFD9",
+    x"00BA",
+    x"00A1",
+    x"FF84",
+    x"FEF3",
+    x"FFF0",
+    x"0137",
+    x"00D1",
+    x"FF0C",
+    x"FE72",
+    x"0030",
+    x"01FB",
+    x"00FD",
+    x"FE37",
+    x"FDB2",
+    x"00C2",
+    x"0352",
+    x"0122",
+    x"FC82",
+    x"FC4F",
+    x"023B",
+    x"0685",
+    x"013A",
+    x"F6E8",
+    x"F71B",
+    x"0AE5",
+    x"2714",
+    x"3474",
+    x"2714",
+    x"0AE5",
+    x"F71B",
+    x"F6E8",
+    x"013A",
+    x"0685",
+    x"023B",
+    x"FC4F",
+    x"FC82",
+    x"0122",
+    x"0352",
+    x"00C2",
+    x"FDB2",
+    x"FE37",
+    x"00FD",
+    x"01FB",
+    x"0030",
+    x"FE72",
+    x"FF0C",
+    x"00D1",
+    x"0137",
+    x"FFF0",
+    x"FEF3",
+    x"FF84",
+    x"00A1",
+    x"00BA",
+    x"FFD9",
+    x"FF52",
+    x"FFC8",
+    x"0073",
+    x"0068",
+    x"FFD6",
+    x"FF96",
+    x"FFEC",
+    x"004C",
+    x"0035",
+    x"FFDE",
+    x"FFC5",
+    x"FFFD",
+    x"002C",
+    x"0018",
+    x"FFEA",
+    x"FFE4",
+    x"0003",
+    x"0016",
+    x"0008",
+    x"FFF5",
+    x"FFF5",
+    x"0003",
+    x"0008");
+    signal r_delay_line  : t_delay_line                                 := (others => (others => '0'));
+    signal r_tap_cntr    : integer                                      := G_NBR_OF_TAPS - 1;
+    signal r_acc_strobe  : std_logic                                    := '0';
+    signal r_tdata_in    : std_logic_vector(C_INPUT_WIDTH - 1 downto 0) := (others => '0');
+    signal r_tdata_acc   : signed(C_BIT_WIDTH - 1 downto 0)             := (others => '0');
+    signal r_accumulator : signed(C_BIT_WIDTH - 1 downto 0)             := (others => '0');
 
     -- Output
     signal s_OUTPUT_STATE : t_output_stage                               := IDLE;
@@ -193,6 +294,8 @@ begin
                         s_COEFF_READ <= SETTLE_1CC;
                     end if;
                 when SETTLE_1CC =>
+                    s_COEFF_READ <= SETTLE_2CC;
+                when SETTLE_2CC =>
                     s_COEFF_READ <= READ_DATA;
                 when READ_DATA =>
                     s_COEFF_READ                        <= SETTLE_1CC;
@@ -210,7 +313,7 @@ begin
     w_updating_coefficients <= '1' when (s_COEFF_READ /= IDLE) else
         '0';
     o_updating_coeffs <= w_updating_coefficients;
-    o_raddr <= r_raddr;
+    o_raddr           <= r_raddr;
     -- ================================================================================
     -- dpmem_dram_inst : entity work.dpmem_bram
     --     generic map(

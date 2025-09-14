@@ -35,22 +35,50 @@ int bram_write_coeffs(uint32_t bram_base_addr,
                       const uint32_t *coeffs,
                       size_t n_taps)
 {
+    uint32_t bram_address_write = bram_base_addr;
+    uint32_t write_data = 0;
+
+    uint32_t bram_address_read = bram_base_addr;
+    uint32_t read_data = 0;
+    uint32_t compare_data = 0;
 
     // 1) Sanity check
     if (!coeffs || n_taps == 0)
     {
-        xil_printf("Empty coefficients or 0 taps specified!\n");
+        xil_printf("Empty coefficients or 0 taps specified!\r\n");
         return XST_FAILURE;
     }
 
     // 2) Write down coefficients
+    xil_printf("\r\n\rWrite address\t:\tdata \r\n");
     for (uint32_t i = 0; i < n_taps; i++)
     {
-        Xil_Out32((UINTPTR)bram_base_addr + i * 4, coeffs[i]);
+        write_data = coeffs[i];
+        Xil_Out32((UINTPTR)bram_address_write, write_data);
+        xil_printf("0x%08X: 0x%08X\r\n", bram_address_write, write_data);
+        bram_address_write += 4;
+    }
+
+    // Debug: readback
+    for (uint32_t i = 0; i < n_taps; i++)
+    {
+        compare_data = coeffs[i];
+        read_data = Xil_In32((UINTPTR)bram_address_read);
+        if (read_data != compare_data)
+        {
+            xil_printf("ERROR! Readback mismatch: 0x%08X: 0x%08X vs 0x%08X\r\n", bram_address_read, read_data, compare_data);
+            return XST_FAILURE;
+        }
+        else
+        {
+            xil_printf("Good readback! 0x%X\r\n", read_data);
+        }
+
+        bram_address_read += 4;
     }
 
     // 3) Flush the written range
-    Xil_DCacheFlushRange((UINTPTR)bram_base_addr, n_taps * sizeof(uint32_t));
+    // Xil_DCacheFlushRange((UINTPTR)bram_base_addr, n_taps * sizeof(uint32_t));
 
     return XST_SUCCESS;
 }
@@ -74,7 +102,7 @@ int bram_write_coeffs_lpf(const uint32_t *coeffs, size_t n_taps)
     }
     // 2) Signal filter that new data is available
     XGpio_DiscreteWrite(&LPFStrobe, 1, 0x1);
-    (void) XGpio_DiscreteRead(&LPFStrobe, 1);
+    (void)XGpio_DiscreteRead(&LPFStrobe, 1);
     XGpio_DiscreteWrite(&LPFStrobe, 1, 0x0);
     return XST_SUCCESS;
 }
@@ -98,7 +126,7 @@ int bram_write_coeffs_hpf(const uint32_t *coeffs, size_t n_taps)
     }
     // 2) Signal filter that new data is available
     XGpio_DiscreteWrite(&HPFStrobe, 1, 0x1);
-    (void) XGpio_DiscreteRead(&HPFStrobe, 1);
+    (void)XGpio_DiscreteRead(&HPFStrobe, 1);
     XGpio_DiscreteWrite(&HPFStrobe, 1, 0x0);
     return XST_SUCCESS;
 }
@@ -136,18 +164,18 @@ int bram_init(void)
     XGpio_DiscreteWrite(&HPFStrobe, 1, 0x0);
 
     // 2) Write down LPF coefficients
-    status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
-    if (status != XST_SUCCESS)
-    {
-        return XST_FAILURE;
-    }
+    // status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
+    // if (status != XST_SUCCESS)
+    //{
+    //    return XST_FAILURE;
+    //}
 
     // 3) Write down HPF coefficients
-    status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
-    if (status != XST_SUCCESS)
-    {
-        return XST_FAILURE;
-    }
-
+    // status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
+    // if (status != XST_SUCCESS)
+    //{
+    //    return XST_FAILURE;
+    //}
+    //
     return XST_SUCCESS;
 }

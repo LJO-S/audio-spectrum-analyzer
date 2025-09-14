@@ -38,8 +38,6 @@ end entity image_generator;
 
 architecture rtl of image_generator is
     -- Constants
-    
-
     -- Debug for adjusting levels
     signal r_debug_color_on : std_logic := '0';
 
@@ -73,8 +71,14 @@ architecture rtl of image_generator is
     signal r_max_value          : unsigned(31 downto 0) := (others => '0');
 
     -- Filter Signals
-    signal r_lpf_cutoff : unsigned(16 downto 0) := to_unsigned(10_000, 17);
-    signal r_hpf_cutoff : unsigned(16 downto 0) := to_unsigned(10_000, 17);
+    signal r_lpf_cutoff     : unsigned(16 downto 0) := to_unsigned(10_000, 17);
+    signal r_hpf_cutoff     : unsigned(16 downto 0) := to_unsigned(10_000, 17);
+    signal w_freq_lpf_1000s : unsigned(6 downto 0);
+    signal w_freq_hpf_1000s : unsigned(6 downto 0);
+    signal r_lpf_x_axis     : unsigned(9 downto 0) := (others => '0') ;
+    signal r_hpf_x_axis     : unsigned(9 downto 0) := (others => '0') ;
+
+    
 
     -- GUI
     signal w_ascii_draw      : std_logic;
@@ -247,15 +251,20 @@ begin
                 (r_counter_Y_d1 = 240) or
                 (r_counter_Y_d1 = 288) or
                 (r_counter_Y_d1 = 400))) then
+                -- Straight lines for GUI
                 r_gui_draw      <= '1';
                 r_video_red_gui <= x"3F";
                 r_video_grn_gui <= x"3F";
                 r_video_blu_gui <= x"3F";
+                -- TODO vvvvvvvvv these determine what FCO GUI resolution we have
+                -- 5k = pxl 104
+                -- 10k = pxl 216
             elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 16) and
                 ((r_counter_X_d1 = 104) or
                 (r_counter_X_d1 = 216) or
                 (r_counter_X_d1 = 320) or
                 (r_counter_X_d1 = 424)) then
+                -- X-axis large ticks for frequency
                 r_gui_draw      <= '1';
                 r_video_red_gui <= x"9F";
                 r_video_grn_gui <= x"9F";
@@ -265,33 +274,59 @@ begin
                 (r_counter_X_d1 = 160) or
                 (r_counter_X_d1 = 268) or
                 (r_counter_X_d1 = 372)) then
+                -- X-axis small ticks for frequency
                 r_gui_draw      <= '1';
                 r_video_red_gui <= x"9F";
                 r_video_grn_gui <= x"9F";
                 r_video_blu_gui <= x"9F";
+            elsif (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER) then
+                -- LPF / HPF cutoff lines
+                if (r_counter_X_d1 = r_lpf_x_axis) then
+                    r_gui_draw      <= i_lpf_on;
+                    r_video_red_gui <= x"00";
+                    r_video_grn_gui <= x"4C";
+                    r_video_blu_gui <= x"99";
+                elsif (r_counter_X_d1 = r_hpf_x_axis) then
+                    r_gui_draw      <= i_hpf_on;
+                    r_video_red_gui <= x"99";
+                    r_video_grn_gui <= x"00";
+                    r_video_blu_gui <= x"00";
+                end if;
             end if;
         end if;
     end process p_draw_lines;
     --*****************************************************************************
+    -- Converting cutoff to x-axis position. Each kHz occupies ~ 21 pixels on the screen 
+    -- Multiply by 20 = 16 + 4 = (X << 4) + (X << 2)
+    p_convert_freq_to_x_pos : process (clk_25)
+    begin
+        if rising_edge(clk_25) then
+            r_lpf_x_axis <= resize((w_freq_lpf_1000s & "0000") + (w_freq_lpf_1000s & "00"), r_lpf_x_axis'length);
+            r_hpf_x_axis <= resize((w_freq_hpf_1000s & "0000") + (w_freq_hpf_1000s & "00"), r_hpf_x_axis'length);
+        end if;
+    end process p_convert_freq_to_x_pos;
+    --*****************************************************************************
     ascii_generator_inst : entity work.ascii_generator
         port map
         (
-            clk_25         => clk_25,
-            i_counter_X    => r_counter_X,
-            i_counter_Y    => r_counter_Y,
-            i_max_freq     => r_max_freq,
-            i_capture_on   => i_capture_on,
-            i_lpf_on       => i_lpf_on,
-            i_lpf_cutoff   => r_lpf_cutoff,
-            i_bpf_on       => i_bpf_on,
-            i_bpf_cutoff   => i_bpf_cutoff,
-            i_hpf_on       => i_hpf_on,
-            i_hpf_cutoff   => r_hpf_cutoff,
-            i_ema_on       => i_ema_on,
-            o_glyph_active => w_ascii_draw,
-            o_video_red    => w_video_red_ascii,
-            o_video_grn    => w_video_grn_ascii,
-            o_video_blu    => w_video_blu_ascii
+            clk_25           => clk_25,
+            i_counter_X      => r_counter_X,
+            i_counter_Y      => r_counter_Y,
+            i_max_freq       => r_max_freq,
+            i_capture_on     => i_capture_on,
+            i_lpf_on         => i_lpf_on,
+            i_lpf_cutoff     => r_lpf_cutoff,
+            i_bpf_on         => i_bpf_on,
+            i_bpf_cutoff     => i_bpf_cutoff,
+            i_hpf_on         => i_hpf_on,
+            i_hpf_cutoff     => r_hpf_cutoff,
+            i_ema_on         => i_ema_on,
+            o_freq_lpf_1000s => w_freq_lpf_1000s,
+            o_freq_hpf_1000s => w_freq_hpf_1000s,
+            o_glyph_active   => w_ascii_draw,
+            o_video_red      => w_video_red_ascii,
+            o_video_grn      => w_video_grn_ascii,
+            o_video_blu      => w_video_blu_ascii
         );
     --*****************************************************************************
 end architecture;

@@ -39,6 +39,11 @@ XGpio gpioInst; /* gpio instance */
  */
 u8 recvBuffer[2]; /* Buffer for Receiving Data */
 
+/************************** Function Prototypes ******************************/
+static int IicPsAudioCodecSetup(u16 deviceId); 
+static void WriteReg(u8 u8RegAddr, u16 u16Data, const char *name);
+static int AudioWriteToReg(u8 u8RegAddr, u16 u16Data);
+
 /*------------------------------------------------------------------------------*/
 /* 1) Error check helper macro                                                  */
 /*------------------------------------------------------------------------------*/

@@ -15,12 +15,15 @@ entity ascii_generator is
         i_capture_on : in std_logic;
         -- From Filters
         i_lpf_on     : in std_logic;
-        i_lpf_cutoff : in unsigned(16 downto 0) := (others => '0');
+        i_lpf_cutoff : in unsigned(16 downto 0);
         i_bpf_on     : in std_logic;
         i_bpf_cutoff : in unsigned(16 downto 0) := (others => '0');
         i_hpf_on     : in std_logic;
-        i_hpf_cutoff : in unsigned(16 downto 0) := (others => '0');
+        i_hpf_cutoff : in unsigned(16 downto 0);
         i_ema_on     : in std_logic;
+        -- 
+        o_freq_lpf_1000s : out unsigned(6 downto 0);
+        o_freq_hpf_1000s : out unsigned(6 downto 0);
         -- 
         o_glyph_active : out std_logic;
         o_video_red    : out std_logic_vector(7 downto 0);
@@ -253,6 +256,8 @@ begin
             r_tilemap_freq_hpf(2) <= to_integer(r_freq_hpf_1000s mod 10);
         end if;
     end process;
+    o_freq_lpf_1000s <= r_freq_lpf_1000s;
+    o_freq_hpf_1000s <= r_freq_hpf_1000s;
     --============================================================================
     --============================================================================
     p_output : process (clk_25)

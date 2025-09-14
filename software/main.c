@@ -13,6 +13,7 @@
 #include "xil_exception.h"
 #include "xil_types.h"
 #include "xil_printf.h"
+#include "sleep.h"
 
 /************************** Constant Definitions ******************************/
 
@@ -68,67 +69,69 @@ int service_event(void)
             if (current_hpf_cutoff < MAX_CUTOFF_FREQ_KHZ)
             {
                 current_hpf_cutoff++;
-                size_t index = (size_t)(current_hpf_cutoff - 1);
-                if (index < HPF_SETS)
-                {
-                    status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
-                    xil_printf("HPF coeffs written: %u kHz\n", current_hpf_cutoff);
-                }
-                else
-                {
-                    xil_printf("HPF index OOB: %u\n", (unsigned)index);
-                    status = XST_FAILURE;
-                }
             }
             else
             {
-                xil_printf("HPF at max: %u\n", current_hpf_cutoff);
+                xil_printf("HPF at max! \r\n");
+            }
+            size_t index = (size_t)(current_hpf_cutoff - 1);
+            if (index < HPF_SETS)
+            {
+                status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
+                xil_printf("HPF coeffs written: %u kHz\r\n", current_hpf_cutoff);
+            }
+            else
+            {
+                xil_printf("HPF index OOB: %u\r\n", (unsigned)index);
+                status = XST_FAILURE;
             }
         }
+
         else if (b == 2)
         {
             // HPF decrement
             if (current_hpf_cutoff > MIN_CUTOFF_FREQ_KHZ)
             {
                 current_hpf_cutoff--;
-                size_t index = (size_t)(current_hpf_cutoff - 1);
-                if (index < HPF_SETS)
-                {
-                    status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
-                    xil_printf("HPF coeffs written: %u kHz\n", current_hpf_cutoff);
-                }
-                else
-                {
-                    xil_printf("HPF index OOB: %u\n", (unsigned)index);
-                    status = XST_FAILURE;
-                }
             }
             else
             {
-                xil_printf("HPF at min: %u\n", current_hpf_cutoff);
+                xil_printf("HPF at min! \r\n");
+            }
+            size_t index = (size_t)(current_hpf_cutoff - 1);
+            if (index < HPF_SETS)
+            {
+                status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
+                xil_printf("HPF coeffs written: %u kHz\r\n", current_hpf_cutoff);
+            }
+            else
+            {
+                xil_printf("HPF index OOB: %u\r\n", (unsigned)index);
+                status = XST_FAILURE;
             }
         }
+        
         else if (b == 1)
         {
             // LPF increment
             if (current_lpf_cutoff < MAX_CUTOFF_FREQ_KHZ)
             {
                 current_lpf_cutoff++;
-                size_t index = (size_t)(current_lpf_cutoff - 1);
-                if (index < LPF_SETS)
-                {
-                    status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
-                    xil_printf("LPF coeffs written: %u kHz\n", current_lpf_cutoff);
-                }
-                else
-                {
-                    xil_printf("LPF index OOB: %u\n", (unsigned)index);
-                    status = XST_FAILURE;
-                }
             }
             else
             {
-                xil_printf("LPF at max: %u\n", current_lpf_cutoff);
+                xil_printf("LPF at max! \r\n");
+            }
+            size_t index = (size_t)(current_lpf_cutoff - 1);
+            if (index < LPF_SETS)
+            {
+                status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
+                xil_printf("LPF coeffs written: %u kHz\r\n", current_lpf_cutoff);
+            }
+            else
+            {
+                xil_printf("LPF index OOB: %u\r\n", (unsigned)index);
+                status = XST_FAILURE;
             }
         }
         else if (b == 0)
@@ -137,21 +140,21 @@ int service_event(void)
             if (current_lpf_cutoff > MIN_CUTOFF_FREQ_KHZ)
             {
                 current_lpf_cutoff--;
-                size_t index = (size_t)(current_lpf_cutoff - 1);
-                if (index < LPF_SETS)
-                {
-                    status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
-                    xil_printf("LPF coeffs written: %u kHz\n", current_lpf_cutoff);
-                }
-                else
-                {
-                    xil_printf("LPF index OOB: %u\n", (unsigned)index);
-                    status = XST_FAILURE;
-                }
             }
             else
             {
-                xil_printf("LPF at min: &u\n", current_lpf_cutoff);
+                xil_printf("LPF at min! \r\n");
+            }
+            size_t index = (size_t)(current_lpf_cutoff - 1);
+            if (index < LPF_SETS)
+            {
+                status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
+                xil_printf("LPF coeffs written: %u kHz\r\n", current_lpf_cutoff);
+            }
+            else
+            {
+                xil_printf("LPF index OOB: %u\r\n", (unsigned)index);
+                status = XST_FAILURE;
             }
         }
 
@@ -184,7 +187,7 @@ int main(void)
     status = iic_init();
     if (status != XST_SUCCESS)
     {
-        xil_printf("-- Fail! I2C codec setup --\n");
+        xil_printf("-- Fail! I2C codec setup --\r\n");
         return XST_FAILURE;
     }
 
@@ -192,7 +195,7 @@ int main(void)
     status = bram_init();
     if (status != XST_SUCCESS)
     {
-        xil_printf("-- Fail! BRAM setup --\n");
+        xil_printf("-- Fail! BRAM setup --\r\n");
         return XST_FAILURE;
     }
 
@@ -200,7 +203,7 @@ int main(void)
     status = irq_init();
     if (status != XST_SUCCESS)
     {
-        xil_printf("-- Fail! IRQ setup --\n");
+        xil_printf("-- Fail! IRQ setup --\r\n");
         return XST_FAILURE;
     }
 
@@ -213,9 +216,10 @@ int main(void)
             status = service_event();
             if (status != XST_SUCCESS)
             {
-                xil_printf("-- Fail! Service Event Poll --");
+                xil_printf("-- Fail! Service Event Poll --\r\n");
                 return XST_FAILURE;
             }
+            usleep(100);
         }
     }
     return XST_SUCCESS;
