@@ -45,7 +45,6 @@ int bram_write_coeffs(uint32_t bram_base_addr,
     }
 
     // 2) Write down coefficients
-    xil_printf("\r\n\rWrite address\t:\tdata \r\n");
     for (uint32_t i = 0; i < n_taps; i++)
     {
         write_data = coeffs[i];

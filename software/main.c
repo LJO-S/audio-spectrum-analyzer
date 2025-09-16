@@ -78,7 +78,6 @@ int service_event(void)
             if (index < HPF_SETS)
             {
                 status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
-                xil_printf("HPF coeffs written: %u kHz\r\n", current_hpf_cutoff);
             }
             else
             {
@@ -102,7 +101,6 @@ int service_event(void)
             if (index < HPF_SETS)
             {
                 status = bram_write_coeffs_hpf(hpf_coeffs[index], HPF_LEN);
-                xil_printf("HPF coeffs written: %u kHz\r\n", current_hpf_cutoff);
             }
             else
             {
@@ -126,7 +124,6 @@ int service_event(void)
             if (index < LPF_SETS)
             {
                 status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
-                xil_printf("LPF coeffs written: %u kHz\r\n", current_lpf_cutoff);
             }
             else
             {
@@ -149,7 +146,6 @@ int service_event(void)
             if (index < LPF_SETS)
             {
                 status = bram_write_coeffs_lpf(lpf_coeffs[index], LPF_LEN);
-                xil_printf("LPF coeffs written: %u kHz\r\n", current_lpf_cutoff);
             }
             else
             {
