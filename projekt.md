@@ -34,9 +34,8 @@ Idéen är följande:
 - Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
 
 ### TODO-filter
-- Fixa mjukvara för BRAM Ctrl och uppdatera TCL script
-- Sätt alla INCR/DECR slv(3:0) med interrupt
 - I2S Serializer
+- FFT
 
 
 
@@ -47,30 +46,30 @@ När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) a
 
 
 
-                     OBSOLETE
-+----------+       +----------+      +--------+     +----------+     +----------+     
-|          |       |          |      | Data   |---->|          |     | Data     |
-|    PS    |--??-->|   DMA    |----->| Parser |     |  FFT IP  |---->| Splitter |       
-|          |       |          |      |        |--0->|          |     |          |
-+----------+       +----------+      +--------+     +----------+     +----------+       
-      A |                                                             |        |
-      | |                                                             V        V
- data | | conf                                                      +---+    +---+        
-      | V                                                           | M |    | M |      
-+----------+                                                        | U |    | U |      
-|  Audio   |                                                        | L |    | L |      
-|  Codec   |                                                        +---+    +---+         
-|  SSM2603 |                                                          |        |
-+----------+                                                          +-> [+]<-+     
-                                                                           |
-                                                                           |
-                                                                           V
-                                                    +----------+      +----------+
-                                                    | DVI      |<-----| PingPong |
-                                        OUT<--------| Module   |      | BRAM     |
-                                                    |          |<--X--|          |
-                                                    +----------+      +----------+ 
-                                                               
+                     
++----------+     +-----+   +-------+    +--------+        +------+          +----------+     +----------+     
+|          |     |AXI  |   | Coeff |    | Audio  |------->|Signal \         |    FFT   |     | Data     |
+|    PS    |---->|BRAM |-->| BRAM  |    | Top    |        |Mux     |------->|I         |---->| Splitter |       
+|          |     |Ctrl |   |       |    |        |    +-->|       /      +->|Q         |     |          |
++----------+     +-----+   +-------+    |---/\---|    |   +------+       |  +----------+     +----------+       
+      |                       |         | 2x FIR |    |                  |                     |        |
+      |                       +-------->| Filter |    |                 GND                    V        V
+      | conf                            |---/\---|    |                                      +---+    +---+        
+      V                                 |        |    |                                      | M |    | M |      
++----------+                            | I2S    |  +----------+                             | U |    | U |      
+|  Audio   |--------------------------->| Deser  |  | Signal   |                             | L |    | L |      
+|  Codec   |                            +--------+  | Gen      |                             +---+    +---+         
+|  SSM2603 |--------------------------------+       +----------+                               |        |
++----------+                                |                                                  +-> [+]<-+     
+      /\                                    |                                                       |
+       |                                +--------+                                                  |
+       |                                | I2S    |                                                  V
+       |                                | Ser    |                            +----------+      +----------+
+    LINE IN                             +--------+                            | DVI      |<-----| PingPong |
+                                            |                  SCREEN<--------| Module   |      | BRAM     |
+                                            |                                 |          |<--X--|          |
+                                            V                                 +----------+      +----------+ 
+                                        HEADPHONES                     
                                                                
 
 
