@@ -16,11 +16,11 @@ entity audio_top is
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
         o_updating_coeffs_lpf : out std_logic;
-        o_raddr_lpf           : out unsigned(6 downto 0);
+        o_raddr_lpf           : out unsigned(8 downto 0);
         i_rdata_lpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         i_new_data_strobe_hpf : in std_logic;
         o_updating_coeffs_hpf : out std_logic;
-        o_raddr_hpf           : out unsigned(6 downto 0);
+        o_raddr_hpf           : out unsigned(8 downto 0);
         i_rdata_hpf           : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         -- ctrl i/f
         i_capture_en : in std_logic;

@@ -126,9 +126,9 @@ architecture rtl of project_top is
     signal w_new_data_strobe_lpf    : std_logic;
     signal w_new_data_strobe_hpf    : std_logic;
 
-    signal w_raddr_hpf : unsigned(6 downto 0);
+    signal w_raddr_hpf : unsigned(8 downto 0);
     signal w_rdata_hpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
-    signal w_raddr_lpf : unsigned(6 downto 0);
+    signal w_raddr_lpf : unsigned(8 downto 0);
     signal w_rdata_lpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
 
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
@@ -322,12 +322,10 @@ begin
         );
 
     -- Resize to fit output
-    -- o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));
-    o_raddr_lpf <= x"000000" & '0' & std_logic_vector(w_raddr_lpf);
+    o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));
     w_rdata_lpf <= i_rdata_lpf(G_FIR_COEFF_WIDTH - 1 downto 0);
 
-    -- o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
-    o_raddr_hpf <= x"000000" & '0' & std_logic_vector(w_raddr_hpf);
+    o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
     w_rdata_hpf <= i_rdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0);
     -- ============================================================================ 
     -- ============================================================================

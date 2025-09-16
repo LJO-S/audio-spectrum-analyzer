@@ -219,7 +219,7 @@ int main(void)
                 xil_printf("-- Fail! Service Event Poll --\r\n");
                 return XST_FAILURE;
             }
-            usleep(100);
+            usleep(1);
         }
     }
     return XST_SUCCESS;

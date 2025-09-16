@@ -25,7 +25,7 @@ entity fir_filter is
         i_new_data_strobe : in std_logic;
         o_updating_coeffs : out std_logic;
         -- To Block Memory
-        o_raddr : out unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+        o_raddr : out unsigned(integer(ceil(log2(real(4 * G_NBR_OF_TAPS)))) - 1 downto 0);
         i_rdata : in std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
         -- From ADC
         i_tvalid : in std_logic;
@@ -62,7 +62,8 @@ architecture rtl of fir_filter is
     -- FIR
     signal s_FIR_CTRL : t_fir_fsm := IDLE;
     -- signal r_coefficients : t_coefficients                               := (t_coefficients'range => (others => '0'));
-    signal r_coefficients : t_coefficients := (x"0008",
+    signal r_coefficients : t_coefficients := (
+    x"0008",
     x"0003",
     x"FFF5",
     x"FFF5",
@@ -180,7 +181,8 @@ architecture rtl of fir_filter is
     -- Coefficient Read
     signal s_COEFF_READ            : t_read_coefficients := IDLE;
     signal w_updating_coefficients : std_logic           := '0';
-    signal r_raddr                 : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal r_raddr_external        : unsigned(integer(ceil(log2(real(4 * G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal r_raddr_internal        : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
     -- Coefficient Write
 
 begin
@@ -287,8 +289,9 @@ begin
     begin
         if rising_edge(clk_25) then
             case s_COEFF_READ is
-                when IDLE          =>
-                    r_raddr <= (others => '0');
+                when IDLE                   =>
+                    r_raddr_internal <= (others => '0');
+                    r_raddr_external <= (others => '0');
                     -- Strobes when new data has been written
                     if (i_new_data_strobe = '1') then
                         s_COEFF_READ <= SETTLE_1CC;
@@ -298,12 +301,14 @@ begin
                 when SETTLE_2CC =>
                     s_COEFF_READ <= READ_DATA;
                 when READ_DATA =>
-                    s_COEFF_READ                        <= SETTLE_1CC;
-                    r_coefficients(to_integer(r_raddr)) <= signed(i_rdata);
-                    r_raddr                             <= r_raddr + 1;
-                    if (r_raddr >= G_NBR_OF_TAPS - 1) then
-                        r_raddr      <= (others => '0');
-                        s_COEFF_READ <= IDLE;
+                    s_COEFF_READ                                 <= SETTLE_1CC;
+                    r_coefficients(to_integer(r_raddr_internal)) <= signed(i_rdata);
+                    r_raddr_internal                             <= r_raddr_internal + 1;
+                    r_raddr_external                             <= r_raddr_external + 4;
+                    if (r_raddr_internal >= G_NBR_OF_TAPS - 1) then
+                        r_raddr_internal <= (others => '0');
+                        r_raddr_external <= (others => '0');
+                        s_COEFF_READ     <= IDLE;
                     end if;
                 when others =>
                     s_COEFF_READ <= IDLE;
@@ -313,26 +318,6 @@ begin
     w_updating_coefficients <= '1' when (s_COEFF_READ /= IDLE) else
         '0';
     o_updating_coeffs <= w_updating_coefficients;
-    o_raddr           <= r_raddr;
-    -- ================================================================================
-    -- dpmem_dram_inst : entity work.dpmem_bram
-    --     generic map(
-    --         G_RAM_WIDTH      => C_COEFF_WIDTH,
-    --         G_RAM_DEPTH_BITS => C_BIT_RANGE_TAPS
-    --     )
-    --     port map
-    --     (
-    --         clk => clk_25,
-    --         -- Port A (PS)
-    --         i_addra => i_waddr,
-    --         i_dina  => i_wdata,
-    --         i_wea   => i_we,
-    --         o_douta => open,
-    --         -- Port B (RTL)
-    --         i_addrb => std_logic_vector(r_raddr),
-    --         i_dinb => (others => '0'),
-    --         i_web   => '0',
-    --         o_doutb => r_rdata
-    --     );
+    o_raddr           <= r_raddr_external;
     -- ================================================================================
 end architecture;

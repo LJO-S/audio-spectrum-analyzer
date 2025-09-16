@@ -75,10 +75,8 @@ architecture rtl of image_generator is
     signal r_hpf_cutoff     : unsigned(16 downto 0) := to_unsigned(10_000, 17);
     signal w_freq_lpf_1000s : unsigned(6 downto 0);
     signal w_freq_hpf_1000s : unsigned(6 downto 0);
-    signal r_lpf_x_axis     : unsigned(9 downto 0) := (others => '0') ;
-    signal r_hpf_x_axis     : unsigned(9 downto 0) := (others => '0') ;
-
-    
+    signal r_lpf_x_axis     : unsigned(9 downto 0) := (others => '0');
+    signal r_hpf_x_axis     : unsigned(9 downto 0) := (others => '0');
 
     -- GUI
     signal w_ascii_draw      : std_logic;
@@ -256,7 +254,6 @@ begin
                 r_video_red_gui <= x"3F";
                 r_video_grn_gui <= x"3F";
                 r_video_blu_gui <= x"3F";
-                -- TODO vvvvvvvvv these determine what FCO GUI resolution we have
                 -- 5k = pxl 104
                 -- 10k = pxl 216
             elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 16) and
@@ -297,12 +294,12 @@ begin
     end process p_draw_lines;
     --*****************************************************************************
     -- Converting cutoff to x-axis position. Each kHz occupies ~ 21 pixels on the screen 
-    -- Multiply by 20 = 16 + 4 = (X << 4) + (X << 2)
+    -- Multiply by 21 = 16 + 4 + 1 = (X << 4) + (X << 2) + (X << 0)
     p_convert_freq_to_x_pos : process (clk_25)
     begin
         if rising_edge(clk_25) then
-            r_lpf_x_axis <= resize((w_freq_lpf_1000s & "0000") + (w_freq_lpf_1000s & "00"), r_lpf_x_axis'length);
-            r_hpf_x_axis <= resize((w_freq_hpf_1000s & "0000") + (w_freq_hpf_1000s & "00"), r_hpf_x_axis'length);
+            r_lpf_x_axis <= resize((w_freq_lpf_1000s & "0000") + (w_freq_lpf_1000s & "00") + w_freq_lpf_1000s, r_lpf_x_axis'length);
+            r_hpf_x_axis <= resize((w_freq_hpf_1000s & "0000") + (w_freq_hpf_1000s & "00") + w_freq_hpf_1000s, r_hpf_x_axis'length);
         end if;
     end process p_convert_freq_to_x_pos;
     --*****************************************************************************
