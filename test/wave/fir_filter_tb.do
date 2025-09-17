@@ -8,7 +8,6 @@ add wave -noupdate -expand -group tb -format Analog-Step -height 88 -max 1340.0 
 add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/i_we
 add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/i_tvalid
 add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/i_tdata
-add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/o_tready
 add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/o_tvalid
 add wave -noupdate -expand -group tb -radixshowbase 0 /fir_filter_tb/o_tdata
 add wave -noupdate -expand -group tb -childformat {{/fir_filter_tb/tb_coefficients(0) -radix hexadecimal}} -radixshowbase 0 -subitemconfig {/fir_filter_tb/tb_coefficients(0) {-height 20 -radix hexadecimal} /fir_filter_tb/tb_coefficients(1) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(2) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(3) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(4) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(5) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(6) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(7) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(8) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(9) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(10) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(11) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(12) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(13) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(14) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(15) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(16) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(17) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(18) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(19) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(20) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(21) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(22) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(23) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(24) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(25) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(26) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(27) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(28) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(29) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(30) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(31) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(32) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(33) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(34) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(35) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(36) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(37) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(38) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(39) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(40) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(41) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(42) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(43) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(44) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(45) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(46) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(47) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(48) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(49) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(50) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(51) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(52) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(53) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(54) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(55) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(56) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(57) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(58) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(59) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(60) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(61) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(62) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(63) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(64) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(65) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(66) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(67) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(68) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(69) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(70) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(71) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(72) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(73) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(74) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(75) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(76) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(77) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(78) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(79) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(80) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(81) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(82) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(83) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(84) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(85) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(86) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(87) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(88) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(89) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(90) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(91) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(92) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(93) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(94) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(95) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(96) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(97) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(98) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(99) {-height 15 -radixshowbase 0} /fir_filter_tb/tb_coefficients(100) {-height 15 -radixshowbase 0}} /fir_filter_tb/tb_coefficients
@@ -21,14 +20,10 @@ add wave -noupdate -radix unsigned /fir_filter_tb/p_read_stimuli_file/v_rd_idx
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/clk_25
 add wave -noupdate -expand -group fir_filter -divider in
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_new_data_strobe
-add wave -noupdate -expand -group fir_filter -radix unsigned -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_waddr
-add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_wdata
-add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_we
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_tvalid
 add wave -noupdate -expand -group fir_filter -format Analog-Step -height 74 -max 29489.999999999996 -min -29491.0 -radix decimal -radixshowbase 0 /fir_filter_tb/fir_filter_inst/i_tdata
 add wave -noupdate -expand -group fir_filter -divider out
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/o_updating_coeffs
-add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/o_tready
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/o_tvalid
 add wave -noupdate -expand -group fir_filter -format Analog-Step -height 74 -max 29011.0 -min -29082.0 -radix decimal -radixshowbase 0 /fir_filter_tb/fir_filter_inst/o_tdata
 add wave -noupdate -expand -group fir_filter -divider {DELAY_LINE & MAC}
@@ -51,22 +46,19 @@ add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/r_tvalid
 add wave -noupdate -expand -group fir_filter -divider COEFFICENTS
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/s_COEFF_READ
-add wave -noupdate -expand -group fir_filter -radix unsigned -radixshowbase 0 /fir_filter_tb/fir_filter_inst/r_raddr
-add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/r_rdata
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/r_coefficients
 add wave -noupdate -expand -group fir_filter -radixshowbase 0 /fir_filter_tb/fir_filter_inst/w_updating_coefficients
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/clk
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_addra
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_dina
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_wea
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/o_douta
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_addrb
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_dinb
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/i_web
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/o_doutb
-add wave -noupdate -group dpmem_bram /fir_filter_tb/fir_filter_inst/dpmem_dram_inst/ram_data_array
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/clk
+add wave -noupdate -expand -group DPMEM -radix unsigned /fir_filter_tb/dpmem_dram_inst/i_addra
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/i_dina
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/i_wea
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/o_douta
+add wave -noupdate -expand -group DPMEM -radix unsigned /fir_filter_tb/dpmem_dram_inst/i_addrb
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/i_dinb
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/i_web
+add wave -noupdate -expand -group DPMEM -radix decimal /fir_filter_tb/dpmem_dram_inst/o_doutb
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {71202980000 ps} 0} {{Cursor 2} {71182500000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {83779600421 ps} 0} {{Cursor 2} {71182500000 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 201
 configure wave -valuecolwidth 175
@@ -82,4 +74,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {71116543316 ps} {71279887876 ps}
+WaveRestoreZoom {0 ps} {46705861668 ps}

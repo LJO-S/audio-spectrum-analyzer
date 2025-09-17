@@ -23,6 +23,7 @@ architecture bench of filter_bank_tb is
     constant clk_period : time := 40 ns;
     -- Generics
     constant G_NBR_OF_TAPS : positive := 101;
+    constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS; -- *4 due to PS write incr being +4
     constant G_QFORMAT     : positive := 15;
     constant G_INPUT_WIDTH : positive := 16;
     constant G_COEFF_WIDTH : positive := 16;
@@ -34,18 +35,18 @@ architecture bench of filter_bank_tb is
     signal i_tdata               : std_logic_vector(15 downto 0);
     signal i_new_data_strobe_lpf : std_logic;
     signal o_updating_coeffs_lpf : std_logic;
-    signal i_waddr_lpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_waddr_lpf           : std_logic_vector(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal i_wdata_lpf           : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we_lpf              : std_logic;
     signal i_new_data_strobe_hpf : std_logic;
     signal o_updating_coeffs_hpf : std_logic;
-    signal i_waddr_hpf           : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_waddr_hpf           : std_logic_vector(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal i_wdata_hpf           : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we_hpf              : std_logic;
 
-    signal w_raddr_lpf : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal w_raddr_lpf : unsigned(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal w_rdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-    signal w_raddr_hpf : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal w_raddr_hpf : unsigned(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal w_rdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
 
     signal o_tvalid : std_logic;
@@ -75,7 +76,7 @@ architecture bench of filter_bank_tb is
         we <= '1';
         for i in tb_coefficient'range loop
             wdata <= std_logic_vector(tb_coefficient(i));
-            waddr <= std_logic_vector(to_unsigned(i, waddr'length));
+            waddr <= std_logic_vector(to_unsigned(4 * i, waddr'length));
             wait_clock(1, clk_period);
         end loop;
         -- Stop load and strobe new data flag
@@ -290,7 +291,7 @@ begin
     lpf_dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
-            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_MEM_SIZE))))
         )
         port map
         (
@@ -309,7 +310,7 @@ begin
     hpf_dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
-            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_MEM_SIZE))))
         )
         port map
         (

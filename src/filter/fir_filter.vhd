@@ -181,8 +181,7 @@ architecture rtl of fir_filter is
     -- Coefficient Read
     signal s_COEFF_READ            : t_read_coefficients := IDLE;
     signal w_updating_coefficients : std_logic           := '0';
-    signal r_raddr_external        : unsigned(integer(ceil(log2(real(4 * G_NBR_OF_TAPS)))) - 1 downto 0);
-    signal r_raddr_internal        : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal r_raddr                 : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
     -- Coefficient Write
 
 begin
@@ -289,9 +288,8 @@ begin
     begin
         if rising_edge(clk_25) then
             case s_COEFF_READ is
-                when IDLE                   =>
-                    r_raddr_internal <= (others => '0');
-                    r_raddr_external <= (others => '0');
+                when IDLE          =>
+                    r_raddr <= (others => '0');
                     -- Strobes when new data has been written
                     if (i_new_data_strobe = '1') then
                         s_COEFF_READ <= SETTLE_1CC;
@@ -301,14 +299,12 @@ begin
                 when SETTLE_2CC =>
                     s_COEFF_READ <= READ_DATA;
                 when READ_DATA =>
-                    s_COEFF_READ                                 <= SETTLE_1CC;
-                    r_coefficients(to_integer(r_raddr_internal)) <= signed(i_rdata);
-                    r_raddr_internal                             <= r_raddr_internal + 1;
-                    r_raddr_external                             <= r_raddr_external + 4;
-                    if (r_raddr_internal >= G_NBR_OF_TAPS - 1) then
-                        r_raddr_internal <= (others => '0');
-                        r_raddr_external <= (others => '0');
-                        s_COEFF_READ     <= IDLE;
+                    s_COEFF_READ                        <= SETTLE_1CC;
+                    r_coefficients(to_integer(r_raddr)) <= signed(i_rdata);
+                    r_raddr                             <= r_raddr + 1;
+                    if (r_raddr >= G_NBR_OF_TAPS - 1) then
+                        r_raddr <= (others => '0');
+                        s_COEFF_READ <= IDLE;
                     end if;
                 when others =>
                     s_COEFF_READ <= IDLE;
@@ -318,6 +314,7 @@ begin
     w_updating_coefficients <= '1' when (s_COEFF_READ /= IDLE) else
         '0';
     o_updating_coeffs <= w_updating_coefficients;
-    o_raddr           <= r_raddr_external;
+    -- x4 due to PS writing to every 4th addr in BRAM
+    o_raddr <= r_raddr & "00";
     -- ================================================================================
 end architecture;

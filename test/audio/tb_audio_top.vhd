@@ -23,6 +23,7 @@ architecture bench of audio_top_tb is
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
     constant G_NBR_OF_TAPS : positive := 101;
+    constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS;
     constant G_QFORMAT     : positive := 15;
     constant G_INPUT_WIDTH : positive := 16;
     constant G_COEFF_WIDTH : positive := 16;
@@ -36,16 +37,16 @@ architecture bench of audio_top_tb is
     signal i_lpf_en              : std_logic := '0';
     signal i_hpf_en              : std_logic := '0';
 
-    signal i_waddr_lpf : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_waddr_lpf : std_logic_vector(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal i_wdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we_lpf    : std_logic;
-    signal i_waddr_hpf : std_logic_vector(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal i_waddr_hpf : std_logic_vector(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal i_wdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we_hpf    : std_logic;
 
-    signal o_raddr_lpf : unsigned(6 downto 0);
+    signal o_raddr_lpf : unsigned(8 downto 0);
     signal i_rdata_lpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
-    signal o_raddr_hpf : unsigned(6 downto 0);
+    signal o_raddr_hpf : unsigned(8 downto 0);
     signal i_rdata_hpf : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
 
     signal i_capture_en : std_logic;
@@ -85,7 +86,7 @@ architecture bench of audio_top_tb is
         we <= '1';
         for i in tb_coefficient'range loop
             wdata <= std_logic_vector(tb_coefficient(i));
-            waddr <= std_logic_vector(to_unsigned(i, waddr'length));
+            waddr <= std_logic_vector(to_unsigned(4 * i, waddr'length));
             wait_clock(1, clk_period);
         end loop;
         -- Stop load and strobe new data flag
@@ -132,7 +133,7 @@ begin
     lpf_dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
-            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_MEM_SIZE))))
         )
         port map
         (
@@ -151,7 +152,7 @@ begin
     hpf_dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
-            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_NBR_OF_TAPS))))
+            G_RAM_DEPTH_BITS => integer(ceil(log2(real(G_MEM_SIZE))))
         )
         port map
         (

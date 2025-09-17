@@ -22,11 +22,14 @@ architecture bench of fir_filter_tb is
     -- Clock period
     constant clk_period : time := 40 ns;
     -- Generics
-    constant G_NBR_OF_TAPS      : positive := 101;
-    constant G_QFORMAT          : positive := 15;
-    constant G_INPUT_WIDTH      : positive := 16;
-    constant G_COEFF_WIDTH      : positive := 16;
-    constant C_NBR_OF_TAPS_LOG2 : integer  := integer(ceil(log2(real(G_NBR_OF_TAPS))));
+    constant G_NBR_OF_TAPS : positive := 101;
+    constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS; -- *4 due to PS write incr being +4
+    constant G_QFORMAT     : positive := 15;
+    constant G_INPUT_WIDTH : positive := 16;
+    constant G_COEFF_WIDTH : positive := 16;
+    -- Why *4 below? Because PS incr by +4 with each write (0x...0, 0x...4, 0x...8, 0x...C). 
+    -- The FIR filter then reads out in increments of 4.
+    constant C_MEM_SIZE_LOG2 : integer := integer(ceil(log2(real(G_MEM_SIZE))));
     type t_tb_cfg is record
         filter_type   : string;
         filter_cutoff : string;
@@ -36,10 +39,10 @@ architecture bench of fir_filter_tb is
     signal i_new_data_strobe : std_logic;
     signal o_updating_coeffs : std_logic;
 
-    signal i_waddr : std_logic_vector(C_NBR_OF_TAPS_LOG2 - 1 downto 0);
+    signal i_waddr : std_logic_vector(C_MEM_SIZE_LOG2 - 1 downto 0);
     signal i_wdata : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
     signal i_we    : std_logic;
-    signal w_raddr : unsigned(integer(ceil(log2(real(G_NBR_OF_TAPS)))) - 1 downto 0);
+    signal w_raddr : unsigned(integer(ceil(log2(real(G_MEM_SIZE)))) - 1 downto 0);
     signal w_rdata : std_logic_vector(G_COEFF_WIDTH - 1 downto 0);
 
     signal i_tvalid : std_logic;
@@ -78,7 +81,8 @@ architecture bench of fir_filter_tb is
         we <= '1';
         for i in tb_coefficients'range loop
             wdata <= std_logic_vector(tb_coefficients(i));
-            waddr <= std_logic_vector(to_unsigned(i, waddr'length));
+            -- Increment by 4 because that's how PS writes to BRAM via AXI BRAM Controller
+            waddr <= std_logic_vector(to_unsigned(4 * i, waddr'length));
             wait_clock(1, clk_period);
         end loop;
         -- Stop load and strobe new data flag
@@ -185,7 +189,7 @@ begin
     dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
-            G_RAM_DEPTH_BITS => C_NBR_OF_TAPS_LOG2
+            G_RAM_DEPTH_BITS => C_MEM_SIZE_LOG2
         )
         port map
         (
@@ -208,71 +212,71 @@ begin
             tb_counter <= tb_counter + 1;
         end if;
     end process;
--- 
-tb_48khz_strobe <= tb_counter(8);
--- 
-p_tdata_generator : process (clk_25)
-    variable v_rd_idx : natural := 0;
-begin
-    if rising_edge(clk_25) then
-        tb_48khz_strobe_d0 <= tb_48khz_strobe;
-        i_tvalid           <= '0';
-        i_tdata            <= (others => '0');
-        if (tb_48khz_strobe_d0 = '0') and (tb_48khz_strobe = '1') then
-            -- Detect rising_edge of new sample
-            i_tvalid <= '1';
-            i_tdata  <= tb_tdata(v_rd_idx);
-            if (v_rd_idx = tb_tdata'length - 1) then
-                v_rd_idx := 0;
-            else
-                v_rd_idx := v_rd_idx + 1;
+    -- 
+    tb_48khz_strobe <= tb_counter(8);
+    -- 
+    p_tdata_generator : process (clk_25)
+        variable v_rd_idx : natural := 0;
+    begin
+        if rising_edge(clk_25) then
+            tb_48khz_strobe_d0 <= tb_48khz_strobe;
+            i_tvalid           <= '0';
+            i_tdata            <= (others => '0');
+            if (tb_48khz_strobe_d0 = '0') and (tb_48khz_strobe = '1') then
+                -- Detect rising_edge of new sample
+                i_tvalid <= '1';
+                i_tdata  <= tb_tdata(v_rd_idx);
+                if (v_rd_idx = tb_tdata'length - 1) then
+                    v_rd_idx := 0;
+                else
+                    v_rd_idx := v_rd_idx + 1;
+                end if;
             end if;
         end if;
-    end if;
-end process p_tdata_generator;
-/* ---------------------------------------------------------------*/
--- Actual testbench
-main : process
-begin
-    test_runner_setup(runner, runner_cfg);
-    while test_suite loop
-        -- ===========================================
-        wait until clk_25 = '1';
-        wait for 10 * clk_period;
-        -- Load coefficients based on generic set by run.py
-        load_coefficients(
-        i_we,
-        i_waddr,
-        i_wdata,
-        i_new_data_strobe
-        );
-        -- ===========================================
-
-        info("Directory containing testbench: " & tb_path(runner_cfg));
-        info("Test output directory: " & output_path(runner_cfg));
-
-        if run("filter-cutoffs") then
-            info("Running fir_filter " & tb_cfg.filter_type & "-" & tb_cfg.filter_cutoff);
-            -- set_timeout(runner, 2 ms);
-
-            wait_clock(1, clk_period);
-            check(o_updating_coeffs = '1', "Expected us to update coefficients!");
-            wait until o_updating_coeffs = '0';
-
-            -- Wait for FIR to fill up
-            for i in 0 to (G_NBR_OF_TAPS - 1) loop
-                wait until rising_edge(o_tvalid);
-            end loop;
-
-            -- Start spitting out data
-            for i in 0 to (tb_tdata'length - G_NBR_OF_TAPS - 1) loop
-                wait until rising_edge(o_tvalid);
-            end loop;
-            test_runner_cleanup(runner);
+    end process p_tdata_generator;
+    /* ---------------------------------------------------------------*/
+    -- Actual testbench
+    main : process
+    begin
+        test_runner_setup(runner, runner_cfg);
+        while test_suite loop
             -- ===========================================
-        end if;
-    end loop;
-end process main;
--- test_runner_watchdog(runner, 10 ms);
-/* ---------------------------------------------------------------*/
+            wait until clk_25 = '1';
+            wait for 10 * clk_period;
+            -- Load coefficients based on generic set by run.py
+            load_coefficients(
+            i_we,
+            i_waddr,
+            i_wdata,
+            i_new_data_strobe
+            );
+            -- ===========================================
+
+            info("Directory containing testbench: " & tb_path(runner_cfg));
+            info("Test output directory: " & output_path(runner_cfg));
+
+            if run("filter-cutoffs") then
+                info("Running fir_filter " & tb_cfg.filter_type & "-" & tb_cfg.filter_cutoff);
+                -- set_timeout(runner, 2 ms);
+
+                wait_clock(1, clk_period);
+                check(o_updating_coeffs = '1', "Expected us to update coefficients!");
+                wait until o_updating_coeffs = '0';
+
+                -- Wait for FIR to fill up
+                for i in 0 to (G_NBR_OF_TAPS - 1) loop
+                    wait until rising_edge(o_tvalid);
+                end loop;
+
+                -- Start spitting out data
+                for i in 0 to (tb_tdata'length - G_NBR_OF_TAPS - 1) loop
+                    wait until rising_edge(o_tvalid);
+                end loop;
+                test_runner_cleanup(runner);
+                -- ===========================================
+            end if;
+        end loop;
+    end process main;
+    -- test_runner_watchdog(runner, 10 ms);
+    /* ---------------------------------------------------------------*/
 end;
