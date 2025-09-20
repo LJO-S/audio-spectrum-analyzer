@@ -56,6 +56,7 @@ begin
         end if;
     end process p_pipeline;
     -- ==================================================================
+    -- TODO make this smarter based upon ring_buffer FIFO
     p_fetch_data : process (clk_25)
     begin
         if rising_edge(clk_25) then
