@@ -56,7 +56,6 @@ begin
         end if;
     end process p_pipeline;
     -- ==================================================================
-    -- TODO make this smarter based upon ring_buffer FIFO
     p_fetch_data : process (clk_25)
     begin
         if rising_edge(clk_25) then
@@ -142,6 +141,10 @@ begin
                     r_data  <= r_data(r_data'high - 1 downto 0) & r_data(r_data'high);
                     r_sdata <= r_data(r_data'high);
                 end if;
+            end if;
+
+            if (i_en = '0') then
+                r_sdata <= '0';
             end if;
         end if;
     end process p_serializer;

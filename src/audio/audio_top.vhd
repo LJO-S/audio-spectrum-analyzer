@@ -32,6 +32,7 @@ entity audio_top is
         o_mclk  : out std_logic; -- master clk
         o_lrclk : out std_logic; -- left/right clk
         o_bclk  : out std_logic; -- bit clk
+        o_pbdat : out std_logic; -- serialized data
         -- FFT i/f
         o_tdata  : out std_logic_vector(31 downto 0);
         o_tvalid : out std_logic;
@@ -150,40 +151,21 @@ begin
             o_tvalid     => o_tvalid,
             o_tlast      => o_tlast
         );
-    /* ------------------------------------------------------ */
-    -- TODO hook these up
-    -- btw dont forget to simulate the ring buffer with the i2s
-    ring_buffer_fifo_inst : entity work.ring_buffer_fifo
-        generic map(
-            G_DEPTH => G_DEPTH,
-            G_WIDTH => G_WIDTH
-        )
-        port map
-        (
-            clk          => clk,
-            reset        => reset,
-            i_wr_en      => i_wr_en,
-            i_wr_data    => i_wr_data,
-            i_rd_en      => i_rd_en,
-            o_rd_data    => o_rd_data,
-            o_rd_valid   => o_rd_valid,
-            o_empty      => o_empty,
-            o_empty_next => o_empty_next,
-            o_full       => o_full,
-            o_full_next  => o_full_next
-        );
 
+    /* ------------------------------------------------------ */
+    -- I2S Serializer
+    -- Data is streamed (no backpressure) from the deserialized input via
+    -- the filter bank and out again. 
     i2s_ser_inst : entity work.i2s_ser
         port map
         (
             clk_25   => clk_25,
-            i_pbclk  => i_pbclk,
-            i_bclk   => i_bclk,
-            i_tdata  => i_tdata,
-            i_tvalid => i_tvalid,
-            i_en     => i_en,
+            i_pbclk  => w_lrclk,
+            i_bclk   => w_bclk,
+            i_tdata  => w_filter_to_buffer_data,
+            i_tvalid => w_filter_to_buffer_valid,
+            i_en     => w_capture_en,
             o_pbdat  => o_pbdat
         );
-
     /* ------------------------------------------------------ */
 end architecture;

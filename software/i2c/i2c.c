@@ -190,7 +190,7 @@ static int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << CLKOUT); /* Power up */
     u16Data |= (1 << OSC);    /* Power down */
     u16Data |= (1 << OUT);    /* Power down */
-    u16Data |= (1 << DAC);    /* Power down */
+    u16Data |= (0 << DAC);    /* Power up */
     u16Data |= (0 << ADC);    /* Power up */
     u16Data |= (0 << MIC);    /* Power down */
     u16Data |= (0 << LINEIN); /* Power up */
@@ -210,13 +210,22 @@ static int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0b010111 << 0); /* Default volume (0 dB) */
     WriteReg(u8RegAddr, u16Data, "Right Ch ADC Vol");
 
-    /* ------------------------------------------------*/
-    // Skipping R2-R3 (DAC Volumes)
-    /* ------------------------------------------------*/
+    /* ------------ Left-Ch DAC output vol -------------*/
+    u8RegAddr = R2_LEFT_CHANNEL_DAC_VOLUME;
+    u16Data = 0x0000;
+    u16Data |= (0b1111001 << 0); /* Default volume (0 dB) */
+    WriteReg(u8RegAddr, u16Data, "Left Ch DAC Vol");
+
+    /* ------------ Right-Ch DAC output vol -------------*/
+    u8RegAddr = R3_RIGHT_CHANNEL_DAC_VOLUME;
+    u16Data = 0x0000;
+    u16Data |= (0b1111001 << 0); /* Default volume (0 dB) */
+    WriteReg(u8RegAddr, u16Data, "Right Ch DAC Vol");
 
     /* -------------- Analog Audio Path -------------- */
     u8RegAddr = R4_ANALOG_AUDIO_PATH;
     u16Data = 0x0000;
+    u16Data |= (1 << DACSEL); /* Allow mixed DAC */
     u16Data |= (0 << BYPASS); /* Disable bypass  */
     u16Data |= (0 << INSEL); /* Select line input */
     u16Data |= (1 << MUTEMIC); /* Enable mute mic */
@@ -224,8 +233,12 @@ static int IicPsAudioCodecSetup(u16 deviceId)
     WriteReg(u8RegAddr, u16Data, "Analog Audio Path");
 
     /* ------------------------------------------------*/
-    // Skipping R5 (DAC Audio Path)
-    /* ------------------------------------------------*/
+    u8RegAddr = R5_DIGITAL_AUDIO_PATH;
+    u16Data = 0x0000;
+    u16Data |= (0 << HPOR); /* Clear DC offset */
+    u16Data |= (0 << DACMU); /* Disable mute */
+    u16Data |= (0b00 << DEEPMPH); /* 0b00 = no emphasis, 0b11= 48 kHz de-emphasis */
+    u16Data |= (0 << ADCHPF); /* Enable ADC HPF */
 
     /* -------------- Digital Audio I/F -------------- */
     u8RegAddr = R7_DIGITAL_AUDIO_I_F;
@@ -268,7 +281,7 @@ static int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << CLKOUT); /* Power up */
     u16Data |= (1 << OSC);    /* Power down */
     u16Data |= (0 << OUT);    /* Power up */
-    u16Data |= (1 << DAC);    /* Power down */
+    u16Data |= (0 << DAC);    /* Power up */
     u16Data |= (0 << ADC);    /* Power up */
     u16Data |= (1 << MIC);    /* Power down */
     u16Data |= (0 << LINEIN); /* Power up */
