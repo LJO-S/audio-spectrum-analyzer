@@ -44,6 +44,7 @@ entity project_top is
         o_mclk  : out std_logic;
         o_lrclk : out std_logic;
         o_bclk  : out std_logic;
+        o_pbdat : out std_logic;
         -- TMDS CLK
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -315,6 +316,7 @@ begin
             o_mclk       => o_mclk,
             o_lrclk      => o_lrclk,
             o_bclk       => o_bclk,
+            o_pbdat      => o_pbdat,
             o_tdata      => w_axis_tdata_audio_to_xfft,
             o_tvalid     => w_axis_tvalid_audio_to_xfft,
             o_tlast      => w_axis_tlast_audio_to_xfft,
