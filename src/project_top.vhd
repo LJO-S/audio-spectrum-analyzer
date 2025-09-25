@@ -40,11 +40,13 @@ entity project_top is
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
         -- Audio Codec IF (SSM2603)
-        i_sdata : in std_logic;
-        o_mclk  : out std_logic;
-        o_lrclk : out std_logic;
-        o_bclk  : out std_logic;
-        o_pbdat : out std_logic;
+        i_sdata     : in std_logic;
+        o_mclk      : out std_logic;
+        o_rec_lrclk : out std_logic;
+        o_bclk      : out std_logic;
+        o_pb_lrclk  : out std_logic;
+        o_pbdat     : out std_logic;
+        o_dac_muten : out std_logic;
         -- TMDS CLK
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -134,6 +136,8 @@ architecture rtl of project_top is
 
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
     signal s_state_drain_guard : t_drain_guard := IDLE;
+
+    signal w_lrclk : std_logic;
 
 begin
     -- ============================================================================ 
@@ -314,7 +318,7 @@ begin
             i_capture_en => w_capture_en_drain_guard,
             i_sdata      => i_sdata,
             o_mclk       => o_mclk,
-            o_lrclk      => o_lrclk,
+            o_lrclk      => w_lrclk,
             o_bclk       => o_bclk,
             o_pbdat      => o_pbdat,
             o_tdata      => w_axis_tdata_audio_to_xfft,
@@ -322,6 +326,11 @@ begin
             o_tlast      => w_axis_tlast_audio_to_xfft,
             i_tready     => w_axis_tready_xfft_to_audio
         );
+
+    -- DAC Output Mute, Active Low
+    o_dac_muten <= '1';
+    o_rec_lrclk <= w_lrclk;
+    o_pb_lrclk  <= w_lrclk;
 
     -- Resize to fit output
     o_raddr_lpf <= std_logic_vector(resize('0' & w_raddr_lpf, o_raddr_lpf'length));

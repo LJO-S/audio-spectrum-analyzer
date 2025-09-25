@@ -34,7 +34,7 @@ extern "C"
 #define BYPASS 3
 #define DACSEL 4
 #define SIDETONE_EN 5
-#define SIDETONE_ATT 7
+#define SIDETONE_ATT 6
 
 /* Digital Audio Path 0x05 */
 #define ADCHPF 0

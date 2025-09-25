@@ -61,26 +61,27 @@ add wave -noupdate -expand -group tb /audio_top_tb/tb_serial_value
 add wave -noupdate -expand -group tb /audio_top_tb/main/tb_i2s_ovalid
 add wave -noupdate -expand -group tb /audio_top_tb/tb_fft_stall
 add wave -noupdate -expand -group tb /audio_top_tb/tb_tready_override
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/clk_25
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_pbclk
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_bclk
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_tdata
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_tvalid
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_en
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/o_pbdat
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/s_ser_state
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_pbclk
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_bclk
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_left
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_right
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_bclk_re
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_bclk_fe
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_bit_cntr
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_data_pending
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_data
-add wave -noupdate -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_sdata
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/clk_25
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_pbclk
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_bclk
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_tdata
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_tvalid
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_en
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/o_pbdat
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/s_ser_state
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_pbclk
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_bclk
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_left
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_right
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_bclk_re
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/w_bclk_fe
+add wave -noupdate -expand -group i2s_ser -radix unsigned /audio_top_tb/audio_top_inst/i2s_ser_inst/r_bit_cntr
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_data_pending
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/r_sdata
+add wave -noupdate -expand -group i2s_ser -radix hexadecimal /audio_top_tb/audio_top_inst/i2s_ser_inst/r_data_left
+add wave -noupdate -expand -group i2s_ser -radix hexadecimal /audio_top_tb/audio_top_inst/i2s_ser_inst/r_data_right
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {41974071856 ps} 0}
+WaveRestoreCursors {{Cursor 1} {84121979009 ps} 0} {Trace {3255666968 ps} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 216
 configure wave -valuecolwidth 100
@@ -96,4 +97,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {42121581004 ps} {42122927316 ps}
+WaveRestoreZoom {3244140635 ps} {3255604731 ps}

@@ -160,11 +160,11 @@ begin
         port map
         (
             clk_25   => clk_25,
+            i_en     => w_capture_en,
             i_pbclk  => w_lrclk,
             i_bclk   => w_bclk,
             i_tdata  => w_filter_to_buffer_data,
             i_tvalid => w_filter_to_buffer_valid,
-            i_en     => w_capture_en,
             o_pbdat  => o_pbdat
         );
     /* ------------------------------------------------------ */

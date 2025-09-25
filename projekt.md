@@ -34,9 +34,8 @@ Idéen är följande:
 - Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
 
 ### TODO-filter
-- I2S Serializer
 - FFT
-
+- Gör FFT och GUI dynamiskt så man kan se t.ex. 0-10 khz
 
 
 ## ########################################################

@@ -232,13 +232,14 @@ static int IicPsAudioCodecSetup(u16 deviceId)
     u16Data |= (0 << MICBOOST); /* Disable mic boost */
     WriteReg(u8RegAddr, u16Data, "Analog Audio Path");
 
-    /* ------------------------------------------------*/
+    /* ------------- Digital Audio Path ----------------*/
     u8RegAddr = R5_DIGITAL_AUDIO_PATH;
     u16Data = 0x0000;
     u16Data |= (0 << HPOR); /* Clear DC offset */
     u16Data |= (0 << DACMU); /* Disable mute */
-    u16Data |= (0b00 << DEEPMPH); /* 0b00 = no emphasis, 0b11= 48 kHz de-emphasis */
+    u16Data |= (0b11 << DEEPMPH); /* 0b00 = no emphasis, 0b11= 48 kHz de-emphasis */
     u16Data |= (0 << ADCHPF); /* Enable ADC HPF */
+    WriteReg(u8RegAddr, u16Data, "Digital Audio Path");
 
     /* -------------- Digital Audio I/F -------------- */
     u8RegAddr = R7_DIGITAL_AUDIO_I_F;

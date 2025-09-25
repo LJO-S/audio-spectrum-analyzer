@@ -19,7 +19,7 @@ entity i2s_ser is
 end entity i2s_ser;
 
 architecture rtl of i2s_ser is
-    constant C_BIT_CNTR_MAX : natural := 16;
+    constant C_BIT_CNTR_MAX : natural := 16 + 1;
 
     type t_serial_fsm is (IDLE, WAIT_LEFT, SKIP_LEFT, WRITE_LEFT, WAIT_RIGHT, SKIP_RIGHT, WRITE_RIGHT);
     signal s_ser_state : t_serial_fsm := IDLE;
@@ -35,9 +35,8 @@ architecture rtl of i2s_ser is
     signal r_bit_cntr : unsigned(7 downto 0) := (others => '0');
 
     signal r_data_pending : std_logic_vector(15 downto 0) := (others => '0');
-    signal r_data         : std_logic_vector(15 downto 0) := (others => '0');
-    -- signal r_ldata        : std_logic                     := '0';
-    -- signal r_rdata        : std_logic                     := '0';
+    signal r_data_left    : std_logic_vector(15 downto 0) := (others => '0');
+    signal r_data_right   : std_logic_vector(15 downto 0) := (others => '0');
     signal r_sdata : std_logic := '0';
 begin
     -- ==================================================================
@@ -135,11 +134,17 @@ begin
     begin
         if rising_edge(clk_25) then
             if (s_ser_state = WAIT_LEFT) then
-                r_data <= r_data_pending;
-            elsif (s_ser_state = WRITE_LEFT) or (s_ser_state = WRITE_RIGHT) then
+                r_data_left  <= r_data_pending;
+                r_data_right <= r_data_pending;
+            elsif (s_ser_state = WRITE_LEFT) then
                 if (w_bclk_fe = '1') then
-                    r_data  <= r_data(r_data'high - 1 downto 0) & r_data(r_data'high);
-                    r_sdata <= r_data(r_data'high);
+                    r_data_left <= r_data_left(r_data_left'high - 1 downto 0) & '0';
+                    r_sdata     <= r_data_left(r_data_left'high);
+                end if;
+            elsif (s_ser_state = WRITE_RIGHT) then
+                if (w_bclk_fe = '1') then
+                    r_data_right <= r_data_right(r_data_right'high - 1 downto 0) & '0';
+                    r_sdata     <= r_data_right(r_data_right'high);
                 end if;
             end if;
 
