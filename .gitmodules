@@ -1,0 +1,3 @@
+[submodule "src/fft-radix2-dit"]
+	path = src/fft-radix2-dit
+	url = https://github.com/LJO-S/fft-radix2-dit
