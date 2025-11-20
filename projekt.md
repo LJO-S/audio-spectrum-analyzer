@@ -1,3 +1,23 @@
+
+## ########################################################
+# Cloning the project
+The project uses git submodules. There's 2 ways to clone the project:
+
+A. 
+- git clone <URL>
+- git submodule init
+- git submodule update
+
+OR
+
+B. 
+- git clone --recurse-submodules <URL> 
+
+## ########################################################
+# Building the project
+- bla bla bla tcl scripts bla bla vivado 2022.2
+
+
 ## ########################################################
 Idéen är följande:
 
@@ -15,23 +35,19 @@ Idéen är följande:
 
 ## ########################################################
 ## Growth 
-- Ta in RAW-I2S/FFT-datan i PS och göra någon behandling. Resultatet muxas med en GPIO, typ PBUTTON.
-- Låta en GPIO m interrupt aktivera ett FIR-filter i PL (interrupten via PS)
+- Window-funktion
 ## ########################################################
 ## Notes
 
 ## ########################################################
 ## TODO
-- Ta bort BPF och ersätt med EMA
-    - Kanske EMA-orig ska va en cursor? Men hur fan styr vi den...
-- Kolla om 3rd party simulator kan simulera XilinxIP?
-    - Jajemen, kör 'compile_simlibs ...' i TCL och få alla bibliotek. 
-    - Exempelvis hade varit att låta python köra ett TCL-skript som bygger upp bd-blocket, sen kompilera simlibs och lägg till i Vunit. 
-      ... Det finns ett Vunit-exempel som Asplund lagt upp i just detta syfte.
-    - Går det med QuestaSim FSE? Ja, med detta fulhack: https://adaptivesupport.amd.com/s/question/0D52E00006q090LSAQ/failed-to-find-the-questasim-simulator-executable-when-i-try-to-compile-vivado-libraries-for-questasim?language=en_US
-    - Problemet är att fulhacket bygger på att vcom är ett .sh-skript. Och inte en .exe. Så gör om detta vid tillfälle för dual-boot. 
-- Skriv egen FFT istället för IP
-- Gör en project_top som instansierar project_top_pl.vhd & project_top_ps.vhd. Låt klockorna komma från pl-delen. Då kan project_top PL simuleras på egen hand. 
+- Ta bort BPF och ersätt med Window
+- Fixa twiddle ROM prelaod att komma från rätt ställe 
+- Fixa TLAST-logic ut från FFT block
+- Fixa "äntligen korrekt" tvalid till ping-pong memory
+    - Gör automatisk testbänk
+- 
+
 
 ### TODO-filter
 - FFT
@@ -86,9 +102,9 @@ DISPLAY
                 | |    \  /\                                      |______________| |_ 144
              200| |     \/  \                                     | LPF:  00 KHZ | |
                 | |          \_/\                                 |______________| |_ 192
-                | |              |                                | BPF:  00 KHZ | |
+                | |              |                                | HPF:  00 KHZ | |
                 | |              |                                |_____________ | |_ 240
-                | |              |/\                /\            | HPF:  00 KHZ | |
+                | |              |/\                /\            | WIN:  HANN   | |
                 | |                 |            /\/  \           |______________| |_ 288
                 | |                  \          /      \          | EMA          |~~~
                 X |___________________\________/________\_________|_MISC_________| |_ 400

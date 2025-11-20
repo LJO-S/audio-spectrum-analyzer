@@ -1,3 +1,19 @@
+-- ----------------------------------------------------
+--       _____              _____
+--      |     |-->0   RD<--|     |   
+--      |     |    \ /     |     |   
+--      |  0  |     X      |  1  |   
+--      |     |    / \     |     |   
+--      |_____|<--WR   0-->|_____|
+-- 
+-- The module writes to one memory while reading from the other.
+-- Once the other memory is filled with new data, the module reads
+-- from that memory and writes to the previous. Hence "ping-pong"
+
+-- The video driver keeps reading from the same memory until the FFT
+-- has written 1024 new values. Therefore, the ping-pong driver is the
+-- FFT which in turn is driven by the sampler.
+-- ----------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -5,16 +21,15 @@ use ieee.numeric_std.all;
 entity ping_pong_memory is
     port (
         clk_25 : in std_logic;
-
         -- FFT input data
         i_fft_data_magn  : in std_logic_vector(31 downto 0);
-        i_fft_data_last  : in std_logic;
         i_fft_data_valid : in std_logic;
+        i_fft_data_last  : in std_logic;
         i_xk_index       : in std_logic_vector(9 downto 0);
         -- Memory input data
         i_rd_addr : in std_logic_vector(9 downto 0);
         -- Memory output data
-        o_rd_data  : out std_logic_vector(31 downto 0)
+        o_rd_data : out std_logic_vector(31 downto 0)
     );
 end entity ping_pong_memory;
 
@@ -30,88 +45,67 @@ architecture rtl of ping_pong_memory is
     signal r_wr_en_bram0   : std_logic                     := '0';
     signal r_wr_en_bram1   : std_logic                     := '0';
 
-    signal r_xk_index          : std_logic_vector(9 downto 0) := (others => '0');
-    signal r_xk_index_d1       : std_logic_vector(9 downto 0) := (others => '0');
-    signal r_fft_data_valid    : std_logic                    := '0';
-    signal r_fft_data_valid_d1 : std_logic                    := '0';
-    signal r_fft_data_last     : std_logic                    := '0';
-    signal r_fft_data_last_d1  : std_logic                    := '0';
-    signal r_pingpong_d1       : std_logic                    := '0';
-    signal r_pingpong_d2       : std_logic                    := '0';
+    signal r_xk_index          : std_logic_vector(9 downto 0)  := (others => '0');
+    signal r_xk_index_d1       : std_logic_vector(9 downto 0)  := (others => '0');
+    signal r_fft_data_valid    : std_logic                     := '0';
+    signal r_fft_data_valid_d1 : std_logic                     := '0';
+    signal r_fft_data_last     : std_logic                     := '0';
+    signal r_fft_data_last_d1  : std_logic                     := '0';
+    signal r_fft_data_magn     : std_logic_vector(31 downto 0) := (others => '0');
+    signal r_pingpong_d1       : std_logic                     := '0';
+    signal r_pingpong_d2       : std_logic                     := '0';
+    signal r_rd_addr           : std_logic_vector(9 downto 0)  := (others => '0');
 begin
-    -- ----------------------------------------------------
-    --       _____              _____
-    --      |     |-->0   RD<--|     |   
-    --      |     |    \ /     |     |   
-    --      |  0  |     X      |  1  |   
-    --      |     |    / \     |     |   
-    --      |_____|<--WR   0-->|_____|
-    -- 
-    -- The module writes to one memory while reading from the other.
-    -- Once the other memory is filled with new data, the module reads
-    -- from that memory and writes to the previous. Hence "ping-pong"
-
-    -- The video driver keeps reading from the same memory until the FFT
-    -- has written 1024 new values. Therefore, the ping-pong driver is the
-    -- FFT which in turn is driven by the sampler.
     -- ----------------------------------------------------
     p_main : process (clk_25)
     begin
         if rising_edge(clk_25) then
-            r_xk_index    <= i_xk_index;
-            r_xk_index_d1 <= r_xk_index;
+            r_xk_index       <= i_xk_index;
+            r_fft_data_magn  <= i_fft_data_magn;
+            r_fft_data_valid <= i_fft_data_valid;
+            r_fft_data_last  <= i_fft_data_last;
+            r_rd_addr        <= i_rd_addr;
 
-            r_fft_data_valid    <= i_fft_data_valid;
-            r_fft_data_valid_d1 <= r_fft_data_valid;
-
-            r_fft_data_last    <= i_fft_data_last;
-            r_fft_data_last_d1 <= r_fft_data_last;
-
+            -- hm
             r_pingpong_d1 <= r_pingpong;
             r_pingpong_d2 <= r_pingpong_d1;
 
             if (r_pingpong = '0') then
-                -- BRAM0 read, BRAM1 write
-                -- o_rd_data       <= r_rd_data_bram0;
-                r_addr_bram0    <= i_rd_addr;
+                -- BRAM0 read
+                r_addr_bram0    <= r_rd_addr;
                 r_wr_en_bram0   <= '0';
                 r_wr_data_bram0 <= (others => '0');
-
-                r_addr_bram1    <= r_xk_index_d1;
-                r_wr_en_bram1   <= r_fft_data_valid_d1;
-                r_wr_data_bram1 <= i_fft_data_magn;
+                -- BRAM1 write
+                r_addr_bram1    <= r_xk_index;
+                r_wr_en_bram1   <= r_fft_data_valid;
+                r_wr_data_bram1 <= r_fft_data_magn;
             else
-                -- BRAM1 read, BRAM0 write
-                -- o_rd_data       <= r_rd_data_bram1;
-                r_addr_bram1    <= i_rd_addr;
+                -- BRAM1 read
+                r_addr_bram1    <= r_rd_addr;
                 r_wr_en_bram1   <= '0';
                 r_wr_data_bram1 <= (others => '0');
-
-                r_addr_bram0    <= r_xk_index_d1;
-                r_wr_en_bram0   <= r_fft_data_valid_d1;
-                r_wr_data_bram0 <= i_fft_data_magn;
+                -- BRAM0 write
+                r_addr_bram0    <= r_xk_index;
+                r_wr_en_bram0   <= r_fft_data_valid;
+                r_wr_data_bram0 <= r_fft_data_magn;
                 null;
             end if;
 
-            if (r_fft_data_last_d1 = '1') and (r_fft_data_last = '0') and (r_fft_data_valid_d1 = '1') then
+            if (r_fft_data_last = '1') and (i_fft_data_last = '0') and (r_fft_data_valid = '1') then
                 r_pingpong <= not r_pingpong;
             end if;
         end if;
     end process p_main;
     ----------------------------------------------------
-    p_output_mux : process (
-        r_pingpong,
-        r_pingpong_d1,
-        r_pingpong_d2,
-        r_rd_data_bram0,
-        r_rd_data_bram1
-        )
+    p_output_mux : process (clk_25)
     begin
-        -- if (r_pingpong = '0') then
-        if (r_pingpong_d2 = '0') then
-            o_rd_data <= r_rd_data_bram0;
-        else
-            o_rd_data <= r_rd_data_bram1;
+        if rising_edge(clk_25) then
+            -- Pipe here due to 1cc bram read latency
+            if (r_pingpong_d2 = '0') then
+                o_rd_data <= r_rd_data_bram0;
+            else
+                o_rd_data <= r_rd_data_bram1;
+            end if;
         end if;
     end process p_output_mux;
     ----------------------------------------------------
