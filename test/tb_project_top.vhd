@@ -28,6 +28,7 @@ architecture bench of project_top_tb is
     constant G_FFT_TW_QFORMAT       : natural  := 15;
     constant G_100MS_CYCLES         : natural  := 5_000;
     constant G_DEBOUNCE_LIMIT       : natural  := 250;
+    constant G_PRELOAD_DIRECTIVE    : string   := "testbench";
     constant G_DEBUG                : boolean  := true;
     -- Ports
     signal i_clk_25              : std_logic := '0';
@@ -71,6 +72,7 @@ begin
             G_FFT_TW_QFORMAT       => G_FFT_TW_QFORMAT,
             G_100MS_CYCLES         => G_100MS_CYCLES,
             G_DEBOUNCE_LIMIT       => G_DEBOUNCE_LIMIT,
+            G_PRELOAD_DIRECTIVE    => G_PRELOAD_DIRECTIVE,
             G_DEBUG                => G_DEBUG
         )
         port map
