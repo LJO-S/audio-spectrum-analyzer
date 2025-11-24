@@ -21,9 +21,8 @@ entity video_driver_top is
         i_hpf_incr : in std_logic;
         i_hpf_decr : in std_logic;
 
-        -- PING_PONG memory I/O ports
+        -- Ping Pong Mem IF
         o_rd_addr : out std_logic_vector(9 downto 0);
-        -- Memory output data
         i_rd_data : in std_logic_vector(31 downto 0);
         -- PIN mapping ports
         o_TMDS_clk_p : out std_logic;
@@ -48,8 +47,6 @@ architecture rtl of video_driver_top is
 
     -- Drawing
     signal w_HDMI_HPD  : std_logic;
-    signal w_counter_X : unsigned(9 downto 0);
-    signal w_counter_Y : unsigned(9 downto 0);
     signal w_HSYNC     : std_logic;
     signal w_VSYNC     : std_logic;
     signal w_draw      : std_logic;
@@ -177,7 +174,6 @@ begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
     -- Outputs
-    --o_HDMI_HPD <= w_HDMI_HPD;
 
     o_TMDS_clk_p <= w_TMDS_out_clk_p;
     o_TMDS_clk_n <= w_TMDS_out_clk_n;

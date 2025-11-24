@@ -18,7 +18,7 @@ architecture bench of signal_generator_tb is
     -- Generics
     constant G_FFT_BIT_SIZE : natural := 16;
     constant G_RAM_DEPTH    : natural := 1024;
-    constant G_INIT_FILE    : string  := "../../../scripts/data/multi_15khz_16bits.txt";
+    constant G_INIT_FILE    : string  := "../../../../scripts/data/multi_15khz_16bits.txt";
     -- Ports
     signal clk_25   : std_logic := '0';
     signal i_start  : std_logic := '0';

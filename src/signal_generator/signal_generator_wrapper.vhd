@@ -7,7 +7,6 @@ entity signal_generator_wrapper is
         G_RAM_DEPTH         : natural := 1024;
         G_100MS_CYCLES      : natural := 2_500_000;
         G_DEBOUNCE_LIMIT    : natural := 250_000;
-        G_DEBUG             : boolean := false;
         G_PRELOAD_DIRECTIVE : string  := "build"
     );
     port (

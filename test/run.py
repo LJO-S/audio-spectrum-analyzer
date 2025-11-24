@@ -55,8 +55,6 @@ lib = VU.add_library("lib")
 # ============================================================
 # Add sources
 for src_file in src_dir.rglob("*.vhd"):
-    if src_file.name == "project_top.vhd":
-        continue
     lib.add_source_files(src_file)
 
 # ============================================================
