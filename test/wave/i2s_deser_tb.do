@@ -1,6 +1,6 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/clk_25
+add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/clk_100
 add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/i_lrclk
 add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/i_bclk
 add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/i_serial_data
@@ -12,7 +12,7 @@ add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/tb_iis_state
 add wave -noupdate -expand -group tb -radix unsigned /i2s_deser_tb/tb_bit_cntr
 add wave -noupdate -expand -group tb /i2s_deser_tb/main/ldata
 add wave -noupdate -expand -group tb /i2s_deser_tb/main/rdata
-add wave -noupdate -height 60 -expand -group DUT /i2s_deser_tb/i2s_deser_inst/clk_25
+add wave -noupdate -height 60 -expand -group DUT /i2s_deser_tb/i2s_deser_inst/clk_100
 add wave -noupdate -height 60 -expand -group DUT /i2s_deser_tb/i2s_deser_inst/i_lrclk
 add wave -noupdate -height 60 -expand -group DUT /i2s_deser_tb/i2s_deser_inst/i_bclk
 add wave -noupdate -height 60 -expand -group DUT -format Literal /i2s_deser_tb/i2s_deser_inst/i_serial_data

@@ -15,14 +15,14 @@ end;
 
 architecture bench of signal_generator_wrapper_tb is
     -- Clock period
-    constant clk_period : time := 20 ns;
+    constant clk_period : time := 10 ns;
     -- Generics
     constant G_FFT_BIT_SIZE      : natural := 16;
     constant G_RAM_DEPTH         : natural := 1024;
     constant G_100MS_CYCLES      : natural := 3000;
     constant G_PRELOAD_DIRECTIVE : string  := "testbench";
     -- Ports
-    signal clk_25          : std_logic                    := '0';
+    signal clk_100         : std_logic                    := '0';
     signal i_pbuttons      : std_logic_vector(3 downto 0) := (others => '0');
     signal i_sel_up_lo     : std_logic                    := '0';
     signal o_reset         : std_logic;
@@ -34,12 +34,13 @@ begin
 
     signal_generator_wrapper_inst : entity work.signal_generator_wrapper
         generic map(
+            G_RAM_DEPTH         => G_RAM_DEPTH,
             G_100MS_CYCLES      => G_100MS_CYCLES,
             G_PRELOAD_DIRECTIVE => G_PRELOAD_DIRECTIVE
         )
         port map
         (
-            clk_25            => clk_25,
+            clk_100           => clk_100,
             i_sig_gen_src_sel => i_pbuttons,
             i_sel_up_lo       => i_sel_up_lo,
             o_reset           => o_reset,
@@ -56,7 +57,7 @@ begin
             i_s_axis_tready <= '1';
             if run("sequential-push-buttons") then
                 wait_clock(100, clk_period);
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 for i in 0 to 1 loop
                     if (i = 0) then
                         i_sel_up_lo <= '0';
@@ -79,7 +80,7 @@ begin
                 -- =============================================
             elsif run("simultaneous-push-buttons") then
                 wait_clock(100, clk_period);
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 i_sel_up_lo <= '0';
                 for j in 0 to 2 loop
                     i_pbuttons        <= (others => '0');
@@ -99,5 +100,5 @@ begin
         end loop;
     end process main;
 
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
 end;

@@ -20,7 +20,7 @@ end;
 
 architecture bench of filter_bank_tb is
     -- Clock period
-    constant clk_period : time := 40 ns;
+    constant clk_period : time := 10 ns;
     -- Generics
     constant G_NBR_OF_TAPS : positive := 101;
     constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS; -- *4 due to PS write incr being +4
@@ -28,7 +28,7 @@ architecture bench of filter_bank_tb is
     constant G_INPUT_WIDTH : positive := 16;
     constant G_COEFF_WIDTH : positive := 16;
     -- Ports
-    signal clk_25                : std_logic := '0';
+    signal clk_100                : std_logic := '0';
     signal i_lpf_en              : std_logic := '0';
     signal i_hpf_en              : std_logic := '0';
     signal i_tvalid              : std_logic;
@@ -59,7 +59,7 @@ architecture bench of filter_bank_tb is
     signal tb_coefficients_extra : t_coefficients;
     signal tb_tdata              : t_input_data         := (others => (others => '0'));
     signal tb_input_enable       : boolean              := FALSE;
-    signal tb_counter            : unsigned(9 downto 0) := (others => '0');
+    signal tb_counter            : unsigned(11 downto 0) := (others => '0');
     signal tb_48khz_strobe       : std_logic            := '0';
     signal tb_48khz_strobe_d0    : std_logic            := '0';
 
@@ -108,7 +108,7 @@ architecture bench of filter_bank_tb is
 
 begin
     /* ---------------------------------------------------------------*/
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     /* ---------------------------------------------------------------*/
     -- Read coefficients file
     p_read_coeffs_file : process
@@ -218,13 +218,13 @@ begin
     end process p_read_stimuli_file;
     /* ---------------------------------------------------------------*/
     -- Write output file
-    p_write_output_file : process (clk_25)
+    p_write_output_file : process (clk_100)
         file v_write_file : text open write_mode is output_path(runner_cfg) & "/" & "output_stimuli.txt";
         variable v_line   : line;
         variable ok       : boolean;
         variable v_wr_idx : natural := 0;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (o_tvalid = '1') then
                 write(v_line, o_tdata, right, o_tdata'length);
                 writeline(v_write_file, v_line);
@@ -233,19 +233,19 @@ begin
     end process p_write_output_file;
     /* ---------------------------------------------------------------*/
     -- Emulate I2C deser data
-    process (clk_25)
+    process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_counter <= tb_counter + 1;
         end if;
     end process;
     -- 
-    tb_48khz_strobe <= tb_counter(8);
+    tb_48khz_strobe <= tb_counter(10);
     -- 
-    p_tdata_generator : process (clk_25)
+    p_tdata_generator : process (clk_100)
         variable v_rd_idx : natural := 0;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_48khz_strobe_d0 <= tb_48khz_strobe;
             i_tvalid           <= '0';
             i_tdata            <= (others => '0');
@@ -271,7 +271,7 @@ begin
         )
         port map
         (
-            clk_25                => clk_25,
+            clk_100                => clk_100,
             i_lpf_en              => i_lpf_en,
             i_hpf_en              => i_hpf_en,
             i_tvalid              => i_tvalid,
@@ -295,7 +295,7 @@ begin
         )
         port map
         (
-            clk => clk_25,
+            clk => clk_100,
             -- Port A (PS)
             i_addra => i_waddr_lpf,
             i_dina  => i_wdata_lpf,
@@ -314,7 +314,7 @@ begin
         )
         port map
         (
-            clk => clk_25,
+            clk => clk_100,
             -- Port A (PS)
             i_addra => i_waddr_hpf,
             i_dina  => i_wdata_hpf,
@@ -370,7 +370,7 @@ begin
                 -- set_timeout(runner, 2 ms);
 
                 -- =========================================================
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 wait_clock(10, clk_period);
                 ----------------------------------------------------
                 -- Load coefficients based on generic set by run.py
@@ -436,7 +436,7 @@ begin
                 -- set_timeout(runner, 2 ms);
 
                 -- =========================================================
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 wait_clock(1, clk_period);
                 ----------------------------------------------------
                 -- Load coefficients based on generic set by run.py

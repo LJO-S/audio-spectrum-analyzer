@@ -1,10 +1,13 @@
+-- ==================================================================
+-- I2S Deserializer
+-- ==================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity i2s_deser is
     port (
-        clk_25           : in std_logic;
+        clk_100       : in std_logic;
         i_lrclk       : in std_logic;
         i_bclk        : in std_logic;
         i_serial_data : in std_logic;
@@ -38,16 +41,16 @@ begin
     -- Combinatorial assignments
     w_left    <= r_lrclk and not(i_lrclk); -- falling edge lrclk
     w_right   <= not(r_lrclk) and i_lrclk; -- rising edge lrclk
-    w_bclk_re <= not(r_bclk) and i_bclk; -- rising_edge bclk
+    w_bclk_re <= not(r_bclk) and i_bclk;   -- rising_edge bclk
 
     o_data  <= r_ldata;
     o_valid <= '1' when (s_deser_state = READ_RIGHT) and (r_bit_cntr >= C_BIT_CNTR_MAX) else
         '0';
     -- ==================================================================
     -- Pipe input logic
-    p_pipeline : process (clk_25)
+    p_pipeline : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_lrclk <= i_lrclk;
             r_bclk  <= i_bclk;
         end if;
@@ -55,13 +58,13 @@ begin
     -- ==================================================================
     -- This process implements the I2S protocol as described in the 
     -- SSM2603 datasheet. The LRCLK @ (1/fs) decides on Left vs Right 
-    -- channel output. The BCLK (bitCLK perhaps?) clocks out N bits,
+    -- channel output. The BCLK (bit clk) clocks out N bits,
     -- where N is set by the I2C setup. Notice that in the datasheet
     -- the 1st bit clocked out after LRCLK toggles is INVALID, so we
     -- skip the 1st BCLK bit.
-    p_deserializer_fsm : process (clk_25)
+    p_deserializer_fsm : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             case s_deser_state is
                     -- --------------------------------------------
                 when IDLE =>
@@ -112,9 +115,9 @@ begin
     end process p_deserializer_fsm;
     -- ==================================================================
     -- Counts the number of bits as per BCLK rising edges
-    p_bclk_bit_counter : process (clk_25)
+    p_bclk_bit_counter : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (s_deser_state = READ_LEFT) or (s_deser_state = READ_RIGHT) then
                 if (w_bclk_re = '1') then
                     r_bit_cntr <= r_bit_cntr + 1;
@@ -126,9 +129,9 @@ begin
     end process p_bclk_bit_counter;
     -- ==================================================================
     -- Left shifts serial data into vector
-    p_output : process (clk_25)
+    p_output : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (s_deser_state = READ_LEFT) then
                 -- Fill LEFT ch data
                 if (w_bclk_re = '1') then

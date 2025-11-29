@@ -20,7 +20,7 @@ end;
 
 architecture bench of fir_filter_tb is
     -- Clock period
-    constant clk_period : time := 40 ns;
+    constant clk_period : time := 10 ns;
     -- Generics
     constant G_NBR_OF_TAPS : positive := 101;
     constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS; -- *4 due to PS write incr being +4
@@ -35,7 +35,7 @@ architecture bench of fir_filter_tb is
         filter_cutoff : string;
     end record t_tb_cfg;
     -- Ports
-    signal clk_25            : std_logic := '0';
+    signal clk_100           : std_logic := '0';
     signal i_new_data_strobe : std_logic;
     signal o_updating_coeffs : std_logic;
 
@@ -54,11 +54,11 @@ architecture bench of fir_filter_tb is
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(G_COEFF_WIDTH - 1 downto 0);
     type t_input_data is array (natural range 0 to 4095) of i_tdata'subtype;
     signal tb_coefficients      : t_coefficients;
-    signal tb_tdata             : t_input_data         := (others => (others => '0'));
-    signal tb_enable_input_data : boolean              := FALSE;
-    signal tb_counter           : unsigned(9 downto 0) := (others => '0');
-    signal tb_48khz_strobe      : std_logic            := '0';
-    signal tb_48khz_strobe_d0   : std_logic            := '0';
+    signal tb_tdata             : t_input_data          := (others => (others => '0'));
+    signal tb_enable_input_data : boolean               := FALSE;
+    signal tb_counter           : unsigned(11 downto 0) := (others => '0');
+    signal tb_48khz_strobe      : std_logic             := '0';
+    signal tb_48khz_strobe_d0   : std_logic             := '0';
 
     impure function decode (encoded_tb_cfg : string) return t_tb_cfg is
     begin
@@ -149,13 +149,13 @@ begin
     end process p_read_stimuli_file;
     /* ---------------------------------------------------------------*/
     -- Write output file
-    p_write_output_file : process (clk_25)
+    p_write_output_file : process (clk_100)
         file v_write_file : text open write_mode is output_path(runner_cfg) & "/" & "output_stimuli.txt";
         variable v_line   : line;
         variable ok       : boolean;
         variable v_wr_idx : natural := 0;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (o_tvalid = '1') then
                 write(v_line, o_tdata, right, o_tdata'length);
                 writeline(v_write_file, v_line);
@@ -163,7 +163,7 @@ begin
         end if;
     end process p_write_output_file;
     /* ---------------------------------------------------------------*/
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     /* ---------------------------------------------------------------*/
     -- DUT
     fir_filter_inst : entity work.fir_filter
@@ -175,7 +175,7 @@ begin
         )
         port map
         (
-            clk_25            => clk_25,
+            clk_100           => clk_100,
             i_new_data_strobe => i_new_data_strobe,
             o_updating_coeffs => o_updating_coeffs,
             o_raddr           => w_raddr,
@@ -193,7 +193,7 @@ begin
         )
         port map
         (
-            clk => clk_25,
+            clk => clk_100,
             -- Port A (PS)
             i_addra => i_waddr,
             i_dina  => i_wdata,
@@ -206,19 +206,19 @@ begin
             o_doutb => w_rdata);
     /* ---------------------------------------------------------------*/
     -- Emulate I2C deser data
-    process (clk_25)
+    p_48khz_strobe : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_counter <= tb_counter + 1;
         end if;
-    end process;
+    end process p_48khz_strobe;
     -- 
-    tb_48khz_strobe <= tb_counter(8);
+    tb_48khz_strobe <= tb_counter(10);
     -- 
-    p_tdata_generator : process (clk_25)
+    p_tdata_generator : process (clk_100)
         variable v_rd_idx : natural := 0;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_48khz_strobe_d0 <= tb_48khz_strobe;
             i_tvalid           <= '0';
             i_tdata            <= (others => '0');
@@ -241,7 +241,7 @@ begin
         test_runner_setup(runner, runner_cfg);
         while test_suite loop
             -- ===========================================
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             wait for 10 * clk_period;
             -- Load coefficients based on generic set by run.py
             load_coefficients(

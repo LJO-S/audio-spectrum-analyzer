@@ -5,7 +5,6 @@
 
 -- TODO
 -- replace all the AXIS naming to something more appropriate
--- replace all clk_25 with clk_125  
 
 -- =============================================================
 library ieee;
@@ -24,16 +23,16 @@ entity project_top is
         G_NFFT           : natural := 1024;
         G_FFT_TW_QFORMAT : natural := 15;
         -- FFT refresh period
-        G_100MS_CYCLES : natural := 2_500_000;
+        G_100MS_CYCLES : natural := 10_000_000;
         -- Debouncers config
-        G_DEBOUNCE_LIMIT    : natural := 250_000;
+        G_DEBOUNCE_LIMIT : natural := 1_000_000;
         -- Debug (set preload to "build" or "testbench")
-        G_PRELOAD_DIRECTIVE : string  := "build"; 
+        G_PRELOAD_DIRECTIVE : string  := "build";
         G_DEBUG             : boolean := false
     );
     port (
-        -- Master clock 25 MHz
-        i_clk_25 : in std_logic;
+        -- Master clock 100 MHz
+        i_clk_100 : in std_logic;
         -- TMDS clock 250 MHz
         i_clk_250 : in std_logic;
         -- PS IF 
@@ -79,15 +78,13 @@ architecture rtl of project_top is
     constant C_NFFT_LOG2 : integer := integer(ceil(log2(real(G_NFFT))));
     -- FFT IF 
     -- TODO rename all this crap
-    signal w_m_axis_data_tlast : std_logic;
-    signal r_fft_tlast_out     : std_logic := '0';
-    signal r_fft_tlast_out_d1  : std_logic := '0';
+    signal r_fft_tlast_out    : std_logic := '0';
+    signal r_fft_tlast_out_d1 : std_logic := '0';
 
     signal w_fft_tvalid_out    : std_logic;
     signal r_fft_tvalid_out    : std_logic := '0';
     signal r_fft_tvalid_out_d1 : std_logic := '0';
 
-    signal w_FFT_mag     : std_logic_vector (31 downto 0);
     signal w_xk_index    : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
     signal r_xk_index    : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
     signal r_xk_index_d1 : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
@@ -120,14 +117,6 @@ architecture rtl of project_top is
     signal w_axis_tdata_audio_to_xfft  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
     signal w_axis_tvalid_audio_to_xfft : std_logic;
     signal w_axis_tlast_audio_to_xfft  : std_logic;
-
-    -- AXI Bram Control
-    signal w_waddr_lpf : std_logic_vector(6 downto 0);
-    signal w_wdata_lpf : std_logic_vector(15 downto 0);
-    signal w_we_lpf    : std_logic;
-    signal w_waddr_hpf : std_logic_vector(6 downto 0);
-    signal w_wdata_hpf : std_logic_vector(15 downto 0);
-    signal w_we_hpf    : std_logic;
 
     -- Video-PPmem IF
     signal w_rd_addr : std_logic_vector(9 downto 0);
@@ -176,12 +165,11 @@ begin
             G_FFT_BIT_SIZE      => G_FFT_BIT_SIZE,
             G_RAM_DEPTH         => G_NFFT,
             G_100MS_CYCLES      => G_100MS_CYCLES,
-            G_DEBOUNCE_LIMIT    => G_DEBOUNCE_LIMIT,
             G_PRELOAD_DIRECTIVE => G_PRELOAD_DIRECTIVE
         )
         port map
         (
-            clk_25            => i_clk_25,
+            clk_100           => i_clk_100,
             i_sig_gen_src_sel => w_sig_gen_src_sel,
             i_sel_up_lo       => w_sel_up_lo,
             o_100ms_strb      => w_100ms_strb,
@@ -202,7 +190,7 @@ begin
         )
         port map
         (
-            clk        => i_clk_25,
+            clk        => i_clk_100,
             reset      => '0',
             i_tdata_re => w_axis_tdata_xfft_in(G_FFT_BIT_SIZE - 1 downto 0),
             i_tdata_im => w_axis_tdata_xfft_in(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
@@ -215,9 +203,9 @@ begin
         );
 
     -- Calculate output magnitude
-    p_magnitude_calc : process (i_clk_25)
+    p_magnitude_calc : process (i_clk_100)
     begin
-        if rising_edge(i_clk_25) then
+        if rising_edge(i_clk_100) then
             -- ---------------
             -- PIPE 0
             -- ---------------
@@ -240,9 +228,9 @@ begin
         end if;
     end process p_magnitude_calc;
 
-    p_pipeline_fft_output : process (i_clk_25)
+    p_pipeline_fft_output : process (i_clk_100)
     begin
-        if rising_edge(i_clk_25) then
+        if rising_edge(i_clk_100) then
             r_fft_tlast_out <= '0';
             if (unsigned(r_xk_index) = G_NFFT - 2) then
                 r_fft_tlast_out <= r_fft_tvalid_out;
@@ -255,7 +243,7 @@ begin
     ping_pong_memory_inst : entity work.ping_pong_memory
         port map
         (
-            clk_25           => i_clk_25,
+            clk_100          => i_clk_100,
             i_fft_data_magn  => r_fft_magnitude(r_fft_magnitude'high downto r_fft_magnitude'low + 1),
             i_fft_data_last  => r_fft_tlast_out_d1,
             i_fft_data_valid => r_fft_tvalid_out_d1,
@@ -269,7 +257,7 @@ begin
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25       => i_clk_25,
+            clk_100      => i_clk_100,
             clk_tmds_250 => i_clk_250,
             i_100ms_strb => w_100ms_strb,
             i_capture_en => w_capture_en_drain_guard,
@@ -300,7 +288,7 @@ begin
         )
         port map
         (
-            clk_25       => i_clk_25,
+            clk_100      => i_clk_100,
             i_pb_vector  => i_pb_vector,
             i_dip_vector => i_dip_vector,
             -- Internal Src Selection
@@ -323,7 +311,7 @@ begin
     gpio_ps_interface_inst : entity work.gpio_ps_interface
         port map
         (
-            clk_25 => i_clk_25,
+            clk_100 => i_clk_100,
             -- GPIO PB Presses
             i_lpf_incr => w_lpf_incr,
             i_lpf_decr => w_lpf_decr,
@@ -358,7 +346,7 @@ begin
         )
         port map
         (
-            clk_25         => i_clk_25,
+            clk_100        => i_clk_100,
             i_i2c_cfg_done => i_i2c_cfg_done,
 
             i_new_data_strobe_lpf => w_new_data_strobe_lpf,
@@ -405,11 +393,11 @@ begin
 
     -- This FSM keeps track of internal/capture mode determined by GPIOs.
     -- If TVALID='1' for Generator/Audio, the data mux will not change the data source if capture_en should toggle. This 
-    -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts.
+    -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts. 
     -- In other words, never change the data source when draining.
-    p_drain_guard : process (i_clk_25)
+    p_drain_guard : process (i_clk_100)
     begin
-        if rising_edge(i_clk_25) then
+        if rising_edge(i_clk_100) then
             case s_state_drain_guard is
                     -- -----------------------------------------------------------
                 when IDLE =>

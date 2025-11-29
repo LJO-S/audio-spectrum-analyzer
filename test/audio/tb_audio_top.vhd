@@ -19,7 +19,7 @@ end;
 
 architecture bench of audio_top_tb is
     -- Constants
-    constant clk_period        : time    := 40 ns;
+    constant clk_period        : time    := 10 ns;
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
     constant G_NBR_OF_TAPS : positive := 101;
@@ -28,7 +28,7 @@ architecture bench of audio_top_tb is
     constant G_INPUT_WIDTH : positive := 16;
     constant G_COEFF_WIDTH : positive := 16;
     -- Ports
-    signal clk_25                : std_logic := '0';
+    signal clk_100                : std_logic := '0';
     signal i_i2c_cfg_done        : std_logic;
     signal i_new_data_strobe_lpf : std_logic;
     signal i_new_data_strobe_hpf : std_logic;
@@ -107,7 +107,7 @@ begin
         )
         port map
         (
-            clk_25                => clk_25,
+            clk_100                => clk_100,
             i_i2c_cfg_done        => i_i2c_cfg_done,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
@@ -137,7 +137,7 @@ begin
         )
         port map
         (
-            clk => clk_25,
+            clk => clk_100,
             -- Port A (PS)
             i_addra => i_waddr_lpf,
             i_dina  => i_wdata_lpf,
@@ -156,7 +156,7 @@ begin
         )
         port map
         (
-            clk => clk_25,
+            clk => clk_100,
             -- Port A (PS)
             i_addra => i_waddr_hpf,
             i_dina  => i_wdata_hpf,
@@ -212,14 +212,14 @@ begin
     /* ---------------------------------------------------------------------- */
     tb_tdata_re <= o_tdata(15 downto 0);
     /* ---------------------------------------------------------------------- */
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     /* ---------------------------------------------------------------------- */
     -- Let tready from FFT engine only be asserted when someone else initializes
     -- communication
-    p_tready : process (clk_25)
+    p_tready : process (clk_100)
         alias tb_audio_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             i_tready <= o_tvalid or tb_tready_override;
             if (i_tready = '1') then
                 if (tb_audio_buf_raddr = 1023) then
@@ -323,7 +323,7 @@ begin
             info("Running tb_audio_top-BASIC");
             -- ------------------------------
             wait_clock(5, clk_period);
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             -- ------------------------------
             -- Emulate PS configuring i2c interface
             i_capture_en   <= '0';
@@ -371,7 +371,7 @@ begin
             info("Running tb_audio_top-CAPTURE-DISABLE");
             -- ------------------------------
             wait_clock(5, clk_period);
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             -- ------------------------------
             -- Emulate PS configuring i2c interface
             i_capture_en   <= '0';
@@ -398,7 +398,7 @@ begin
             info("Running tb_audio_top-READY-BEFORE-VALID");
             -- ------------------------------
             wait_clock(5, clk_period);
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             -- ------------------------------
             -- Emulate PS configuring i2c interface
             i_capture_en   <= '0';

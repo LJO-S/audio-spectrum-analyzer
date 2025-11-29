@@ -4,7 +4,7 @@ add wave -noupdate -expand -group tb -radix unsigned /i2s_ser_tb/tb_counter
 add wave -noupdate -expand -group tb /i2s_ser_tb/tb_pbclk
 add wave -noupdate -expand -group tb /i2s_ser_tb/tb_pbclk_fe
 add wave -noupdate -expand -group tb -radix binary /i2s_ser_tb/tb_tdata
-add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/clk_25
+add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/clk_100
 add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/i_pbclk
 add wave -noupdate -expand -group i2s_ser -color {Cornflower Blue} /i2s_ser_tb/i2s_ser_inst/i_bclk
 add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/i_tdata
@@ -23,7 +23,7 @@ add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/r_data_pendin
 add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/r_sdata
 add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/r_data_left
 add wave -noupdate -expand -group i2s_ser /i2s_ser_tb/i2s_ser_inst/r_data_right
-add wave -noupdate -group i2s_deser /i2s_ser_tb/i2s_deser_inst/clk_25
+add wave -noupdate -group i2s_deser /i2s_ser_tb/i2s_deser_inst/clk_100
 add wave -noupdate -group i2s_deser /i2s_ser_tb/i2s_deser_inst/i_lrclk
 add wave -noupdate -group i2s_deser /i2s_ser_tb/i2s_deser_inst/i_bclk
 add wave -noupdate -group i2s_deser /i2s_ser_tb/i2s_deser_inst/i_serial_data

@@ -30,13 +30,13 @@ entity filter_bank is
         G_COEFF_WIDTH : positive := 16
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -----------------------------------------
         -- RTL Ctrl
         i_lpf_en : in std_logic;
         i_hpf_en : in std_logic;
         -----------------------------------------
-        -- from ADC
+        -- from Deserializer
         i_tvalid : in std_logic;
         i_tdata  : in std_logic_vector(15 downto 0);
         --------------------------------------
@@ -85,9 +85,9 @@ begin
     --            lpf_en='1'                    hpf_en='1'                          
     -- 
     -- 
-    p_path_selector : process (clk_25)
+    p_path_selector : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             -- LPF path
             if (i_lpf_en = '1') then
                 w_tvalid_lpf_in      <= i_tvalid;
@@ -125,7 +125,7 @@ begin
         )
         port map
         (
-            clk_25            => clk_25,
+            clk_100           => clk_100,
             i_new_data_strobe => i_new_data_strobe_lpf,
             o_updating_coeffs => o_updating_coeffs_lpf,
             o_raddr           => o_raddr_lpf,
@@ -145,7 +145,7 @@ begin
         )
         port map
         (
-            clk_25            => clk_25,
+            clk_100           => clk_100,
             i_new_data_strobe => i_new_data_strobe_hpf,
             o_updating_coeffs => o_updating_coeffs_hpf,
             o_raddr           => o_raddr_hpf,

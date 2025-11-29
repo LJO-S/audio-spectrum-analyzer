@@ -2,7 +2,7 @@ onerror {resume}
 quietly virtual function -install /gpio_ps_interface_tb/gpio_ps_interface_inst -env /gpio_ps_interface_tb/gpio_ps_interface_inst { ((((1'b0 xor w_fir_ctrl[3] ) xor w_fir_ctrl[2] ) xor w_fir_ctrl[1] ) xor w_fir_ctrl[0] )} dbgTemp0_11
 quietly virtual function -install /gpio_ps_interface_tb/gpio_ps_interface_inst -env /gpio_ps_interface_tb/gpio_ps_interface_inst { ((bool)dbgTemp0_11  ? w_fir_ctrl[3:0] : 4'b0000)} dbgTemp1_r_fir_ctrl_latch_2
 quietly WaveActivateNextPane {} 0
-add wave -noupdate /gpio_ps_interface_tb/gpio_ps_interface_inst/clk_25
+add wave -noupdate /gpio_ps_interface_tb/gpio_ps_interface_inst/clk_100
 add wave -noupdate -expand -group {From GPIO} /gpio_ps_interface_tb/gpio_ps_interface_inst/i_lpf_incr
 add wave -noupdate -expand -group {From GPIO} /gpio_ps_interface_tb/gpio_ps_interface_inst/i_lpf_decr
 add wave -noupdate -expand -group {From GPIO} /gpio_ps_interface_tb/gpio_ps_interface_inst/i_hpf_incr

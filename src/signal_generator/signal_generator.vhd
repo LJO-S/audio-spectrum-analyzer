@@ -10,7 +10,7 @@ entity signal_generator is
         G_INIT_FILE    : string  := "../scripts/data/sinc_15khz_16bits.txt"
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- Enable module
         i_start : in std_logic;
         i_reset : in std_logic;
@@ -23,8 +23,6 @@ entity signal_generator is
 end entity signal_generator;
 
 architecture rtl of signal_generator is
-    constant C_BIT_RANGE_1024 : natural                                 := integer(floor(log2(real(G_RAM_DEPTH))));
-    -- signal r_addra            : unsigned(C_BIT_RANGE_1024 - 1 downto 0) := (others => '0');
     signal r_addra            : unsigned(9 downto 0) := (others => '0');
     signal w_re_data          : std_logic_vector(15 downto 0);
     signal r_tlast            : std_logic;
@@ -40,9 +38,9 @@ begin
     o_tlast  <= r_tlast;
     ----------------------------------------------------------
     ----------------------------------------------------------
-    p_read_mem : process (clk_25)
+    p_read_mem : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (i_reset = '0') then
                 r_tlast           <= '0';
                 r_tvalid          <= '0';
@@ -77,7 +75,7 @@ begin
         )
         port map
         (
-            clk     => clk_25,
+            clk     => clk_100,
             i_addra => std_logic_vector(r_addra),
             i_dina => (others => '0'),
             i_wea   => '0',

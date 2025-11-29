@@ -1,3 +1,6 @@
+-- ============================================================================ 
+-- Audio Codec Interface and Filters
+-- ============================================================================ 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -11,7 +14,7 @@ entity audio_top is
         G_COEFF_WIDTH : positive := 16
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- PS i/f
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
@@ -43,7 +46,7 @@ end entity audio_top;
 
 architecture rtl of audio_top is
     -- Constants
-    signal r_clk_counter : unsigned(9 downto 0) := (others => '0');
+    signal r_clk_counter : unsigned(11 downto 0) := (others => '0');
     signal w_lrclk       : std_logic;
     signal w_bclk        : std_logic;
     -- I2S_deser to Audio_buffer
@@ -61,25 +64,25 @@ begin
     /* ------------------------------------------------------ */
     --  Combinatorial assignments
 
-    -- Master clk same as system
-    o_mclk <= clk_25; -- 25 MHz
+    -- Master clk 
+    o_mclk <= r_clk_counter(1); -- 25 MHz
 
     -- Left/right clk same as samling freq, i.e. ~48 kHz with divider: /2/256 = /512
-    w_lrclk <= r_clk_counter(8); -- 48 kHz
+    w_lrclk <= r_clk_counter(10); -- 48 kHz
     o_lrclk <= w_lrclk;
 
     -- Bit clock >= (fs * 2 * wl) = 48k * 2 * 16 = 1.5 MHz... 
     -- 3.125MHz lets us include all invalid bits required in the read operation
-    w_bclk <= r_clk_counter(2); -- 3.125 MHz
+    w_bclk <= r_clk_counter(4); -- 3.125 MHz
     o_bclk <= w_bclk;
 
     -- Fill Imaginary part with 0s and Real part with capture data
     o_tdata <= x"0000" & w_buffer_to_top_data;
 
     /* ------------------------------------------------------ */
-    p_clk_counter : process (clk_25)
+    p_clk_counter : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_clk_counter <= r_clk_counter + 1;
         end if;
     end process p_clk_counter;
@@ -92,7 +95,7 @@ begin
     i2s_deser_inst : entity work.i2s_deser
         port map
         (
-            clk_25        => clk_25,
+            clk_100       => clk_100,
             i_lrclk       => w_lrclk,
             i_bclk        => w_bclk,
             i_serial_data => i_sdata,
@@ -112,7 +115,7 @@ begin
         )
         port map
         (
-            clk_25 => clk_25,
+            clk_100 => clk_100,
             -- Filter ctrl
             i_lpf_en => i_lpf_en,
             i_hpf_en => i_hpf_en,
@@ -141,7 +144,7 @@ begin
     audio_buffer_inst : entity work.audio_buffer
         port map
         (
-            clk_25       => clk_25,
+            clk_100      => clk_100,
             i_capture_en => w_capture_en,
             o_draining   => w_audio_buffer_draining,
             i_pdata      => w_filter_to_buffer_data,
@@ -159,7 +162,7 @@ begin
     i2s_ser_inst : entity work.i2s_ser
         port map
         (
-            clk_25   => clk_25,
+            clk_100  => clk_100,
             i_en     => w_capture_en,
             i_pbclk  => w_lrclk,
             i_bclk   => w_bclk,

@@ -16,11 +16,11 @@ end;
 
 architecture bench of i2s_deser_tb is
     -- Clock period
-    constant clk_period        : time    := 40 ns;
+    constant clk_period        : time    := 10 ns;
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
     -- Ports
-    signal clk_25        : std_logic := '0';
+    signal clk_100       : std_logic := '0';
     signal i_lrclk       : std_logic := '1';
     signal i_bclk        : std_logic := '0';
     signal i_serial_data : std_logic;
@@ -38,7 +38,7 @@ begin
     i2s_deser_inst : entity work.i2s_deser
         port map
         (
-            clk_25        => clk_25,
+            clk_100       => clk_100,
             i_lrclk       => i_lrclk,
             i_bclk        => i_bclk,
             i_serial_data => i_serial_data,
@@ -47,13 +47,13 @@ begin
             o_valid       => o_valid
         );
 
-    clk_25  <= not clk_25 after clk_period/2; -- 25 MHz
-    i_lrclk <= tb_counter(8); -- /512 ~ 48 kHz
-    i_bclk  <= tb_counter(2); -- /8 = 3.125 MHz
+    clk_100 <= not clk_100 after clk_period/2; -- 25 MHz
+    i_lrclk <= tb_counter(10);                 -- /2048 ~ 48 kHz
+    i_bclk  <= tb_counter(4);                  -- /32 = 3.125 MHz
 
-    p_subclk_generator : process (clk_25)
+    p_subclk_generator : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_counter <= tb_counter + 1;
         end if;
     end process p_subclk_generator;
@@ -114,7 +114,7 @@ begin
             info("Running tb_i2s_deser-BASIC");
             tb_enable <= '0';
             wait_clock(25, clk_period);
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             tb_enable <= '1';
             for i in 0 to 3 loop
                 wait until o_valid = '1';

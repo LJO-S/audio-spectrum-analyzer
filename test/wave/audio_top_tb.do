@@ -9,7 +9,7 @@ quietly virtual function -install /audio_top_tb -env /audio_top_tb { ( ~(bool)(t
 quietly virtual function -install /audio_top_tb -env /audio_top_tb { ((bool)dbgTemp0_9  ? dbgTemp3_9 : tb_serial_value)} dbgTemp2_tb_serial_value_7
 quietly virtual function -install /audio_top_tb -env /audio_top_tb { ((tb_iis_state  == LEFT_INITIAL) ? tb_serial_value : ((tb_iis_state  == LEFT_SEND) ? tb_serial_value : ((tb_iis_state  == RIGHT_INITIAL) ? tb_serial_value : ((tb_iis_state  == RIGHT_SEND) ? dbgTemp2_tb_serial_value_7 : tb_serial_value))))} dbgTemp2_tb_serial_value_8
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/clk_25
+add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/clk_100
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/i_i2c_cfg_done
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/i_capture_en
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/i_sdata
@@ -24,7 +24,7 @@ add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/r_clk_counter
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_lrclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_bclk
 add wave -noupdate -expand -group DUT /audio_top_tb/audio_top_inst/w_audio_buffer_draining
-add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/clk_25
+add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/clk_100
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/i_lrclk
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/i_bclk
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/i_serial_data
@@ -40,7 +40,7 @@ add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/r_bit_cntr
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/r_ldata
 add wave -noupdate -group i2s_deser /audio_top_tb/audio_top_inst/i2s_deser_inst/r_rdata
-add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/clk_25
+add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/clk_100
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_capture_en
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_pdata
 add wave -noupdate -expand -group audio_buffer /audio_top_tb/audio_top_inst/audio_buffer_inst/i_valid
@@ -61,7 +61,7 @@ add wave -noupdate -expand -group tb /audio_top_tb/tb_serial_value
 add wave -noupdate -expand -group tb /audio_top_tb/main/tb_i2s_ovalid
 add wave -noupdate -expand -group tb /audio_top_tb/tb_fft_stall
 add wave -noupdate -expand -group tb /audio_top_tb/tb_tready_override
-add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/clk_25
+add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/clk_100
 add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_pbclk
 add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_bclk
 add wave -noupdate -expand -group i2s_ser /audio_top_tb/audio_top_inst/i2s_ser_inst/i_tdata

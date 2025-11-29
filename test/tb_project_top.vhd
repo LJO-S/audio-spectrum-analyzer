@@ -16,7 +16,7 @@ end;
 
 architecture bench of project_top_tb is
     -- Clock period
-    constant clk_period_25  : time := 40 ns;
+    constant clk_period_100 : time := 10 ns;
     constant clk_period_250 : time := 4 ns;
     -- Generics
     constant G_FIR_NBR_OF_TAPS      : positive := 101;
@@ -31,7 +31,7 @@ architecture bench of project_top_tb is
     constant G_PRELOAD_DIRECTIVE    : string   := "testbench";
     constant G_DEBUG                : boolean  := true;
     -- Ports
-    signal i_clk_25              : std_logic := '0';
+    signal i_clk_100             : std_logic := '0';
     signal i_clk_250             : std_logic := '0';
     signal i_i2c_cfg_done        : std_logic := '0';
     signal i_new_data_strobe_lpf : std_logic := '0';
@@ -77,7 +77,7 @@ begin
         )
         port map
         (
-            i_clk_25              => i_clk_25,
+            i_clk_100             => i_clk_100,
             i_clk_250             => i_clk_250,
             i_i2c_cfg_done        => i_i2c_cfg_done,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
@@ -107,7 +107,7 @@ begin
             o_video_2_n           => o_video_2_n
         );
     -- ====================================================================
-    i_clk_25  <= not i_clk_25 after clk_period_25/2;
+    i_clk_100 <= not i_clk_100 after clk_period_100/2;
     i_clk_250 <= not i_clk_250 after clk_period_250/2;
     -- ====================================================================
     main : process
@@ -136,12 +136,12 @@ begin
         test_runner_setup(runner, runner_cfg);
         if run("visual") then
             info("Running tb_project_top-visual");
-            wait_clock(10, clk_period_25);
+            wait_clock(10, clk_period_100);
             -- Set internally generated
             proc_set_internal;
             -- Select signal generator
             select_sig_gen(2);
-            wait_clock(100_000, clk_period_25);
+            wait_clock(100_000, clk_period_100);
         end if;
         test_runner_cleanup(runner);
     end process main;

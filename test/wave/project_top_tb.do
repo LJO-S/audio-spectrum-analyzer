@@ -1,6 +1,6 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -group TOP /project_top_tb/project_top_inst/i_clk_25
+add wave -noupdate -group TOP /project_top_tb/project_top_inst/i_clk_100
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/i_clk_250
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/i_i2c_cfg_done
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/i_new_data_strobe_lpf
