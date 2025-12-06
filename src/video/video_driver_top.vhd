@@ -6,6 +6,7 @@ use work.sig_gen_pkg.all;
 
 entity video_driver_top is
     port (
+        clk_25       : in std_logic;
         clk_100      : in std_logic;
         clk_tmds_250 : in std_logic;
         -- Misc
@@ -45,7 +46,7 @@ architecture rtl of video_driver_top is
     signal r_ce_counter : unsigned(1 downto 0) := (others => '0');
     signal w_ce         : std_logic;
     signal r_ce         : std_logic := '0';
-    signal r_pixclk     : std_logic;
+    -- signal r_pixclk     : std_logic;
 
     -- Data Eval
     signal r_comp_limit_value : unsigned(31 downto 0) := TO_UNSIGNED(C_INTERNAL_COMP_LIMIT, 32);
@@ -81,6 +82,19 @@ architecture rtl of video_driver_top is
 begin
     --------------------------------------------------------------------
     --------------------------------------------------------------------
+    --                _   _   _   _   _   _   _   _   _   _
+    -- clk_100      _| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_
+    --       
+    -- counter       00  01  10  11  00  01  10  11  00  01
+    --                        _______         _______
+    -- counter(1)   _________|       |_______|       |_______
+    --    
+    --                        ___             ___
+    -- w_ce         _________|   |___________|   |_______
+    -- 
+    --                            ___             ___
+    -- r_ce         _____________|   |___________|   |___
+    --    
     p_25mhz_ce : process (clk_100)
     begin
         if rising_edge(clk_100) then
@@ -89,19 +103,9 @@ begin
             -- Reg CE
             r_ce <= w_ce;
             -- Create PIXCLK
-            r_pixclk <= r_ce_counter(1);
+            -- r_pixclk <= r_ce_counter(1);
         end if;
     end process p_25mhz_ce;
-    --   _   _   _   _   _   _   _   _   _   _
-    -- _| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_
-    -- 
-    --  00  01  10  11  00  01  10  11  00  01
-    --           _______         _______
-    -- _________|       |_______|       |_______
-    -- 
-    --           ___             ___
-    -- _________|   |___________|   |_______
-    -- 
     w_ce <= r_ce_counter(1) and not(r_ce);
     --------------------------------------------------------------------
     --------------------------------------------------------------------
@@ -152,15 +156,16 @@ begin
     TMDS_top_inst : entity work.TMDS_top
         port map
         (
-            i_TMDS_clk  => clk_tmds_250,
-            i_pixclk    => r_pixclk,
+            i_clk_25    => clk_25,
+            i_clk_100   => clk_100,
+            i_clk_250   => clk_tmds_250,
+            i_25m_ce    => w_ce,
             i_HSYNC     => w_HSYNC,
             i_VSYNC     => w_VSYNC,
             i_draw      => w_draw,
             i_video_red => w_video_red,
             i_video_grn => w_video_grn,
             i_video_blu => w_video_blu,
-            temp        => open,
             o_TMDS      => w_TMDS,
             o_TMDS_clk  => w_TMDS_out_clk,
             o_HDMI_HPD  => w_HDMI_HPD

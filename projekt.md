@@ -40,43 +40,8 @@ Idéen är följande:
 ## Notes
 
 ## ########################################################
-# 125 MHZ!
-- [DONE] signal_generator 
-- [DONE] ping_Pong_memory  OBS kör TB
-- [DONE] Video Driver
-- [DONE] GPIO Ctrl
-- [DONE] GPIO PS IF
-- TMDS_TOP
-- Audio Top
-    - SRC [DONE]
-    - TEST [DONE]
-    - Audio Buffer [DONE]
-    - I2S Deser
-        - SRC [DONE]
-        - TEST [DONE]
-    - I2S Ser 
-        - SRC [DONE]
-        - TEST [DONE]
-    - Filter Bank
-        - SRC [DONE]
-        - TEST [DONE: TODO should be tested]
-    - Fir_filter
-        - SRC [DONE]
-        - TEST [DONE: TODO should be tested]
-
-
-- Kör video-testbänkar och se CE beteende
-    - Kör ASCII Gen
-    - Skapa TB Video Top
-        - Kolla på /master/ om tmds 250 och i_pxlclk är unaligned
-
-- Skapa constraints for r_pixclk
-
-
-
-## ########################################################
 ## TODO
-- Klocka upp till 125 MHz
+- Klocka upp till 100 MHz
 - Fixa waterfall
     - Behöver magnitude (32bit) -> log10 (12/8bit)
     - Minneshantering (ett 480x120x12/8 bit minne)

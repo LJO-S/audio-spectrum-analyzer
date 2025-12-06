@@ -31,10 +31,15 @@ entity project_top is
         G_DEBUG             : boolean := false
     );
     port (
+        -- Pixel clock 25 MHz
+        i_clk_25 : in std_logic;
+
         -- Master clock 100 MHz
         i_clk_100 : in std_logic;
+
         -- TMDS clock 250 MHz
         i_clk_250 : in std_logic;
+
         -- PS IF 
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
@@ -51,6 +56,7 @@ entity project_top is
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
+
         -- Audio Codec IF (SSM2603)
         i_sdata     : in std_logic;
         o_mclk      : out std_logic;
@@ -59,6 +65,7 @@ entity project_top is
         o_pb_lrclk  : out std_logic;
         o_pbdat     : out std_logic;
         o_dac_muten : out std_logic;
+
         -- TMDS CLK
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -76,33 +83,28 @@ end entity project_top;
 
 architecture rtl of project_top is
     constant C_NFFT_LOG2 : integer := integer(ceil(log2(real(G_NFFT))));
-    -- FFT IF 
-    -- TODO rename all this crap
-    signal r_fft_tlast_out    : std_logic := '0';
-    signal r_fft_tlast_out_d1 : std_logic := '0';
-
-    signal w_fft_tvalid_out    : std_logic;
-    signal r_fft_tvalid_out    : std_logic := '0';
-    signal r_fft_tvalid_out_d1 : std_logic := '0';
-
-    signal w_xk_index    : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-    signal r_xk_index    : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-    signal r_xk_index_d1 : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-
+    -- FFT
+    -- TODO rename all axis crap
+    signal r_fft_tlast_out        : std_logic := '0';
+    signal r_fft_tlast_out_d1     : std_logic := '0';
+    signal w_fft_tvalid_out       : std_logic;
+    signal r_fft_tvalid_out       : std_logic := '0';
+    signal r_fft_tvalid_out_d1    : std_logic := '0';
+    signal w_xk_index             : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
+    signal r_xk_index             : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
+    signal r_xk_index_d1          : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
     signal w_axis_tready_xfft_out : std_logic;
     signal w_axis_tdata_xfft_in   : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
     signal w_axis_tvalid_xfft_in  : std_logic;
     signal w_axis_tlast_xfft_in   : std_logic;
-
-    -- New stuff
-    signal w_fft_tdata_out_re : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_fft_tdata_out_im : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_fft_tdata_out_re     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_fft_tdata_out_im     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
 
     -- FFT Magnitude Calculation
     signal r_fft_tdata_pow2_re : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
     signal r_fft_tdata_pow2_im : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
     signal r_fft_magnitude     : std_logic_vector(2 * G_FFT_BIT_SIZE downto 0) := (others => '0');
-    ----------------------------------
+
     -- Misc
     signal w_100ms_strb : std_logic;
 
@@ -257,6 +259,7 @@ begin
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
+            clk_25       => i_clk_25,
             clk_100      => i_clk_100,
             clk_tmds_250 => i_clk_250,
             i_100ms_strb => w_100ms_strb,

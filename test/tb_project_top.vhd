@@ -16,6 +16,7 @@ end;
 
 architecture bench of project_top_tb is
     -- Clock period
+    constant clk_period_25  : time := 40 ns;
     constant clk_period_100 : time := 10 ns;
     constant clk_period_250 : time := 4 ns;
     -- Generics
@@ -31,6 +32,7 @@ architecture bench of project_top_tb is
     constant G_PRELOAD_DIRECTIVE    : string   := "testbench";
     constant G_DEBUG                : boolean  := true;
     -- Ports
+    signal i_clk_25              : std_logic := '1';
     signal i_clk_100             : std_logic := '0';
     signal i_clk_250             : std_logic := '0';
     signal i_i2c_cfg_done        : std_logic := '0';
@@ -77,6 +79,7 @@ begin
         )
         port map
         (
+            i_clk_25              => i_clk_25,
             i_clk_100             => i_clk_100,
             i_clk_250             => i_clk_250,
             i_i2c_cfg_done        => i_i2c_cfg_done,
@@ -107,6 +110,7 @@ begin
             o_video_2_n           => o_video_2_n
         );
     -- ====================================================================
+    i_clk_25  <= not i_clk_25 after clk_period_25/2;
     i_clk_100 <= not i_clk_100 after clk_period_100/2;
     i_clk_250 <= not i_clk_250 after clk_period_250/2;
     -- ====================================================================

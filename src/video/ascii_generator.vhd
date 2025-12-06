@@ -232,32 +232,33 @@ begin
     p_freq_into_ascii : process (clk_100)
     begin
         if rising_edge(clk_100) then
+            -- "Division by 1000"
+            -- x/1000 ~= x/1024 + x/32768 = x>>10 + x>>15
+            -- But our input frequencies are usually bounded by 25 kHz, then following approximation is better:
+            -- x/1000 ~= x/1024 + x/16384 = x>>10 + x>>14
+
+            -- ------------------
             -- Max Frequency
-            r_freq_max_1000s <= resize(
-                i_max_freq / to_unsigned(1000, i_max_freq'length),
-                r_freq_max_1000s'length
-                );
+            -- ------------------
+            r_freq_max_1000s      <= i_max_freq(i_max_freq'high downto 10) + i_max_freq(i_max_freq'high downto 15) + 1;
             r_tilemap_freq_max(1) <= to_integer(r_freq_max_1000s / 10);
             r_tilemap_freq_max(2) <= to_integer(r_freq_max_1000s mod 10);
+            -- ------------------
             -- LPF
-            r_freq_lpf_1000s <= resize(
-                i_lpf_cutoff / to_unsigned(1000, i_lpf_cutoff'length),
-                r_freq_lpf_1000s'length
-                );
+            -- ------------------
+            r_freq_lpf_1000s      <= i_lpf_cutoff(i_lpf_cutoff'high downto 10) + i_lpf_cutoff(i_lpf_cutoff'high downto 15) + 1;
             r_tilemap_freq_lpf(1) <= to_integer(r_freq_lpf_1000s / 10);
             r_tilemap_freq_lpf(2) <= to_integer(r_freq_lpf_1000s mod 10);
+            -- ------------------
             -- BPF
-            r_freq_bpf_1000s <= resize(
-                i_bpf_cutoff / to_unsigned(1000, i_bpf_cutoff'length),
-                r_freq_bpf_1000s'length
-                );
+            -- ------------------
+            r_freq_bpf_1000s      <= i_bpf_cutoff(i_bpf_cutoff'high downto 10) + i_bpf_cutoff(i_bpf_cutoff'high downto 15) + 1;
             r_tilemap_freq_bpf(1) <= to_integer(r_freq_bpf_1000s / 10);
             r_tilemap_freq_bpf(2) <= to_integer(r_freq_bpf_1000s mod 10);
+            -- ------------------
             -- HPF
-            r_freq_hpf_1000s <= resize(
-                i_hpf_cutoff / to_unsigned(1000, i_hpf_cutoff'length),
-                r_freq_hpf_1000s'length
-                );
+            -- ------------------
+            r_freq_hpf_1000s      <= i_hpf_cutoff(i_hpf_cutoff'high downto 10) + i_hpf_cutoff(i_hpf_cutoff'high downto 15) + 1;
             r_tilemap_freq_hpf(1) <= to_integer(r_freq_hpf_1000s / 10);
             r_tilemap_freq_hpf(2) <= to_integer(r_freq_hpf_1000s mod 10);
         end if;
@@ -269,7 +270,7 @@ begin
     p_output : process (clk_100)
     begin
         if rising_edge(clk_100) then
-            if (i_ce = '1') then 
+            if (i_ce = '1') then
                 o_video_red    <= (others => '0');
                 o_video_grn    <= (others => '0');
                 o_video_blu    <= (others => '0');

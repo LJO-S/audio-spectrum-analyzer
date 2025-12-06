@@ -16,10 +16,12 @@ end;
 
 architecture bench of video_driver_top_tb is
     -- Clock period
+    constant clk_period_25  : time := 40 ns;
     constant clk_period_100 : time := 10 ns;
     constant clk_period_250 : time := 4 ns;
     -- Generics
     -- Ports
+    signal clk_25       : std_logic := '0';
     signal clk_100      : std_logic := '0';
     signal clk_tmds_250 : std_logic := '0';
     signal i_100ms_strb : std_logic;
@@ -43,12 +45,14 @@ architecture bench of video_driver_top_tb is
     signal o_video_2_n  : std_logic;
 begin
     -- ===============================================================
+    clk_25       <= not clk_25 after clk_period_25/2;
     clk_100      <= not clk_100 after clk_period_100/2;
     clk_tmds_250 <= not clk_tmds_250 after clk_period_250/2;
     -- ===============================================================
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
+            clk_25       => clk_25,
             clk_100      => clk_100,
             clk_tmds_250 => clk_tmds_250,
             i_100ms_strb => i_100ms_strb,
@@ -74,7 +78,6 @@ begin
     -- ===============================================================
     main : process
         alias tb_vsync is << signal video_driver_top_inst.w_VSYNC : std_logic >> ;
-
     begin
         test_runner_setup(runner, runner_cfg);
         if run("visual") then

@@ -148,9 +148,9 @@ begin
         -------------------------------------------------------------
         -- Generate Signal Generators with a preload directory
         -- in relation to /src/
-        assert false
-        report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
-            severity note;
+
+        assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
+
         gen_signal_generators : for i in 0 to 7 generate
             signal_generator_inst : entity work.signal_generator
                 generic map(
@@ -174,9 +174,9 @@ begin
             -------------------------------------------------------------
             -- Generate Signal Generators with a preload directory
             -- in relation to /test/vunit_out/
-            assert false
-            report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
-                severity note;
+
+            assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
+            
             gen_signal_generators : for i in 0 to 7 generate
                 signal_generator_inst : entity work.signal_generator
                     generic map(

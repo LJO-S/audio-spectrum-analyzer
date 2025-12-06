@@ -58,8 +58,7 @@ architecture rtl of async_fifo is
     signal r_wr_gray_sync_to_rd_d1 : t_ptr_u := (others => '0');
     signal r_wr_bin_sync_in_rd     : t_ptr_u := (others => '0');
     -- Status
-    signal w_full  : std_logic;
-    signal w_empty : std_logic;
+    signal w_full : std_logic;
     -- -------------
     -- Functions
     -- -------------
@@ -86,7 +85,19 @@ architecture rtl of async_fifo is
         end loop;
         return v_binary;
     end function;
+    -- -------------
+    -- Attributes
+    -- -------------
+    attribute ram_style                       : string;
+    attribute ram_style of r_memory           : signal is "block";
+    attribute keep                            : string;
+    attribute keep of r_rd_gray_sync_to_wr    : signal is "true";
+    attribute keep of r_rd_gray_sync_to_wr_d1 : signal is "true";
+    attribute keep of r_wr_gray_sync_to_rd    : signal is "true";
+    attribute keep of r_wr_gray_sync_to_rd_d1 : signal is "true";
+
 begin
+    -- ==============================================================================
     -- ------------------------
     -- Write Domain (wr_clk)
     -- ------------------------
@@ -127,6 +138,7 @@ begin
         '0';
     o_full <= w_full;
 
+    -- ==============================================================================
     -- ------------------------
     -- Read Domain (rd clk)
     -- ------------------------
@@ -161,6 +173,8 @@ begin
             end if;
         end if;
     end process;
+    -- ==============================================================================
     o_empty <= '1' when (r_rd_ptr_bin = r_wr_bin_sync_in_rd) else
         '0';
+    -- ==============================================================================
 end architecture;

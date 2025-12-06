@@ -17,6 +17,8 @@ add wave -noupdate -group tb /async_fifo_tb/i_rd_rst
 add wave -noupdate -group tb /async_fifo_tb/i_rd_en
 add wave -noupdate -group tb /async_fifo_tb/o_rd_data
 add wave -noupdate -group tb /async_fifo_tb/o_empty
+add wave -noupdate -group tb /async_fifo_tb/tb_wr_data
+add wave -noupdate -group tb /async_fifo_tb/tb_wr_data_d1
 add wave -noupdate -expand -group async_fifo -divider -height 38 Write
 add wave -noupdate -expand -group async_fifo /async_fifo_tb/async_fifo_inst/i_wr_clk
 add wave -noupdate -expand -group async_fifo /async_fifo_tb/async_fifo_inst/i_wr_rst

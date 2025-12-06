@@ -65,26 +65,42 @@ add wave -noupdate -group {Video driver top} /video_driver_top_tb/video_driver_t
 add wave -noupdate -group {Video driver top} /video_driver_top_tb/video_driver_top_inst/w_TMDS_out_clk_p
 add wave -noupdate -group {Video driver top} /video_driver_top_tb/video_driver_top_inst/w_TMDS_out_clk_n
 add wave -noupdate -group {Video driver top} /video_driver_top_tb/video_driver_top_inst/w_TMDS
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_TMDS_clk
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_pixclk
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_HSYNC
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_VSYNC
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_draw
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_red
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_grn
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_blu
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/temp
-add wave -noupdate -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS_clk
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_HDMI_HPD
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_red
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_grn
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_blu
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_mod10
-add wave -noupdate -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_red
-add wave -noupdate -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_grn
-add wave -noupdate -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_blu
-add wave -noupdate -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_load
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_clk_25
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_clk_100
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_clk_250
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_25m_ce
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_HSYNC
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_VSYNC
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_draw
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_red
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_grn
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_video_blu
+add wave -noupdate -expand -group TMDS_top -radix binary -childformat {{/video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(2) -radix binary} {/video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(1) -radix binary} {/video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(0) -radix binary}} -subitemconfig {/video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(2) {-radix binary} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(1) {-radix binary} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS(0) {-radix binary}} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_TMDS_clk
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/o_HDMI_HPD
+add wave -noupdate -expand -group TMDS_top -divider Encode
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_25m_ce
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_red
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_grn
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_TMDS_blu
+add wave -noupdate -expand -group TMDS_top -divider FIFO
+add wave -noupdate -expand -group TMDS_top -color Gold /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_clk_100
+add wave -noupdate -expand -group TMDS_top -color Gold /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_fifo_wr_en
+add wave -noupdate -expand -group TMDS_top -color Gold -subitemconfig {/video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(29) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(28) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(27) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(26) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(25) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(24) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(23) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(22) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(21) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(20) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(19) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(18) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(17) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(16) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(15) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(14) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(13) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(12) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(11) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(10) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(9) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(8) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(7) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(6) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(5) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(4) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(3) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(2) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(1) {-color Gold} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data(0) {-color Gold}} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_wr_data
+add wave -noupdate -expand -group TMDS_top -color Gold /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_full
+add wave -noupdate -expand -group TMDS_top -color {Cornflower Blue} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/i_clk_250
+add wave -noupdate -expand -group TMDS_top -color {Cornflower Blue} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_fifo_rd_en
+add wave -noupdate -expand -group TMDS_top -color {Cornflower Blue} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_rd_data
+add wave -noupdate -expand -group TMDS_top -color {Cornflower Blue} /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/w_fifo_empty
+add wave -noupdate -expand -group TMDS_top -divider Out
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_sync_TMDS_red
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_sync_TMDS_grn
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_sync_TMDS_blu
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_mod10
+add wave -noupdate -expand -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_red
+add wave -noupdate -expand -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_grn
+add wave -noupdate -expand -group TMDS_top -radix binary /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_blu
+add wave -noupdate -expand -group TMDS_top /video_driver_top_tb/video_driver_top_inst/TMDS_top_inst/r_TMDS_shift_load
 add wave -noupdate -group {Image Generator} /video_driver_top_tb/video_driver_top_inst/image_generator_inst/clk_100
 add wave -noupdate -group {Image Generator} /video_driver_top_tb/video_driver_top_inst/image_generator_inst/i_ce
 add wave -noupdate -group {Image Generator} /video_driver_top_tb/video_driver_top_inst/image_generator_inst/i_compare_limit
@@ -185,7 +201,7 @@ add wave -noupdate -group {Ascii Generator} /video_driver_top_tb/video_driver_to
 add wave -noupdate -group {Ascii Generator} /video_driver_top_tb/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_freq_hpf_1000s
 add wave -noupdate -group {Ascii Generator} /video_driver_top_tb/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_font_line
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {976841 ps} 0}
+WaveRestoreCursors {{Cursor 4} {49857 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 162
 configure wave -valuecolwidth 100
@@ -201,4 +217,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {0 ps} {1692672 ps}
+WaveRestoreZoom {0 ps} {155304 ps}
