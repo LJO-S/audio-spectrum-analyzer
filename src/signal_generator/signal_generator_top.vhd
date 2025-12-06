@@ -1,24 +1,24 @@
 ------------------------------------------------------------
 ------------------------------------------------------------
 -- Signal Generator Wrapper
--- Should be able to produce 8 different pre-produced patterns
--- from 8 different signal generators
+-- Produces 8 different pre-produced patterns from 8 different signal generators
 ------------------------------------------------------------
 ------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 use work.sig_gen_pkg.all;
 
 entity signal_generator_top is
     generic (
         G_FFT_BIT_SIZE      : natural := 16;
         G_RAM_DEPTH         : natural := 1024;
-        G_100MS_CYCLES      : natural := 2_500_000;
+        G_100MS_CYCLES      : natural := 10_000_000;
         G_PRELOAD_DIRECTIVE : string  := "build"
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- GPIO
         i_pbuttons  : in std_logic_vector(3 downto 0);
         i_sel_up_lo : in std_logic;
@@ -37,18 +37,19 @@ architecture rtl of signal_generator_top is
     -- Constants
     constant C_PRELOAD_STRING_SRC : t_preload_string_array := C_PRELOAD_STRING_SRC;
     constant C_PRELOAD_STRING_TB  : t_preload_string_array := C_PRELOAD_STRING_TB;
+    constant C_100MS_CYCLES_LOG2  : integer                := integer(ceil(log2(real(G_100MS_CYCLES))));
     -- Internals
     type t_gpio_state is (s_IDLE, s_REQ_PENDING);
     signal r_STATE_GPIO : t_gpio_state                 := s_IDLE;
     signal r_pbuttons   : std_logic_vector(3 downto 0) := (others => '0');
 
-    signal r_100ms_counter       : unsigned(22 downto 0) := (others => '0');
-    signal r_sig_gen_reset       : std_logic             := '0';
-    signal r_start_strobe        : std_logic             := '0';
-    signal r_start_strobe_d1     : std_logic             := '0';
-    signal r_tlast_pending       : std_logic             := '0';
-    signal w_sig_gen_tvalid      : std_logic             := '0';
-    signal w_sig_gen_tlast       : std_logic             := '0';
+    signal r_100ms_counter       : unsigned(C_100MS_CYCLES_LOG2 - 1 downto 0) := (others => '0');
+    signal r_sig_gen_reset       : std_logic                                  := '0';
+    signal r_start_strobe        : std_logic                                  := '0';
+    signal r_start_strobe_d1     : std_logic                                  := '0';
+    signal r_tlast_pending       : std_logic                                  := '0';
+    signal w_sig_gen_tvalid      : std_logic                                  := '0';
+    signal w_sig_gen_tlast       : std_logic                                  := '0';
     signal w_sig_gen_tdata       : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
     signal r_sig_gen_idx         : UNSIGNED(2 downto 0) := (others => '0');
     signal r_sig_gen_idx_pending : UNSIGNED(2 downto 0) := (others => '0');
@@ -67,9 +68,9 @@ begin
     o_m_axis_tvalid <= w_sig_gen_tvalid;
     o_m_axis_tlast  <= w_sig_gen_tlast;
     -------------------------------------------------------------
-    p_100ms_cntr : process (clk_25)
+    p_100ms_cntr : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             --------------------------------------
             --------------------------------------
             case r_STATE_GPIO is
@@ -134,10 +135,10 @@ begin
         w_sig_gen_tdata                           <= w_tdata_array(to_integer(r_sig_gen_idx));
     end process p_data_mux;
     -------------------------------------------------------------
-    p_startup : process (clk_25)
+    p_startup : process (clk_100)
     begin
-        if rising_edge(clk_25) then
-            if (r_sig_gen_reset = '0') and (r_100ms_counter >= 20) then
+        if rising_edge(clk_100) then
+            if (r_sig_gen_reset = '0') and (r_100ms_counter >= 80) then
                 r_sig_gen_reset <= '1';
             end if;
         end if;
@@ -147,9 +148,9 @@ begin
         -------------------------------------------------------------
         -- Generate Signal Generators with a preload directory
         -- in relation to /src/
-        assert false
-        report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
-            severity note;
+
+        assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
+
         gen_signal_generators : for i in 0 to 7 generate
             signal_generator_inst : entity work.signal_generator
                 generic map(
@@ -159,7 +160,7 @@ begin
                 )
                 port map
                 (
-                    clk_25   => clk_25,
+                    clk_100  => clk_100,
                     i_start  => w_start_vector(i),
                     i_reset  => r_sig_gen_reset,
                     i_tready => i_s_axis_tready,
@@ -173,9 +174,9 @@ begin
             -------------------------------------------------------------
             -- Generate Signal Generators with a preload directory
             -- in relation to /test/vunit_out/
-            assert false
-            report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'"
-                severity note;
+
+            assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
+            
             gen_signal_generators : for i in 0 to 7 generate
                 signal_generator_inst : entity work.signal_generator
                     generic map(
@@ -185,7 +186,7 @@ begin
                     )
                     port map
                     (
-                        clk_25   => clk_25,
+                        clk_100  => clk_100,
                         i_start  => w_start_vector(i),
                         i_reset  => r_sig_gen_reset,
                         i_tready => i_s_axis_tready,

@@ -41,7 +41,7 @@ Idéen är följande:
 
 ## ########################################################
 ## TODO
-- Klocka upp till 125 MHz
+- Klocka upp till 100 MHz
 - Fixa waterfall
     - Behöver magnitude (32bit) -> log10 (12/8bit)
     - Minneshantering (ett 480x120x12/8 bit minne)

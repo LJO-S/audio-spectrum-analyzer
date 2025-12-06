@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity TMDS_encoder is
     port (
         clk : in std_logic;
+        ce  : in std_logic;
 
         i_video_en   : in std_logic;
         i_CD         : in std_logic_vector(1 downto 0);
@@ -121,27 +122,29 @@ begin
     p_output : process (clk)
     begin
         if rising_edge(clk) then
-            if (i_video_en = '1') then
-                o_TMDS <= w_TMDS_data;
+            if (ce = '1') then
+                if (i_video_en = '1') then
+                    o_TMDS <= w_TMDS_data;
 
-                -- Cnt(t-1)
-                w_balance_acc <= w_balance_acc_new;
-            else
-                w_balance_acc <= (others => '0');
-                w_C1_C0 <= i_CD;
-                case w_C1_C0 is
-                    when "00" =>
-                        o_TMDS <= "1101010100";
-                    when "01" =>
-                        o_TMDS <= "0010101011";
-                    when "10" =>
-                        o_TMDS <= "0101010100";
-                    when "11" =>
-                        o_TMDS <= "1010101011";
-                    when others =>
-                        -- 00 case
-                        o_TMDS <= "1101010100";
-                end case;
+                    -- Cnt(t-1)
+                    w_balance_acc <= w_balance_acc_new;
+                else
+                    w_balance_acc <= (others => '0');
+                    w_C1_C0       <= i_CD;
+                    case w_C1_C0 is
+                        when "00" =>
+                            o_TMDS <= "1101010100";
+                        when "01" =>
+                            o_TMDS <= "0010101011";
+                        when "10" =>
+                            o_TMDS <= "0101010100";
+                        when "11" =>
+                            o_TMDS <= "1010101011";
+                        when others =>
+                            -- 00 case
+                            o_TMDS <= "1101010100";
+                    end case;
+                end if;
             end if;
         end if;
     end process p_output;

@@ -16,12 +16,12 @@ end;
 
 architecture bench of gpio_ctrl_tb is
     -- Clock period
-    constant clk_period : time := 40 ns;
+    constant clk_period : time := 10 ns;
     -- Generics
     constant G_DEBOUNCE_LIMIT : natural := 25;
     constant G_DEBUG          : boolean := true;
     -- Ports
-    signal clk_25            : std_logic := '0';
+    signal clk_100           : std_logic := '0';
     signal i_pb_vector       : std_logic_vector(3 downto 0);
     signal i_dip_vector      : std_logic_vector(3 downto 0);
     signal o_sig_gen_src_sel : std_logic_vector(3 downto 0);
@@ -36,7 +36,7 @@ architecture bench of gpio_ctrl_tb is
     signal o_capture_en      : std_logic;
 begin
     /* ---------------------------------------------------------- */
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
 
     gpio_ctrl_inst : entity work.gpio_ctrl
         generic map(
@@ -45,7 +45,7 @@ begin
         )
         port map
         (
-            clk_25            => clk_25,
+            clk_100           => clk_100,
             i_pb_vector       => i_pb_vector,
             i_dip_vector      => i_dip_vector,
             o_sig_gen_src_sel => o_sig_gen_src_sel,

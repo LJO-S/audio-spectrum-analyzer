@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity i2s_ser is
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- I2S Timing
         i_pbclk : in std_logic;
         i_bclk  : in std_logic;
@@ -47,26 +47,26 @@ begin
 
     o_pbdat <= r_sdata;
     -- ==================================================================
-    p_pipeline : process (clk_25)
+    p_pipeline : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_bclk  <= i_bclk;
             r_pbclk <= i_pbclk;
         end if;
     end process p_pipeline;
     -- ==================================================================
-    p_fetch_data : process (clk_25)
+    p_fetch_data : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (i_tvalid = '1') then
                 r_data_pending <= i_tdata;
             end if;
         end if;
     end process p_fetch_data;
     -- ==================================================================
-    p_serializer_fsm : process (clk_25)
+    p_serializer_fsm : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             case s_ser_state is
                     -- -----------------------------------
                 when IDLE =>
@@ -116,9 +116,9 @@ begin
         end if;
     end process p_serializer_fsm;
     -- ==================================================================
-    p_bclk_bit_counter : process (clk_25)
+    p_bclk_bit_counter : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (s_ser_state = WRITE_LEFT) or (s_ser_state = WRITE_RIGHT) then
                 if (w_bclk_fe = '1') then
                     r_bit_cntr <= r_bit_cntr + 1;
@@ -130,9 +130,9 @@ begin
     end process p_bclk_bit_counter;
     -- ==================================================================
     -- 
-    p_serializer : process (clk_25)
+    p_serializer : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (s_ser_state = WAIT_LEFT) then
                 r_data_left  <= r_data_pending;
                 r_data_right <= r_data_pending;

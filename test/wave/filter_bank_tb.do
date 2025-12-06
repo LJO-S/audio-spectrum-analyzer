@@ -1,6 +1,6 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -group tb /filter_bank_tb/clk_25
+add wave -noupdate -group tb /filter_bank_tb/clk_100
 add wave -noupdate -group tb /filter_bank_tb/i_lpf_en
 add wave -noupdate -group tb /filter_bank_tb/i_hpf_en
 add wave -noupdate -group tb /filter_bank_tb/i_tvalid
@@ -24,7 +24,7 @@ add wave -noupdate -group tb /filter_bank_tb/tb_input_enable
 add wave -noupdate -group tb /filter_bank_tb/tb_counter
 add wave -noupdate -group tb /filter_bank_tb/tb_48khz_strobe
 add wave -noupdate -group tb /filter_bank_tb/tb_48khz_strobe_d0
-add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/clk_25
+add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/clk_100
 add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/i_lpf_en
 add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/i_hpf_en
 add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/i_tvalid
@@ -52,7 +52,7 @@ add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/w_tvalid_
 add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/w_tdata_hpf_in
 add wave -noupdate -expand -group DUT /filter_bank_tb/filter_bank_inst/w_tvalid_hpf_out
 add wave -noupdate -expand -group DUT -format Analog-Step -height 74 -max 22370.0 -min -18690.0 -radix decimal /filter_bank_tb/filter_bank_inst/w_tdata_hpf_out
-add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/clk_25
+add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/clk_100
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/i_new_data_strobe
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/o_updating_coeffs
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/i_waddr
@@ -79,7 +79,7 @@ add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/r_raddr
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/r_rdata
 add wave -noupdate -expand -group LPF /filter_bank_tb/filter_bank_inst/lpf_inst/w_updating_coefficients
-add wave -noupdate -expand -group HPF /filter_bank_tb/filter_bank_inst/hpf_inst/clk_25
+add wave -noupdate -expand -group HPF /filter_bank_tb/filter_bank_inst/hpf_inst/clk_100
 add wave -noupdate -expand -group HPF /filter_bank_tb/filter_bank_inst/hpf_inst/i_new_data_strobe
 add wave -noupdate -expand -group HPF /filter_bank_tb/filter_bank_inst/hpf_inst/o_updating_coeffs
 add wave -noupdate -expand -group HPF /filter_bank_tb/filter_bank_inst/hpf_inst/i_waddr

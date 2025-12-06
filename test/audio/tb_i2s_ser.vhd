@@ -18,13 +18,13 @@ end;
 
 architecture bench of i2s_ser_tb is
     -- Clock period
-    constant clk_period        : time    := 40 ns;
+    constant clk_period        : time    := 10 ns;
     constant TB_C_TIMEOUT      : time    := 100 ms;
     constant TB_C_MAX_BIT_CNTR : natural := 16;
 
     -- Generics
     -- Ports
-    signal clk_25  : std_logic := '0';
+    signal clk_100  : std_logic := '0';
     signal i_pbclk : std_logic := '0';
     signal i_bclk  : std_logic := '0';
     signal i_en    : std_logic := '0';
@@ -46,18 +46,18 @@ architecture bench of i2s_ser_tb is
     signal tb_pbclk_fe : std_logic                     := '0';
 begin
     -- ===============================================================
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     -- ===============================================================
-    p_subclk_generator : process (clk_25)
+    p_subclk_generator : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_counter <= tb_counter + 1;
         end if;
     end process p_subclk_generator;
-    i_pbclk <= tb_counter(8); -- /512 ~ 48 kHz
-    i_bclk  <= tb_counter(2); -- /8 = 3.125 MHz
+    i_pbclk <= tb_counter(10); -- /2048 ~ 48 kHz
+    i_bclk  <= tb_counter(4); -- /32 = 3.125 MHz
     -- ===============================================================
-    process (clk_25)
+    process (clk_100)
         variable seed1, seed2 : positive := 999;
         impure function rand_slv (
             len : integer
@@ -73,7 +73,7 @@ begin
             return slv;
         end function;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_tvalid <= '0';
             if (tb_pbclk_fe = '1') then
                 tb_tdata  <= rand_slv(tb_tdata'length);
@@ -83,9 +83,9 @@ begin
     end process;
 
     tb_pbclk_fe <= tb_pbclk and not(i_pbclk);
-    process (clk_25)
+    process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_pbclk    <= i_pbclk;
             tb_pbclk_d1 <= tb_pbclk;
             tb_pbclk_d2 <= tb_pbclk_d1;
@@ -98,7 +98,7 @@ begin
     i2s_ser_inst : entity work.i2s_ser
         port map
         (
-            clk_25   => clk_25,
+            clk_100   => clk_100,
             i_pbclk  => tb_pbclk_d2,
             i_bclk   => tb_bclk_d2,
             i_tdata  => tb_tdata,
@@ -110,7 +110,7 @@ begin
     i2s_deser_inst : entity work.i2s_deser
         port map
         (
-            clk_25        => clk_25,
+            clk_100        => clk_100,
             i_lrclk       => tb_pbclk_d2,
             i_bclk        => tb_bclk_d2,
             i_serial_data => o_pbdat,
@@ -126,7 +126,7 @@ begin
 
             info("Running tb_i2s_ser-BASIC");
 
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             wait_clock(10, clk_period);
 
             for i in 0 to 15 loop
@@ -155,7 +155,7 @@ begin
 
             info("Running tb_i2s_ser-DESERIALIZER");
 
-            wait until clk_25 = '1';
+            wait until clk_100 = '1';
             wait_clock(10, clk_period);
 
             for i in 0 to 15 loop

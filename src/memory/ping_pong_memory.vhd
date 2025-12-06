@@ -20,7 +20,7 @@ use ieee.numeric_std.all;
 
 entity ping_pong_memory is
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- FFT input data
         i_fft_data_magn  : in std_logic_vector(31 downto 0);
         i_fft_data_valid : in std_logic;
@@ -45,28 +45,24 @@ architecture rtl of ping_pong_memory is
     signal r_wr_en_bram0   : std_logic                     := '0';
     signal r_wr_en_bram1   : std_logic                     := '0';
 
-    signal r_xk_index          : std_logic_vector(9 downto 0)  := (others => '0');
-    signal r_xk_index_d1       : std_logic_vector(9 downto 0)  := (others => '0');
-    signal r_fft_data_valid    : std_logic                     := '0';
-    signal r_fft_data_valid_d1 : std_logic                     := '0';
-    signal r_fft_data_last     : std_logic                     := '0';
-    signal r_fft_data_last_d1  : std_logic                     := '0';
-    signal r_fft_data_magn     : std_logic_vector(31 downto 0) := (others => '0');
-    signal r_pingpong_d1       : std_logic                     := '0';
-    signal r_pingpong_d2       : std_logic                     := '0';
-    signal r_rd_addr           : std_logic_vector(9 downto 0)  := (others => '0');
+    signal r_xk_index       : std_logic_vector(9 downto 0)  := (others => '0');
+    signal r_fft_data_valid : std_logic                     := '0';
+    signal r_fft_data_last  : std_logic                     := '0';
+    signal r_fft_data_magn  : std_logic_vector(31 downto 0) := (others => '0');
+    signal r_pingpong_d1    : std_logic                     := '0';
+    signal r_pingpong_d2    : std_logic                     := '0';
+    signal r_rd_addr        : std_logic_vector(9 downto 0)  := (others => '0');
 begin
     -- ----------------------------------------------------
-    p_main : process (clk_25)
+    p_main : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_xk_index       <= i_xk_index;
             r_fft_data_magn  <= i_fft_data_magn;
             r_fft_data_valid <= i_fft_data_valid;
             r_fft_data_last  <= i_fft_data_last;
             r_rd_addr        <= i_rd_addr;
 
-            -- hm
             r_pingpong_d1 <= r_pingpong;
             r_pingpong_d2 <= r_pingpong_d1;
 
@@ -97,9 +93,9 @@ begin
         end if;
     end process p_main;
     ----------------------------------------------------
-    p_output_mux : process (clk_25)
+    p_output_mux : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             -- Pipe here due to 1cc bram read latency
             if (r_pingpong_d2 = '0') then
                 o_rd_data <= r_rd_data_bram0;
@@ -118,7 +114,7 @@ begin
         )
         port map
         (
-            clk     => clk_25,
+            clk     => clk_100,
             i_addra => r_addr_bram0,
             i_dina  => r_wr_data_bram0,
             i_wea   => r_wr_en_bram0,
@@ -134,7 +130,7 @@ begin
         )
         port map
         (
-            clk     => clk_25,
+            clk     => clk_100,
             i_addra => r_addr_bram1,
             i_dina  => r_wr_data_bram1,
             i_wea   => r_wr_en_bram1,

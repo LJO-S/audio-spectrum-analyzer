@@ -1,16 +1,18 @@
+-- ========================================================================
+-- Handles DIP/PB GPIO debouncers and subsequent routing
+-- ========================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
--- TODO: route to /video/image_generator
+use ieee.math_real.all;
 
 entity gpio_ctrl is
     generic (
-        G_DEBOUNCE_LIMIT : natural := 250_000;
+        G_DEBOUNCE_LIMIT : natural := 1_000_000;
         G_DEBUG          : boolean := false
     );
     port (
-        clk_25       : in std_logic;
+        clk_100      : in std_logic;
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
 
@@ -70,9 +72,9 @@ architecture rtl of gpio_ctrl is
 
 begin
     /* ------------------------------------------------------------------ */ 
-    p_gpio_mux : process (clk_25)
+    p_gpio_mux : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             -- Defaults
             o_sig_gen_src_sel <= (others => '0');
             o_lpf_en          <= '0';
@@ -130,9 +132,9 @@ begin
     w_hpf_incr_re <= not(r_hpf_incr) and w_hpf_incr;
     w_hpf_decr_re <= not(r_hpf_decr) and w_hpf_decr;
 
-    p_rising_edge_det : process (clk_25)
+    p_rising_edge_det : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_lpf_incr <= w_lpf_incr;
             r_lpf_decr <= w_lpf_decr;
             r_hpf_incr <= w_hpf_incr;
@@ -149,7 +151,7 @@ begin
             )
             port map
             (
-                i_CLK         => clk_25,
+                i_CLK         => clk_100,
                 i_PB          => i_pb_vector(i),
                 o_PB_debounce => w_pb_debounce(i)
             );
@@ -168,7 +170,7 @@ begin
             )
             port map
             (
-                i_CLK         => clk_25,
+                i_CLK         => clk_100,
                 i_PB          => i_dip_vector(i),
                 o_PB_debounce => w_dip_debounce(i)
             );

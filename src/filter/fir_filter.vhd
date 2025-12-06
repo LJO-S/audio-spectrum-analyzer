@@ -20,7 +20,7 @@ entity fir_filter is
         G_COEFF_WIDTH : positive := 16
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- From PS
         i_new_data_strobe : in std_logic;
         o_updating_coeffs : out std_logic;
@@ -61,7 +61,6 @@ architecture rtl of fir_filter is
     -- ----------------------------------
     -- FIR
     signal s_FIR_CTRL : t_fir_fsm := IDLE;
-    -- signal r_coefficients : t_coefficients                               := (t_coefficients'range => (others => '0'));
     signal r_coefficients : t_coefficients := (
     x"0008",
     x"0003",
@@ -189,9 +188,9 @@ begin
     o_tvalid <= r_tvalid;
     o_tdata  <= std_logic_vector(r_tdata_out);
     -- ================================================================================
-    p_output_stage : process (clk_25)
+    p_output_stage : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_tvalid    <= '0';
             r_tdata_out <= (others => '0');
             case s_OUTPUT_STATE is
@@ -237,11 +236,11 @@ begin
         end if;
     end process p_output_stage;
     -- ================================================================================
-    p_fir_fsm : process (clk_25)
+    p_fir_fsm : process (clk_100)
         variable v_sum         : signed(C_BIT_WIDTH - 1 downto 0) := (others => '0');
         variable v_coeff_debug : real;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_acc_strobe <= '0';
             case s_FIR_CTRL is
                 when IDLE =>
@@ -284,9 +283,9 @@ begin
     end process p_fir_fsm;
     -- ================================================================================
     -- Detect when PS has written down new coefficient values
-    p_read_coefficients : process (clk_25)
+    p_read_coefficients : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             case s_COEFF_READ is
                 when IDLE          =>
                     r_raddr <= (others => '0');

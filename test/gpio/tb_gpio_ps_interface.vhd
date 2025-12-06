@@ -16,10 +16,10 @@ end;
 
 architecture bench of gpio_ps_interface_tb is
     -- Clock period
-    constant clk_period : time := 5 ns;
+    constant clk_period : time := 10 ns;
     -- Generics
     -- Ports
-    signal clk_25                : std_logic := '0';
+    signal clk_100               : std_logic := '0';
     signal i_lpf_incr            : std_logic := '0';
     signal i_lpf_decr            : std_logic := '0';
     signal i_hpf_incr            : std_logic := '0';
@@ -39,12 +39,12 @@ architecture bench of gpio_ps_interface_tb is
     signal i_new_data_strobe_hpf : std_logic := '0';
 begin
     -- ========================================================================
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     -- ========================================================================
     gpio_ps_interface_inst : entity work.gpio_ps_interface
         port map
         (
-            clk_25 => clk_25,
+            clk_100 => clk_100,
             -- GPIO PB Presses
             i_lpf_incr => i_lpf_incr,
             i_lpf_decr => i_lpf_decr,
@@ -120,7 +120,7 @@ begin
         test_runner_setup(runner, runner_cfg);
         while test_suite loop
             if run("sequential-requests") then
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 wait_clock(1, clk_period);
 
                 -- Sequential write
@@ -182,7 +182,7 @@ begin
 
                 test_runner_cleanup(runner);
             elsif run("clashing-requests") then
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 wait_clock(1, clk_period);
 
                 -- Clashing write
@@ -231,7 +231,7 @@ begin
                 updating_hpf(5);
                 test_runner_cleanup(runner);
             elsif run("clashing-with-updates") then
-                wait until clk_25 = '1';
+                wait until clk_100 = '1';
                 wait_clock(1, clk_period);
 
                 -- Clashing write
@@ -282,8 +282,6 @@ begin
                 wait_clock(1, clk_period);
                 i_updating_coeffs_hpf <= '1';
                 wait_clock(1, clk_period);
-
-
                 test_runner_cleanup(runner);
             end if;
         end loop;

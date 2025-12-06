@@ -4,12 +4,12 @@ use ieee.numeric_std.all;
 
 entity PB_debounce is
     generic (
-        -- 10ms with 25 MHz clk 
-        G_DEBOUNCE_LIMIT : natural := 250_000;
+        -- 10ms with 100 MHz clk 
+        G_DEBOUNCE_LIMIT : natural := 1_000_000;
         G_DEBUG          : boolean := FALSE
     );
     port (
-        i_CLK         : in std_logic; -- 25 MHz
+        i_CLK         : in std_logic;
         i_PB          : in std_logic;
         o_PB_debounce : out std_logic
     );
@@ -23,8 +23,8 @@ begin
     process
     begin
         if (G_DEBUG = FALSE) then
-            assert (G_DEBOUNCE_LIMIT > 249_999)
-            report "Debounce limit is less than 250_000 when DEBUG=FALSE. Currently set to (" & natural'image(G_DEBOUNCE_LIMIT) & ")!"
+            assert (G_DEBOUNCE_LIMIT > 999_999)
+            report "Debounce limit is less than 1_000_000 when DEBUG=FALSE. Currently set to (" & natural'image(G_DEBOUNCE_LIMIT) & ")!"
                 severity failure;
         else
             assert G_DEBUG = TRUE

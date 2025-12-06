@@ -16,13 +16,13 @@ end;
 
 architecture bench of ping_pong_memory_tb is
     -- Clock period
-    constant clk_period   : time    := 5 ns;
+    constant clk_period   : time    := 10 ns;
     constant C_RD_LATENCY : natural := 4;
     constant C_NFFT       : natural := 1024;
     constant C_LOG2_NFFT  : integer := integer(ceil(log2(real(C_NFFT))));
     -- Generics
     -- Ports
-    signal clk_25           : std_logic                                  := '0';
+    signal clk_100          : std_logic                                  := '0';
     signal i_fft_data_magn  : std_logic_vector(31 downto 0)              := (others => '0');
     signal i_fft_data_last  : std_logic                                  := '0';
     signal i_fft_data_valid : std_logic                                  := '0';
@@ -34,7 +34,6 @@ architecture bench of ping_pong_memory_tb is
     signal tb_clk_strobe       : std_logic := '0';
     signal tb_use_slow_readout : std_logic := '1';
     signal tb_latency_cntr     : integer   := 0;
-    signal tb_latency_done     : std_logic := '0';
 
     type t_input_data_state is (IDLE, GENERATING);
     signal tb_input_data_state : t_input_data_state := IDLE;
@@ -53,13 +52,13 @@ architecture bench of ping_pong_memory_tb is
 
 begin
     -- ======================================================================
-    clk_25 <= not clk_25 after clk_period/2;
+    clk_100 <= not clk_100 after clk_period/2;
     -- ======================================================================
 
     ping_pong_memory_inst : entity work.ping_pong_memory
         port map
         (
-            clk_25           => clk_25,
+            clk_100          => clk_100,
             i_fft_data_magn  => i_fft_data_magn,
             i_fft_data_last  => i_fft_data_last,
             i_fft_data_valid => i_fft_data_valid,
@@ -68,7 +67,7 @@ begin
             o_rd_data        => o_rd_data
         );
     -- ======================================================================
-    p_input_data : process (clk_25)
+    p_input_data : process (clk_100)
         variable seed1, seed2 : positive := 999;
         impure function rand_slv (
             len : integer
@@ -84,7 +83,7 @@ begin
             return slv;
         end function;
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
 
             case tb_input_data_state is
                 when IDLE =>
@@ -97,11 +96,6 @@ begin
                 when GENERATING =>
                     -- Data 
                     i_fft_data_magn <= rand_slv(i_fft_data_magn'length);
-                    -- if (tb_mem_sel = '1') then
-                    --     i_fft_data_magn <= std_logic_vector((resize(unsigned(i_fft_data_magn), i_fft_data_magn'length) + 1) mod C_NFFT);
-                    -- else
-                    --     i_fft_data_magn <= std_logic_vector(resize((unsigned(i_fft_data_magn)), i_fft_data_magn'length) + 4096);
-                    -- end if;
 
                     -- Assuming wraparound for pow-of-2 NFFTs
                     i_xk_index <= std_logic_vector(unsigned(i_xk_index) + 1);
@@ -121,9 +115,9 @@ begin
         end if;
     end process p_input_data;
     -- ======================================================================
-    p_rd_addr : process (clk_25)
+    p_rd_addr : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             if (tb_use_slow_readout = '1') then
                 tb_clk_strobe <= not tb_clk_strobe;
             else
@@ -135,9 +129,9 @@ begin
         end if;
     end process p_rd_addr;
     -- ======================================================================
-    p_check_output : process (clk_25)
+    p_check_output : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             tb_rd_addr_shreg <= i_rd_addr & tb_rd_addr_shreg(tb_rd_addr_shreg'low to tb_rd_addr_shreg'high - 1);
             tb_mem_sel_shreg <= tb_mem_sel_shreg(tb_mem_sel_shreg'high - 1 downto 0) & tb_mem_sel;
 
@@ -201,7 +195,7 @@ begin
     -- ======================================================================
 
     main : process
-        variable v_last_ping_pong                                         : std_logic;
+        variable v_last_ping_pong                                        : std_logic;
         alias tb_ping_pong is << signal ping_pong_memory_inst.r_pingpong : std_logic >> ;
     begin
         test_runner_setup(runner, runner_cfg);
@@ -210,7 +204,7 @@ begin
             if run("slow-readout-auto") then
                 info("Running test of ping_pong memory SLOW readout!");
                 tb_use_slow_readout <= '1';
-                wait until (clk_25 = '1');
+                wait until (clk_100 = '1');
                 wait_clock(10, clk_period);
                 tb_enable <= '1';
                 for i in 0 to 9 loop
@@ -220,7 +214,7 @@ begin
             elsif run("fast-readout-auto") then
                 info("Running tb_ping_pong-fast-readout-auto!");
                 tb_use_slow_readout <= '0';
-                wait until (clk_25 = '1');
+                wait until (clk_100 = '1');
                 wait_clock(10, clk_period);
                 tb_enable <= '1';
                 for i in 0 to 9 loop
@@ -230,7 +224,7 @@ begin
             elsif run("stuck-at-tlast") then
                 info("Running tb_ping_pong-fast-readout-auto!");
                 tb_use_slow_readout <= '0';
-                wait until (clk_25 = '1');
+                wait until (clk_100 = '1');
                 wait_clock(10, clk_period);
                 tb_enable <= '1';
                 wait until i_fft_data_last = '1';

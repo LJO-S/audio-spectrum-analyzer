@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity audio_buffer is
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- CTRL logic IF
         i_capture_en : in std_logic;
         o_draining   : out std_logic;
@@ -34,9 +34,9 @@ architecture rtl of audio_buffer is
 
 begin
     /* ------------------------------------------------------------- */
-    process (clk_25)
+    process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_tvalid <= '0';
             r_we     <= '0';
             case s_buffer_state is
@@ -104,7 +104,7 @@ begin
         )
         port map
         (
-            clk    => clk_25,
+            clk    => clk_100,
             i_addr => std_logic_vector(r_addr),
             i_din  => r_din,
             i_we   => r_we,

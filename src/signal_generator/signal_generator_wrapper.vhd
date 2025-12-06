@@ -5,12 +5,11 @@ entity signal_generator_wrapper is
     generic (
         G_FFT_BIT_SIZE      : natural := 16;
         G_RAM_DEPTH         : natural := 1024;
-        G_100MS_CYCLES      : natural := 2_500_000;
-        G_DEBOUNCE_LIMIT    : natural := 250_000;
+        G_100MS_CYCLES      : natural := 10_000_000;
         G_PRELOAD_DIRECTIVE : string  := "build"
     );
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- GPIO
         i_sig_gen_src_sel : in std_logic_vector(3 downto 0);
         i_sel_up_lo       : in std_logic;
@@ -37,7 +36,7 @@ begin
         )
         port map
         (
-            clk_25          => clk_25,
+            clk_100         => clk_100,
             i_pbuttons      => i_sig_gen_src_sel,
             i_sel_up_lo     => i_sel_up_lo,
             o_100ms_strb    => o_100ms_strb,

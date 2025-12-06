@@ -1,6 +1,6 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate /gpio_ctrl_tb/gpio_ctrl_inst/clk_25
+add wave -noupdate /gpio_ctrl_tb/gpio_ctrl_inst/clk_100
 add wave -noupdate -radix binary /gpio_ctrl_tb/gpio_ctrl_inst/i_pb_vector
 add wave -noupdate -radix binary /gpio_ctrl_tb/gpio_ctrl_inst/i_dip_vector
 add wave -noupdate -radix binary /gpio_ctrl_tb/gpio_ctrl_inst/o_sig_gen_src_sel

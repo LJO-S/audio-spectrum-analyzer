@@ -1,3 +1,7 @@
+-- ========================================================================
+-- Handles communication with Processing System and distributes internal 
+-- logic based on said comms.
+-- ========================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -5,7 +9,7 @@ use ieee.std_logic_misc.all;
 
 entity gpio_ps_interface is
     port (
-        clk_25 : in std_logic;
+        clk_100 : in std_logic;
         -- From GPIO Ctrl
         i_lpf_incr : in std_logic;
         i_lpf_decr : in std_logic;
@@ -20,12 +24,12 @@ entity gpio_ps_interface is
         o_new_data_strobe_lpf : out std_logic;
         o_new_data_strobe_hpf : out std_logic;
         -- From FIR Filters
-        i_updating_coeffs_lpf : std_logic;
-        i_updating_coeffs_hpf : std_logic;
+        i_updating_coeffs_lpf : in std_logic;
+        i_updating_coeffs_hpf : in std_logic;
         -- From AXI GPIO
         i_new_data_strobe_lpf : in std_logic;
         i_new_data_strobe_hpf : in std_logic;
-        i_ps_ack              : in std_logic; -- TODO
+        i_ps_ack              : in std_logic;
         -- To AXI GPIO
         o_fir_ctrl : out std_logic_vector(3 downto 0));
 end entity gpio_ps_interface;
@@ -56,9 +60,9 @@ begin
     --  r_  ... _________|
     --                ___
     --  re  ... _____|   |_______
-    p_re_det : process (clk_25)
+    p_re_det : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_ps_ack              <= i_ps_ack;
             r_new_data_strobe_lpf <= i_new_data_strobe_lpf;
             r_new_data_strobe_hpf <= i_new_data_strobe_hpf;
@@ -92,9 +96,9 @@ begin
     -- To PS
     o_fir_ctrl <= r_fir_ctrl_request;
     -- ==================================================================
-    p_send_request_to_ps : process (clk_25)
+    p_send_request_to_ps : process (clk_100)
     begin
-        if rising_edge(clk_25) then
+        if rising_edge(clk_100) then
             r_fir_ctrl_video <= (others => '0');
             case s_STATE is
                 when IDLE                     =>
