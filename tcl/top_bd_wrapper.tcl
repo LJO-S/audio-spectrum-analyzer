@@ -335,20 +335,26 @@ proc create_root_design { parentCell } {
   # Create instance: clk_wiz_0, and set properties
   set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
   set_property -dict [list \
-    CONFIG.CLKOUT1_JITTER {165.419} \
+    CONFIG.CLKOUT1_JITTER {124.615} \
     CONFIG.CLKOUT1_PHASE_ERROR {96.948} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {100} \
     CONFIG.CLKOUT2_JITTER {104.759} \
     CONFIG.CLKOUT2_PHASE_ERROR {96.948} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {250} \
     CONFIG.CLKOUT2_USED {true} \
+    CONFIG.CLKOUT3_JITTER {165.419} \
+    CONFIG.CLKOUT3_PHASE_ERROR {96.948} \
+    CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {25} \
+    CONFIG.CLKOUT3_USED {true} \
     CONFIG.CLK_IN1_BOARD_INTERFACE {sys_clock} \
-    CONFIG.CLK_OUT1_PORT {clk_out_25} \
+    CONFIG.CLK_OUT1_PORT {clk_out_100} \
     CONFIG.CLK_OUT2_PORT {clk_out_250} \
+    CONFIG.CLK_OUT3_PORT {clk_out_25} \
     CONFIG.MMCM_CLKFBOUT_MULT_F {8.000} \
-    CONFIG.MMCM_CLKOUT0_DIVIDE_F {40.000} \
+    CONFIG.MMCM_CLKOUT0_DIVIDE_F {10.000} \
     CONFIG.MMCM_CLKOUT1_DIVIDE {4} \
-    CONFIG.NUM_OUT_CLKS {2} \
+    CONFIG.MMCM_CLKOUT2_DIVIDE {40} \
+    CONFIG.NUM_OUT_CLKS {3} \
     CONFIG.USE_BOARD_FLOW {true} \
     CONFIG.USE_RESET {false} \
   ] $clk_wiz_0
@@ -769,7 +775,8 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_gpio_2_gpio_io_o [get_bd_pins axi_gpio_2/gpio_io_o] [get_bd_pins project_top_0/i_new_data_strobe_lpf]
   connect_bd_net -net axi_gpio_3_gpio_io_o [get_bd_pins axi_gpio_3/gpio_io_o] [get_bd_pins project_top_0/i_ps_fir_ctrl_ack]
   connect_bd_net -net axi_gpio_4_gpio_io_o [get_bd_pins axi_gpio_4/gpio_io_o] [get_bd_pins project_top_0/i_new_data_strobe_hpf]
-  connect_bd_net -net clk_wiz_0_clk_out_25 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins axi_bram_ctrl_1/s_axi_aclk] [get_bd_pins axi_bram_ctrl_1_bram/clkb] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_gpio_1/s_axi_aclk] [get_bd_pins axi_gpio_2/s_axi_aclk] [get_bd_pins axi_gpio_3/s_axi_aclk] [get_bd_pins axi_gpio_4/s_axi_aclk] [get_bd_pins clk_wiz_0/clk_out_25] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins project_top_0/i_clk_100] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins ps7_0_axi_periph/M03_ACLK] [get_bd_pins ps7_0_axi_periph/M04_ACLK] [get_bd_pins ps7_0_axi_periph/M05_ACLK] [get_bd_pins ps7_0_axi_periph/M06_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_clk_wiz_0_25M/slowest_sync_clk]
+  connect_bd_net -net clk_wiz_0_clk_out_25 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins axi_bram_ctrl_1/s_axi_aclk] [get_bd_pins axi_bram_ctrl_1_bram/clkb] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_gpio_1/s_axi_aclk] [get_bd_pins axi_gpio_2/s_axi_aclk] [get_bd_pins axi_gpio_3/s_axi_aclk] [get_bd_pins axi_gpio_4/s_axi_aclk] [get_bd_pins clk_wiz_0/clk_out_100] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins project_top_0/i_clk_100] [get_bd_pins ps7_0_axi_periph/ACLK] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins ps7_0_axi_periph/M03_ACLK] [get_bd_pins ps7_0_axi_periph/M04_ACLK] [get_bd_pins ps7_0_axi_periph/M05_ACLK] [get_bd_pins ps7_0_axi_periph/M06_ACLK] [get_bd_pins ps7_0_axi_periph/S00_ACLK] [get_bd_pins rst_clk_wiz_0_25M/slowest_sync_clk]
+  connect_bd_net -net clk_wiz_0_clk_out_26 [get_bd_pins clk_wiz_0/clk_out_25] [get_bd_pins project_top_0/i_clk_25]
   connect_bd_net -net clk_wiz_0_clk_out_250 [get_bd_pins clk_wiz_0/clk_out_250] [get_bd_pins project_top_0/i_clk_250]
   connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins rst_clk_wiz_0_25M/dcm_locked]
   connect_bd_net -net i_dip_vector_0_1 [get_bd_ports i_dip_vector] [get_bd_pins project_top_0/i_dip_vector]
