@@ -43,9 +43,11 @@ Idéen är följande:
 ## TODO
 - Klocka upp till 100 MHz
 - Fixa waterfall
-    - Behöver magnitude (32bit) -> log10 (12/8bit)
+    - Behöver magnitude (32bit) -> log2 (8bit)
     - Minneshantering (ett 480x120x12/8 bit minne)
-    - LUT i Video Driver som gör om till vattenfallshantering
+    - Video Driver
+        - LUT i Video Driver som gör om till vattenfallshantering 
+        - samt vanlig som tidigare
 - Ta bort BPF och ersätt med Window
 
 
