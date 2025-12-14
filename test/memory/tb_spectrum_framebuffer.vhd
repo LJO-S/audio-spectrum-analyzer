@@ -34,11 +34,17 @@ architecture bench of spectrum_framebuffer_tb is
     signal i_rd_addr_Y    : std_logic_vector(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0);
     signal o_rd_data      : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
     -- Testbench
-    signal tb_enable             : boolean                                                          := false;
-    signal tb_random_data_enable : boolean                                                          := false;
-    signal tb_data_idx           : integer range 0 to G_NFFT                                        := 0;
-    signal tb_X_counter          : unsigned(integer(ceil(log2(real(C_SCREEN_X_DIM)))) - 1 downto 0) := (others => '0');
-    signal tb_Y_counter          : unsigned(integer(ceil(log2(real(C_SCREEN_Y_DIM)))) - 1 downto 0) := (others => '0');
+    signal tb_enable    : boolean                                                          := false;
+    signal tb_check_en  : boolean                                                          := false;
+    signal tb_data_idx  : integer range 0 to G_NFFT                                        := 0;
+    signal tb_X_counter : unsigned(integer(ceil(log2(real(C_SCREEN_X_DIM)))) - 1 downto 0) := (others => '0');
+    signal tb_Y_counter : unsigned(integer(ceil(log2(real(C_SCREEN_Y_DIM)))) - 1 downto 0) := (others => '0');
+
+    type t_producer_state is (IDLE, PRODUCING, HOLD);
+    signal tb_data_State : t_producer_state := IDLE;
+
+    type t_rd_addr_X_shreg is array (0 to 2) of UNSIGNED(tb_X_counter'range);
+    signal tb_rd_addr_X : t_rd_addr_X_shreg := (others => (others => '0'));
 begin
     -- ======================================================================
     clk <= not clk after clk_period/2;
@@ -69,24 +75,30 @@ begin
             i_tvalid <= '0';
             i_tdata  <= (others => '1');
             i_tlast  <= '0';
-            if (tb_enable = true) then
-                if (tb_random_data_enable = true) then
-                    null;
-                else
+            case tb_data_State is
+                when IDLE =>
+                    if (tb_enable = true) then
+                        tb_data_State <= PRODUCING;
+                    end if;
+                when PRODUCING =>
                     i_tdata  <= std_logic_vector(unsigned(i_tdata) + 1);
                     i_tvalid <= '1';
                     i_tlast  <= '1' when tb_data_idx = G_NFFT - 2 else
                         '0';
-                end if;
-            end if;
-            -- Zero counter 
-            if (i_tvalid = '1') then
-                tb_data_idx <= tb_data_idx + 1;
-                if (i_tlast = '1') then
-                    tb_data_idx <= 0;
-                    i_tvalid    <= '0';
-                end if;
-            end if;
+                    if (i_tvalid = '1') then
+                        tb_data_idx <= tb_data_idx + 1;
+                        if (i_tlast = '1') then
+                            -- Zero counter 
+                            tb_data_idx   <= 0;
+                            i_tvalid      <= '0';
+                            tb_data_State <= HOLD;
+                        end if;
+                    end if;
+                when HOLD =>
+                    tb_data_State <= IDLE;
+                when others =>
+                    tb_data_State <= IDLE;
+            end case;
         end if;
     end process p_data_producer;
 
@@ -100,6 +112,18 @@ begin
                 if (tb_Y_counter >= C_SCREEN_Y_DIM - 1) then
                     tb_Y_counter <= (others => '0');
                 end if;
+            end if;
+
+            -- Testing
+            tb_rd_addr_X <= tb_X_counter & tb_rd_addr_X(tb_rd_addr_X'low to tb_rd_addr_X'high - 1);
+            if (tb_check_en = true) then
+                check(
+                (tb_rd_addr_X(tb_rd_addr_X'high) mod (2**G_DATA_WIDTH)) = unsigned(o_rd_data),
+                "Data mismatch! Actual=" &
+                integer'image(to_integer(unsigned(o_rd_data))) &
+                " vs Expected=" &
+                integer'image(to_integer(tb_rd_addr_X(tb_rd_addr_X'high) mod (2**G_DATA_WIDTH)))
+                );
             end if;
         end if;
     end process p_data_consumer;
@@ -125,7 +149,15 @@ begin
                 wait_clock(2, clk_period);
             end loop;
         elsif run("auto") then
-            null;
+            tb_enable <= true;
+            wait until clk = '1';
+            -- Then we have written to a column
+            wait until i_tlast = '1';
+            tb_check_en <= true;
+            for i in 0 to 25 loop
+                wait until i_tlast = '1';
+                wait_clock(1, clk_period);
+            end loop;
         end if;
         test_runner_cleanup(runner);
     end process main;
