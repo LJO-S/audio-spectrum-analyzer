@@ -31,6 +31,7 @@ architecture bench of gpio_ctrl_tb is
     signal o_hpf_en          : std_logic;
     signal o_hpf_incr        : std_logic;
     signal o_hpf_decr        : std_logic;
+    signal o_waterfall_en    : std_logic;
     signal o_ema_en          : std_logic;
     signal o_sel_up_lo       : std_logic;
     signal o_capture_en      : std_logic;
@@ -55,6 +56,7 @@ begin
             o_hpf_en          => o_hpf_en,
             o_hpf_incr        => o_hpf_incr,
             o_hpf_decr        => o_hpf_decr,
+            o_waterfall_en    => o_waterfall_en,
             o_ema_en          => o_ema_en,
             o_sel_up_lo       => o_sel_up_lo,
             o_capture_en      => o_capture_en
@@ -74,8 +76,8 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         set_stop_level(error);
-        if run("basic") then
-            info("Running tb_gpio_ctrl-BASIC");
+        if run("auto") then
+            info("Running tb_gpio_ctrl-auto");
             -- ---------------------------
             -- Default
             i_pb_vector  <= "0000";
@@ -108,10 +110,11 @@ begin
             wait_clock(G_DEBOUNCE_LIMIT + 1, clk_period);
             check(o_capture_en = '1', "Expected capture enabled");
 
-            -- Enable EMA
+            -- Enable EMA & Waterfall
             i_dip_vector(0) <= '1';
             wait_clock(G_DEBOUNCE_LIMIT + 1, clk_period);
             check(o_ema_en = '1', "Expected EMA enabled");
+            check(o_waterfall_en = '1', "Expected WATERFALL enabled");
 
             -- Enable LPF
             i_dip_vector(1) <= '1';

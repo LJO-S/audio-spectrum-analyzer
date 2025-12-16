@@ -30,6 +30,7 @@ architecture bench of ascii_generator_tb is
     signal i_bpf_cutoff     : unsigned(16 downto 0) := (others => '0');
     signal i_hpf_on         : std_logic             := '0';
     signal i_hpf_cutoff     : unsigned(16 downto 0) := (others => '0');
+    signal i_waterfall_on   : std_logic             := '0';
     signal i_ema_on         : std_logic             := '0';
     signal o_freq_lpf_1000s : unsigned(6 downto 0);
     signal o_freq_hpf_1000s : unsigned(6 downto 0);
@@ -63,6 +64,7 @@ begin
             i_bpf_cutoff     => i_bpf_cutoff,
             i_hpf_on         => i_hpf_on,
             i_hpf_cutoff     => i_hpf_cutoff,
+            i_waterfall_on   => i_waterfall_on,
             i_ema_on         => i_ema_on,
             o_freq_lpf_1000s => o_freq_lpf_1000s,
             o_freq_hpf_1000s => o_freq_hpf_1000s,
@@ -167,6 +169,8 @@ begin
             -- 
             i_ema_on <= '1';
             -- 
+            i_waterfall_on <= '1';
+            -- 
             wait until tb_VSYNC = '1';
             wait until tb_VSYNC = '0';
         elsif run("auto_div-by-1000") then
@@ -196,7 +200,7 @@ begin
                 "Mismatch BPF! Expected=" & integer'image(to_integer(v_bpf_cutoff)/1000) & " vs actual=" & integer'image(to_integer(tb_bpf_cutoff))
                 );
                 check_equal(
-                real(to_integer(tb_max_freq)), 
+                real(to_integer(tb_max_freq)),
                 round(real(to_integer(v_max_freq))/1000.0),
                 "Mismatch FREQ! Expected=" & integer'image(to_integer(v_max_freq)/1000) & " vs actual=" & integer'image(to_integer(tb_max_freq)),
                 max_diff => 1.0

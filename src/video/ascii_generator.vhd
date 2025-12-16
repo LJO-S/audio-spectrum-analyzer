@@ -22,7 +22,9 @@ entity ascii_generator is
         i_bpf_cutoff : in unsigned(16 downto 0) := (others => '0');
         i_hpf_on     : in std_logic;
         i_hpf_cutoff : in unsigned(16 downto 0);
-        i_ema_on     : in std_logic;
+        -- Misc
+        i_waterfall_on : in std_logic;
+        i_ema_on       : in std_logic;
         -- 
         o_freq_lpf_1000s : out unsigned(6 downto 0);
         o_freq_hpf_1000s : out unsigned(6 downto 0);
@@ -43,11 +45,13 @@ architecture rtl of ascii_generator is
     signal w_col_addr_1_8        : unsigned(2 downto 0)         := (others => '0'); -- 1:8 [0-7] X
     signal w_col_addr_1_8_half   : unsigned(1 downto 0)         := (others => '0'); -- 1:8 [0-3] X
     signal w_col_addr_1_8_eighth : unsigned(0 downto 0)         := (others => '0'); -- 1:8 [0-1] X
+    signal w_col_addr_1_8_double : unsigned(3 downto 0)         := (others => '0'); -- 1:8 [0-15] X
     signal w_row_addr            : unsigned(3 downto 0)         := (others => '0'); -- [0-15] Y
     signal r_draw                : std_logic                    := '0';
     signal r_draw_lpf            : std_logic                    := '0';
     signal r_draw_bpf            : std_logic                    := '0';
     signal r_draw_hpf            : std_logic                    := '0';
+    signal r_draw_waterfall      : std_logic                    := '0';
     signal r_draw_ema            : std_logic                    := '0';
     signal r_draw_capture        : std_logic                    := '0';
     signal r_draw_internal       : std_logic                    := '0';
@@ -67,6 +71,7 @@ begin
     -- 1:8 for indexing glyphs
     w_col_addr_1_8 <= i_counter_X(5 downto 3); -- Range: 0-7
     -- 1:8 [0-3] for indexing short words
+    w_col_addr_1_8_double <= i_counter_X(6 downto 3); -- Range: 0-15
     w_col_addr_1_8_half   <= i_counter_X(4 downto 3); -- Range: 0-3
     w_col_addr_1_8_eighth <= i_counter_X(3 downto 3); -- Range: 0-1
     -- 1:2 Tile scaling
@@ -85,13 +90,14 @@ begin
         -- 3. Get bit (with bit reverse)
         if rising_edge(clk_100) then
             if (i_ce = '1') then
-                r_draw          <= '0';
-                r_draw_lpf      <= '0';
-                r_draw_bpf      <= '0';
-                r_draw_hpf      <= '0';
-                r_draw_ema      <= '0';
-                r_draw_capture  <= '0';
-                r_draw_internal <= '0';
+                r_draw           <= '0';
+                r_draw_lpf       <= '0';
+                r_draw_bpf       <= '0';
+                r_draw_hpf       <= '0';
+                r_draw_ema       <= '0';
+                r_draw_waterfall <= '0';
+                r_draw_capture   <= '0';
+                r_draw_internal  <= '0';
                 ------------------------------------------------------------------------------
                 if (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < (C_WORD_X_LEFT + 64)) and
                     (i_counter_Y >= 16) and (i_counter_Y < 32) then
@@ -170,10 +176,11 @@ begin
                     end if;
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 304) and (i_counter_Y < 320) and
-                    (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 32) then
-                    -- "EMA"
-                    v_tilemap_index := C_TILEMAP_EMA(to_integer(unsigned(w_col_addr_1_8_half)));
-                    r_draw_ema <= '1';
+                    (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 72) then
+                    -- "WATERFALL"
+                    -- TODO not sure if this'll work
+                    v_tilemap_index := C_TILEMAP_WATERFALL(to_integer(unsigned(w_col_addr_1_8_double)));
+                    r_draw_waterfall <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 336) and (i_counter_Y < 352) and
                     (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 32) then
@@ -281,6 +288,7 @@ begin
                     r_draw_lpf or
                     r_draw_bpf or
                     r_draw_hpf or
+                    r_draw_waterfall or
                     r_draw_ema);
                 if (r_draw = '1') then
                     -- Note: the not() causes bit-reversion, i.e. 0-->7, 1-->6 and so on
@@ -335,6 +343,16 @@ begin
                         o_video_grn <= (others => not(i_hpf_on));
                         o_video_blu <= (others => not(i_hpf_on));
                     elsif (i_hpf_on = '1') then
+                        o_video_red <= (others => '1');
+                        o_video_grn <= (others => '1');
+                        o_video_blu <= (others => '0');
+                    end if;
+                elsif (r_draw_waterfall = '1') then
+                    if (r_font_line(to_integer(unsigned(not(r_col_addr)))) = '1') then
+                        o_video_red <= (others => not(i_waterfall_on));
+                        o_video_grn <= (others => not(i_waterfall_on));
+                        o_video_blu <= (others => not(i_waterfall_on));
+                    elsif (i_waterfall_on = '1') then
                         o_video_red <= (others => '1');
                         o_video_grn <= (others => '1');
                         o_video_blu <= (others => '0');

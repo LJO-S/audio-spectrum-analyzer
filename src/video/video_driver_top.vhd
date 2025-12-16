@@ -14,17 +14,19 @@ entity video_driver_top is
         -- Internal/Capture IF
         i_capture_en : in std_logic;
         -- Filter IF
-        i_lpf_en   : in std_logic;
-        i_hpf_en   : in std_logic;
-        i_ema_en   : in std_logic;
-        i_lpf_incr : in std_logic;
-        i_lpf_decr : in std_logic;
-        i_hpf_incr : in std_logic;
-        i_hpf_decr : in std_logic;
-
+        i_lpf_en       : in std_logic;
+        i_hpf_en       : in std_logic;
+        i_lpf_incr     : in std_logic;
+        i_lpf_decr     : in std_logic;
+        i_hpf_incr     : in std_logic;
+        i_hpf_decr     : in std_logic;
+        -- Display Settings
+        i_waterfall_en : in std_logic;
+        i_ema_en       : in std_logic;
         -- Ping Pong Mem IF
-        o_rd_addr : out std_logic_vector(9 downto 0);
-        i_rd_data : in std_logic_vector(31 downto 0);
+        o_rd_addr_X : out std_logic_vector(9 downto 0);
+        o_rd_addr_Y : out std_logic_vector(9 downto 0);
+        i_rd_data   : in std_logic_vector(31 downto 0);
         -- PIN mapping ports
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -131,7 +133,8 @@ begin
             i_compare_limit      => r_comp_limit_value,
             i_compare_subtractor => r_subtract_value,
             i_fft_data           => i_rd_data,
-            o_rd_addr            => o_rd_addr,
+            o_rd_addr_X          => o_rd_addr_X,
+            o_rd_addr_Y          => o_rd_addr_Y,
             i_100ms_strb         => i_100ms_strb,
             i_capture_on         => i_capture_en,
             i_lpf_on             => i_lpf_en,
@@ -142,6 +145,7 @@ begin
             i_hpf_on             => i_hpf_en,
             i_hpf_incr           => i_hpf_incr,
             i_hpf_decr           => i_hpf_decr,
+            i_waterfall_on       => i_waterfall_en,
             i_ema_on             => i_ema_en,
             -- 
             o_HSYNC     => w_HSYNC,

@@ -14,7 +14,6 @@ use ieee.math_real.all;
 
 entity spectrum_framebuffer is
     generic (
-        G_NFFT         : natural := 1024;
         G_DATA_WIDTH   : natural := 8;
         G_DATA_DEPTH_X : natural := 640;
         G_DATA_DEPTH_Y : natural := 480/2

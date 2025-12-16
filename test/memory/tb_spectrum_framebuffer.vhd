@@ -17,10 +17,10 @@ end;
 architecture bench of spectrum_framebuffer_tb is
     -- Clock period
     constant clk_period     : time    := 5 ns;
+    constant G_NFFT         : integer := 1024;
     constant C_SCREEN_X_DIM : integer := 640;
     constant C_SCREEN_Y_DIM : integer := 480;
     -- Generics
-    constant G_NFFT         : natural := 1024;
     constant G_DATA_WIDTH   : natural := 8;
     constant G_DATA_DEPTH_X : natural := 640;
     constant G_DATA_DEPTH_Y : natural := 480/2;
@@ -51,7 +51,6 @@ begin
     -- ======================================================================
     spectrum_framebuffer_inst : entity work.spectrum_framebuffer
         generic map(
-            G_NFFT         => G_NFFT,
             G_DATA_WIDTH   => G_DATA_WIDTH,
             G_DATA_DEPTH_X => G_DATA_DEPTH_X,
             G_DATA_DEPTH_Y => G_DATA_DEPTH_Y
@@ -118,11 +117,11 @@ begin
             tb_rd_addr_X <= tb_X_counter & tb_rd_addr_X(tb_rd_addr_X'low to tb_rd_addr_X'high - 1);
             if (tb_check_en = true) then
                 check(
-                (tb_rd_addr_X(tb_rd_addr_X'high) mod (2**G_DATA_WIDTH)) = unsigned(o_rd_data),
+                (tb_rd_addr_X(tb_rd_addr_X'high) mod (2 ** G_DATA_WIDTH)) = unsigned(o_rd_data),
                 "Data mismatch! Actual=" &
                 integer'image(to_integer(unsigned(o_rd_data))) &
                 " vs Expected=" &
-                integer'image(to_integer(tb_rd_addr_X(tb_rd_addr_X'high) mod (2**G_DATA_WIDTH)))
+                integer'image(to_integer(tb_rd_addr_X(tb_rd_addr_X'high) mod (2 ** G_DATA_WIDTH)))
                 );
             end if;
         end if;

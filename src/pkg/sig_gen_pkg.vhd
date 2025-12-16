@@ -9,8 +9,8 @@ package sig_gen_pkg is
     constant C_SPECTRUM_X_UPPER : natural := 480;
     constant C_SPECTRUM_Y_UPPER : natural := 400;
 
-    constant C_CHAR_WIDTH          : natural := 8;
-    constant C_CHAR_HEIGHT         : natural := 16;
+    constant C_CHAR_WIDTH  : natural := 8;
+    constant C_CHAR_HEIGHT : natural := 16;
 
     constant C_INTERNAL_COMP_LIMIT : natural := 2 ** 24;
     constant C_INTERNAL_SUBTRACT   : natural := natural(floor(real(C_INTERNAL_COMP_LIMIT / (C_SPECTRUM_Y_UPPER + 1))));
@@ -25,6 +25,7 @@ package sig_gen_pkg is
     -- Ascii Text
     constant C_WORD_X_LEFT : natural := 512;
 
+    type t_tilemap_unbound is array (natural range <>) of natural range 0 to 63;
     type t_tilemap_long is array (0 to 7) of natural range 0 to 63;
     type t_tilemap_short is array (0 to 3) of natural range 0 to 63;
     type t_tilemap_minimal is array (0 to 1) of natural range 0 to 63;
@@ -121,9 +122,29 @@ package sig_gen_pkg is
     3 => 10  -- :
     );
 
+    -- "WATERFALL"
+    constant C_TILEMAP_WATERFALL : t_tilemap_unbound(0 to 15) := (
+    0  => 33, -- W
+    1  => 11, -- A
+    2  => 30, -- T
+    3  => 15, -- E
+    4  => 28, -- R
+    5  => 16, -- F
+    6  => 11, -- A
+    7  => 22, -- L
+    8  => 37, -- L
+    9  => 37, -- 
+    10 => 37, -- 
+    11 => 37, -- 
+    12 => 37, -- 
+    13 => 37, -- 
+    14 => 37, -- 
+    15 => 37  -- 
+    );
+
     constant C_TILEMAP_10 : t_tilemap_minimal := (
     0 => 37, -- 0
-    1 => 5  -- 5
+    1 => 5   -- 5
     );
     constant C_TILEMAP_20 : t_tilemap_minimal := (
     0 => 1, -- 1

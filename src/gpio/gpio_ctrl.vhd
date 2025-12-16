@@ -26,9 +26,10 @@ entity gpio_ctrl is
         o_hpf_incr : out std_logic;
         o_hpf_decr : out std_logic;
 
-        o_ema_en     : out std_logic;
-        o_sel_up_lo  : out std_logic;
-        o_capture_en : out std_logic
+        o_waterfall_en : out std_logic;
+        o_ema_en       : out std_logic;
+        o_sel_up_lo    : out std_logic;
+        o_capture_en   : out std_logic
     );
 end entity gpio_ctrl;
 
@@ -42,8 +43,8 @@ architecture rtl of gpio_ctrl is
     -- dip0:
     -- Selects between Signal Generator source 0-3 (LO) or 4-7 (HI) IFF (i_capture_en = '0')
     -- else enables EMA
-    signal w_sel_up_lo : std_logic;
-    signal w_ema_en    : std_logic;
+    signal w_sel_up_lo            : std_logic;
+    signal w_ema_and_waterfall_en : std_logic;
 
     -- dip1
     -- LPF Enable
@@ -99,8 +100,10 @@ begin
                 o_hpf_en   <= w_hpf_en;
                 o_hpf_incr <= w_hpf_incr_re;
                 o_hpf_decr <= w_hpf_decr_re;
+                -- WATERFALL
+                o_waterfall_en <= w_ema_and_waterfall_en;
                 -- EMA
-                o_ema_en <= w_ema_en;
+                o_ema_en <= w_ema_and_waterfall_en;
             else
                 -- Mode A: internal
 
@@ -175,10 +178,10 @@ begin
                 o_PB_debounce => w_dip_debounce(i)
             );
     end generate;
-    w_sel_up_lo  <= w_dip_debounce(0);
-    w_ema_en     <= w_dip_debounce(0);
-    w_lpf_en     <= w_dip_debounce(1);
-    w_hpf_en     <= w_dip_debounce(2);
-    w_capture_en <= w_dip_debounce(3);
+    w_sel_up_lo            <= w_dip_debounce(0);
+    w_ema_and_waterfall_en <= w_dip_debounce(0);
+    w_lpf_en               <= w_dip_debounce(1);
+    w_hpf_en               <= w_dip_debounce(2);
+    w_capture_en           <= w_dip_debounce(3);
     /* ------------------------------------------------------------------ */ 
 end architecture;

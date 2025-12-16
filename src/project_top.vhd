@@ -12,6 +12,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
+use work.sig_gen_pkg.all;
+
 entity project_top is
     generic (
         G_FIR_NBR_OF_TAPS      : positive := 101;
@@ -87,6 +89,8 @@ architecture rtl of project_top is
     -- TODO rename all axis crap
     signal r_fft_tlast_out        : std_logic := '0';
     signal r_fft_tlast_out_d1     : std_logic := '0';
+    signal r_fft_tlast_out_d2     : std_logic := '0';
+    signal r_fft_tlast_out_d3     : std_logic := '0';
     signal w_fft_tvalid_out       : std_logic;
     signal r_fft_tvalid_out       : std_logic := '0';
     signal r_fft_tvalid_out_d1    : std_logic := '0';
@@ -100,10 +104,13 @@ architecture rtl of project_top is
     signal w_fft_tdata_out_re     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
     signal w_fft_tdata_out_im     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
 
-    -- FFT Magnitude Calculation
+    -- FFT Magnitude Calculation & Log2
     signal r_fft_tdata_pow2_re : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
     signal r_fft_tdata_pow2_im : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
     signal r_fft_magnitude     : std_logic_vector(2 * G_FFT_BIT_SIZE downto 0) := (others => '0');
+    -- Magnitude Log2
+    signal w_mag_log2_data_out  : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
+    signal w_mag_log2_valid_out : std_logic;
 
     -- Misc
     signal w_100ms_strb : std_logic;
@@ -120,9 +127,10 @@ architecture rtl of project_top is
     signal w_axis_tvalid_audio_to_xfft : std_logic;
     signal w_axis_tlast_audio_to_xfft  : std_logic;
 
-    -- Video-PPmem IF
-    signal w_rd_addr : std_logic_vector(9 downto 0);
-    signal w_rd_data : std_logic_vector(31 downto 0);
+    -- Video-FrameBufMem IF
+    signal w_rd_addr_X         : std_logic_vector(9 downto 0);
+    signal w_rd_addr_Y         : std_logic_vector(9 downto 0);
+    signal w_frame_buf_rd_data : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
 
     -- GPIO
     signal w_sig_gen_src_sel        : std_logic_vector(3 downto 0);
@@ -137,6 +145,7 @@ architecture rtl of project_top is
     signal w_hpf_decr               : std_logic;
     signal w_hpf_decr_to_video      : std_logic;
     signal w_ema_en                 : std_logic;
+    signal w_waterfall_en           : std_logic;
     signal w_sel_up_lo              : std_logic;
     signal w_capture_en             : std_logic;
     signal w_capture_en_drain_guard : std_logic;
@@ -154,7 +163,6 @@ architecture rtl of project_top is
     signal s_state_drain_guard : t_drain_guard := IDLE;
 
     signal w_lrclk : std_logic;
-
 begin
     -- ============================================================================ 
     -- ============================================================================ 
@@ -203,7 +211,8 @@ begin
             o_xk_index => w_xk_index,
             o_tvalid   => w_fft_tvalid_out
         );
-
+    -- ============================================================================ 
+    -- ============================================================================ 
     -- Calculate output magnitude
     p_magnitude_calc : process (i_clk_100)
     begin
@@ -227,10 +236,15 @@ begin
             r_fft_tvalid_out_d1 <= r_fft_tvalid_out;
             r_fft_tlast_out_d1  <= r_fft_tlast_out;
             r_xk_index_d1       <= r_xk_index;
+            -- ---------------
+            -- PIPE 2 
+            -- ---------------
+            r_fft_tlast_out_d2 <= r_fft_tlast_out_d1;
+            r_fft_tlast_out_d3 <= r_fft_tlast_out_d2;
         end if;
     end process p_magnitude_calc;
-
-    p_pipeline_fft_output : process (i_clk_100)
+    ---------------------------------------
+    p_fft_output_tlast : process (i_clk_100)
     begin
         if rising_edge(i_clk_100) then
             r_fft_tlast_out <= '0';
@@ -238,49 +252,87 @@ begin
                 r_fft_tlast_out <= r_fft_tvalid_out;
             end if;
         end if;
-    end process p_pipeline_fft_output;
+    end process p_fft_output_tlast;
+    ---------------------------------------
 
     -- ============================================================================ 
     -- ============================================================================
-    ping_pong_memory_inst : entity work.ping_pong_memory
+    log_2_inst : entity work.log_2
+        generic map(
+            G_DATA_WIDTH => r_fft_magnitude'length,
+            -- QFORMAT adjusted to give 1 byte output
+            G_QFORMAT => 3
+        )
         port map
         (
-            clk_100          => i_clk_100,
-            i_fft_data_magn  => r_fft_magnitude(r_fft_magnitude'high downto r_fft_magnitude'low + 1),
-            i_fft_data_last  => r_fft_tlast_out_d1,
-            i_fft_data_valid => r_fft_tvalid_out_d1,
-            i_xk_index       => r_xk_index_d1,
-            i_rd_addr        => w_rd_addr,
-            o_rd_data        => w_rd_data
+            clk      => i_clk_100,
+            i_tdata  => r_fft_magnitude,
+            i_tvalid => r_fft_tvalid_out_d1,
+            o_tdata  => w_mag_log2_data_out,
+            o_tvalid => w_mag_log2_valid_out
         );
+    -- TODO
+    spectrum_framebuffer_inst : entity work.spectrum_framebuffer
+        generic map(
+            G_DATA_WIDTH   => 8,
+            G_DATA_DEPTH_X => C_SPECTRUM_X_UPPER,
+            G_DATA_DEPTH_Y => C_SPECTRUM_Y_UPPER/2
+        )
+        port map
+        (
+            clk => i_clk_100,
+            -- Ctrl
+            i_waterfall_en => w_waterfall_en,
+            -- Input (TODO check that _d3 is ok)
+            i_tdata  => w_mag_log2_data_out,
+            i_tvalid => w_mag_log2_valid_out,
+            i_tlast  => r_fft_tlast_out_d3,
+            -- Out
+            i_rd_addr_X => w_rd_addr_X,
+            i_rd_addr_Y => w_rd_addr_Y,
+            o_rd_data   => w_frame_buf_rd_data
+        );
+    -- ping_pong_memory_inst : entity work.ping_pong_memory
+    --     port map
+    --     (
+    --         clk_100          => i_clk_100,
+    --         i_fft_data_magn  => r_fft_magnitude(r_fft_magnitude'high downto r_fft_magnitude'low + 1),
+    --         i_fft_data_last  => r_fft_tlast_out_d1,
+    --         i_fft_data_valid => r_fft_tvalid_out_d1,
+    --         i_xk_index       => r_xk_index_d1,
+    --         i_rd_addr        => w_rd_addr,
+    --         o_rd_data        => w_rd_data
+    --     );
 
     -- ============================================================================ 
     -- ============================================================================ 
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25       => i_clk_25,
-            clk_100      => i_clk_100,
-            clk_tmds_250 => i_clk_250,
-            i_100ms_strb => w_100ms_strb,
-            i_capture_en => w_capture_en_drain_guard,
-            i_lpf_en     => w_lpf_en,
-            i_hpf_en     => w_hpf_en,
-            i_ema_en     => w_ema_en,
-            i_lpf_incr   => w_lpf_incr_to_video,
-            i_lpf_decr   => w_lpf_decr_to_video,
-            i_hpf_incr   => w_hpf_incr_to_video,
-            i_hpf_decr   => w_hpf_decr_to_video,
-            o_rd_addr    => w_rd_addr,
-            i_rd_data    => w_rd_data,
-            o_TMDS_clk_p => o_TMDS_clk_p,
-            o_TMDS_clk_n => o_TMDS_clk_n,
-            o_video_0_p  => o_video_0_p,
-            o_video_0_n  => o_video_0_n,
-            o_video_1_p  => o_video_1_p,
-            o_video_1_n  => o_video_1_n,
-            o_video_2_p  => o_video_2_p,
-            o_video_2_n  => o_video_2_n
+            clk_25         => i_clk_25,
+            clk_100        => i_clk_100,
+            clk_tmds_250   => i_clk_250,
+            i_100ms_strb   => w_100ms_strb,
+            i_capture_en   => w_capture_en_drain_guard,
+            i_lpf_en       => w_lpf_en,
+            i_hpf_en       => w_hpf_en,
+            i_lpf_incr     => w_lpf_incr_to_video,
+            i_lpf_decr     => w_lpf_decr_to_video,
+            i_hpf_incr     => w_hpf_incr_to_video,
+            i_hpf_decr     => w_hpf_decr_to_video,
+            i_waterfall_en => w_waterfall_en,
+            i_ema_en       => w_ema_en,
+            o_rd_addr_X    => w_rd_addr_X,
+            o_rd_addr_Y    => w_rd_addr_Y,
+            i_rd_data      => w_frame_buf_rd_data,
+            o_TMDS_clk_p   => o_TMDS_clk_p,
+            o_TMDS_clk_n   => o_TMDS_clk_n,
+            o_video_0_p    => o_video_0_p,
+            o_video_0_n    => o_video_0_n,
+            o_video_1_p    => o_video_1_p,
+            o_video_1_n    => o_video_1_n,
+            o_video_2_p    => o_video_2_p,
+            o_video_2_n    => o_video_2_n
         );
     -- ============================================================================ 
     -- ============================================================================ 
@@ -305,6 +357,8 @@ begin
             o_hpf_en   => w_hpf_en,
             o_hpf_incr => w_hpf_incr,
             o_hpf_decr => w_hpf_decr,
+            -- WATERFALL
+            o_waterfall_en => w_waterfall_en,
             -- EMA
             o_ema_en => w_ema_en,
             -- Capture/Internal
