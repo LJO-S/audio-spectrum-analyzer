@@ -14,19 +14,20 @@ entity video_driver_top is
         -- Internal/Capture IF
         i_capture_en : in std_logic;
         -- Filter IF
-        i_lpf_en       : in std_logic;
-        i_hpf_en       : in std_logic;
-        i_lpf_incr     : in std_logic;
-        i_lpf_decr     : in std_logic;
-        i_hpf_incr     : in std_logic;
-        i_hpf_decr     : in std_logic;
+        i_lpf_en   : in std_logic;
+        i_hpf_en   : in std_logic;
+        i_lpf_incr : in std_logic;
+        i_lpf_decr : in std_logic;
+        i_hpf_incr : in std_logic;
+        i_hpf_decr : in std_logic;
         -- Display Settings
         i_waterfall_en : in std_logic;
         i_ema_en       : in std_logic;
         -- Ping Pong Mem IF
-        o_rd_addr_X : out std_logic_vector(9 downto 0);
-        o_rd_addr_Y : out std_logic_vector(9 downto 0);
-        i_rd_data   : in std_logic_vector(31 downto 0);
+        o_rd_addr_X      : out std_logic_vector(9 downto 0);
+        o_rd_addr_Y      : out std_logic_vector(9 downto 0);
+        i_rd_data_log    : in std_logic_vector(7 downto 0);
+        i_rd_data_linear : in std_logic_vector(31 downto 0);
         -- PIN mapping ports
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -132,7 +133,8 @@ begin
             i_ce                 => w_ce,
             i_compare_limit      => r_comp_limit_value,
             i_compare_subtractor => r_subtract_value,
-            i_fft_data           => i_rd_data,
+            i_fft_data_log       => i_rd_data_log,
+            i_fft_data_linear    => i_rd_data_linear,
             o_rd_addr_X          => o_rd_addr_X,
             o_rd_addr_Y          => o_rd_addr_Y,
             i_100ms_strb         => i_100ms_strb,
