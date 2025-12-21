@@ -5,12 +5,15 @@
 -- 
 -- This data is read out either to form a 1D FFT plot or a 2D waterfall.
 -- 
--- Latency: 2 cc
+-- Latency: 4 cc
 -- ---------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
+-- 
+use work.sig_gen_pkg.all;
+-- 
 
 entity spectrum_framebuffer is
     generic (
@@ -27,6 +30,8 @@ entity spectrum_framebuffer is
         i_tvalid : in std_logic;
         i_tlast  : in std_logic;
         -- VIDEO IF
+        -- i_rd_addr_X : in std_logic_vector(integer(ceil(log2(real(G_DATA_DEPTH_X)))) - 1 downto 0);
+        -- i_rd_addr_Y : in std_logic_vector(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0);
         i_rd_addr_X : in std_logic_vector(integer(ceil(log2(real(G_DATA_DEPTH_X)))) - 1 downto 0);
         i_rd_addr_Y : in std_logic_vector(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0);
         o_rd_data   : out std_logic_vector(G_DATA_WIDTH - 1 downto 0)
@@ -38,21 +43,21 @@ architecture rtl of spectrum_framebuffer is
     constant C_DATA_DEPTH_Y_UNS : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0) := to_unsigned(G_DATA_DEPTH_Y, integer(ceil(log2(real(G_DATA_DEPTH_Y)))));
 
     -- Y
-    signal r_wr_row_head      : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0) := (others => '0'); --to_unsigned(237, integer(ceil(log2(real(G_DATA_DEPTH_Y)))));
-    signal r_wr_row_head_prev : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0) := (others => '0'); --to_unsigned(236, integer(ceil(log2(real(G_DATA_DEPTH_Y)))));
+    signal r_wr_row_head      : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0) := (others => '0');--to_unsigned(G_DATA_DEPTH_Y/2 - 2, integer(ceil(log2(real(G_DATA_DEPTH_Y))))); --  
+    signal r_wr_row_head_prev : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0) := (others => '0');--to_unsigned(G_DATA_DEPTH_Y/2 - 3, integer(ceil(log2(real(G_DATA_DEPTH_Y))))); --  
     -- X
     signal r_wr_col_head : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_X)))) - 1 downto 0) := (others => '0');
 
     -- Write
     signal r_wr_addr : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_X * G_DATA_DEPTH_Y)))) - 1 downto 0);
     signal r_wr_data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal w_wr_en   : std_logic := '0';
     signal r_wr_en   : std_logic := '0';
 
     -- Read
     signal r_rd_row  : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_Y)))) - 1 downto 0);
     signal r_rd_addr : unsigned(integer(ceil(log2(real(G_DATA_DEPTH_X * G_DATA_DEPTH_Y)))) - 1 downto 0);
     signal w_rd_data : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal r_rd_data : std_logic_vector(G_DATA_WIDTH - 1 downto 0) := (others => '0');
 
     -- Control
     signal r_update_row_strobe : std_logic := '0';
@@ -64,8 +69,6 @@ begin
     -- ==============================================================================
     -- INPUT
     -- Rasterized writes
-    w_wr_en <= i_tvalid when (r_wr_col_head < C_DATA_DEPTH_X_UNS) else
-        '0';
     p_wr_mem : process (clk)
     begin
         if rising_edge(clk) then
@@ -73,15 +76,17 @@ begin
             r_wr_en             <= '0';
             --------------------------------------------------------------------
             if (i_tvalid = '1') then
-                r_wr_en   <= w_wr_en;
-                r_wr_data <= i_tdata;
-                r_wr_addr <= resize(
-                    (r_wr_row_head * C_DATA_DEPTH_X_UNS) + r_wr_col_head,
-                    r_wr_addr'length
-                    );
+                if (r_wr_col_head < C_DATA_DEPTH_X_UNS) then
+                    r_wr_en   <= '1';
+                    r_wr_data <= i_tdata;
+                    r_wr_addr <= resize(
+                        (r_wr_row_head * C_DATA_DEPTH_X_UNS) + r_wr_col_head,
+                        r_wr_addr'length
+                        );
 
-                -- Update address
-                r_wr_col_head <= r_wr_col_head + 1;
+                    -- Update address
+                    r_wr_col_head <= r_wr_col_head + 1;
+                end if;
 
                 -- Check TLAST
                 if (i_tlast = '1') then
@@ -138,8 +143,14 @@ begin
             end if;
         end if;
     end process p_rd_mem;
-    -- Connect
-    o_rd_data <= w_rd_data;
+    -- ==============================================================================
+    o_rd_data <= r_rd_data;
+    p_output_register : process (clk)
+    begin
+        if rising_edge(clk) then
+            r_rd_data <= w_rd_data;
+        end if;
+    end process p_output_register;
     -- ==============================================================================
     dpmem_bram_inst : entity work.dpmem_bram
         generic map(

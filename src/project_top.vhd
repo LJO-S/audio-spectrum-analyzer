@@ -84,9 +84,7 @@ entity project_top is
 end entity project_top;
 
 architecture rtl of project_top is
-    constant C_NFFT_LOG2           : integer := integer(ceil(log2(real(G_NFFT))));
-    constant C_FFT_LOG2_QFORMAT    : integer := 3;
-    constant C_FFT_LOG2_DATA_WIDTH : integer := 8;
+    constant C_NFFT_LOG2 : integer := integer(ceil(log2(real(G_NFFT))));
 
     -- FFT
     -- TODO rename all axis crap
@@ -112,7 +110,7 @@ architecture rtl of project_top is
     signal r_fft_tdata_pow2_im : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
     signal r_fft_magnitude     : std_logic_vector(2 * G_FFT_BIT_SIZE downto 0) := (others => '0');
     -- Magnitude Log2
-    signal w_mag_log2_data_out  : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
+    signal w_mag_log2_data_out  : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0);
     signal w_mag_log2_valid_out : std_logic;
 
     -- Misc
@@ -133,11 +131,13 @@ architecture rtl of project_top is
     -- Video-FrameBufMem IF
     signal w_rd_addr_X             : std_logic_vector(9 downto 0);
     signal w_rd_addr_Y             : std_logic_vector(9 downto 0);
-    signal w_frame_buf_data_log    : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
-    signal r_frame_buf_data_log    : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
-    signal r_frame_buf_data_log_d1 : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
-    signal r_frame_buf_data_log_d2 : std_logic_vector(integer(ceil(log2(real(r_fft_magnitude'length)))) - 1 downto 0);
-    signal w_frame_bug_data_linear : std_logic_vector(r_fft_magnitude'range);
+    signal w_rd_addr_X_framebuf    : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_X_SIZE)))) - 1 downto 0);
+    signal w_rd_addr_Y_framebuf    : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_Y_SIZE)))) - 1 downto 0);
+    signal w_frame_buf_data_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0);
+    signal r_frame_buf_data_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal r_frame_buf_data_log_d1 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal r_frame_buf_data_log_d2 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal w_frame_buf_data_linear : std_logic_vector(2 ** (C_FFT_LOG2_DATA_WIDTH - C_FFT_LOG2_QFORMAT) - 1 downto 0);
 
     -- GPIO
     signal w_sig_gen_src_sel        : std_logic_vector(3 downto 0);
@@ -247,6 +247,9 @@ begin
             -- PIPE 2 
             -- ---------------
             r_fft_tlast_out_d2 <= r_fft_tlast_out_d1;
+            -- ---------------
+            -- PIPE 3
+            -- ---------------
             r_fft_tlast_out_d3 <= r_fft_tlast_out_d2;
         end if;
     end process p_magnitude_calc;
@@ -266,38 +269,48 @@ begin
     -- ============================================================================
     log_2_inst : entity work.log_2
         generic map(
-            G_DATA_WIDTH => r_fft_magnitude'length,
+            G_DATA_WIDTH => 32,
             -- QFORMAT adjusted to give 1 byte output
             G_QFORMAT => C_FFT_LOG2_QFORMAT
         )
         port map
         (
             clk      => i_clk_100,
-            i_tdata  => r_fft_magnitude,
+            i_tdata  => r_fft_magnitude(r_fft_magnitude'high downto r_fft_magnitude'low + 1),
             i_tvalid => r_fft_tvalid_out_d1,
             o_tdata  => w_mag_log2_data_out,
             o_tvalid => w_mag_log2_valid_out
         );
     -- ============================================================================ 
     -- ============================================================================ 
+    -- Refit to insize
+    p_framebuf_resize : process (w_rd_addr_X, w_rd_addr_Y)
+        variable v_rd_addr_Y_start : integer;
+    begin
+        w_rd_addr_X_framebuf <= w_rd_addr_X(w_rd_addr_X_framebuf'range);
+        v_rd_addr_Y_start := w_rd_addr_Y'low + (C_SPECTRUM_Y_UPPER / C_FRAMEBUF_Y_SIZE)/2;
+        w_rd_addr_Y_framebuf <= w_rd_addr_Y(
+            v_rd_addr_Y_start + w_rd_addr_Y_framebuf'length - 1 downto v_rd_addr_Y_start
+            );
+    end process p_framebuf_resize;
+
     spectrum_framebuffer_inst : entity work.spectrum_framebuffer
         generic map(
             G_DATA_WIDTH   => C_FFT_LOG2_DATA_WIDTH,
-            G_DATA_DEPTH_X => C_SPECTRUM_X_UPPER,
-            G_DATA_DEPTH_Y => C_SPECTRUM_Y_UPPER/2
+            G_DATA_DEPTH_X => C_FRAMEBUF_X_SIZE,
+            G_DATA_DEPTH_Y => C_FRAMEBUF_Y_SIZE
         )
         port map
         (
             clk => i_clk_100,
             -- Ctrl
             i_waterfall_en => w_waterfall_en,
-            -- Input (TODO check that _d3 is ok)
-            i_tdata  => w_mag_log2_data_out,
-            i_tvalid => w_mag_log2_valid_out,
-            i_tlast  => r_fft_tlast_out_d3,
+            i_tdata        => w_mag_log2_data_out,
+            i_tvalid       => w_mag_log2_valid_out,
+            i_tlast        => r_fft_tlast_out_d3,
             -- Out
-            i_rd_addr_X => w_rd_addr_X,
-            i_rd_addr_Y => w_rd_addr_Y,
+            i_rd_addr_X => w_rd_addr_X_framebuf,
+            i_rd_addr_Y => w_rd_addr_Y_framebuf,
             o_rd_data   => w_frame_buf_data_log
         );
     -- ============================================================================ 
@@ -317,13 +330,13 @@ begin
                 clk      => i_clk_100,
                 i_tdata  => w_frame_buf_data_log,
                 i_tvalid => '1',
-                o_tdata  => w_frame_bug_data_linear,
+                o_tdata  => w_frame_buf_data_linear,
                 o_tvalid => open
             );
     end generate;
 
     -- Testbench
-    g_log2lin_test : if (G_PRELOAD_DIRECTIVE = "test") generate
+    g_log2lin_test : if (G_PRELOAD_DIRECTIVE = "testbench") generate
         log2_to_lin_inst : entity work.log2_to_lin
             generic map(
                 G_DATA_WIDTH    => C_FFT_LOG2_DATA_WIDTH,
@@ -336,7 +349,7 @@ begin
                 clk      => i_clk_100,
                 i_tdata  => w_frame_buf_data_log,
                 i_tvalid => '1',
-                o_tdata  => w_frame_bug_data_linear,
+                o_tdata  => w_frame_buf_data_linear,
                 o_tvalid => open
             );
     end generate;
@@ -356,24 +369,23 @@ begin
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25         => i_clk_25,
-            clk_100        => i_clk_100,
-            clk_tmds_250   => i_clk_250,
-            i_100ms_strb   => w_100ms_strb,
-            i_capture_en   => w_capture_en_drain_guard,
-            i_lpf_en       => w_lpf_en,
-            i_hpf_en       => w_hpf_en,
-            i_lpf_incr     => w_lpf_incr_to_video,
-            i_lpf_decr     => w_lpf_decr_to_video,
-            i_hpf_incr     => w_hpf_incr_to_video,
-            i_hpf_decr     => w_hpf_decr_to_video,
-            i_waterfall_en => w_waterfall_en,
-            i_ema_en       => w_ema_en,
-            o_rd_addr_X    => w_rd_addr_X,
-            o_rd_addr_Y    => w_rd_addr_Y,
-            -- TODO are these correct?
+            clk_25           => i_clk_25,
+            clk_100          => i_clk_100,
+            clk_tmds_250     => i_clk_250,
+            i_100ms_strb     => w_100ms_strb,
+            i_capture_en     => w_capture_en_drain_guard,
+            i_lpf_en         => w_lpf_en,
+            i_hpf_en         => w_hpf_en,
+            i_lpf_incr       => w_lpf_incr_to_video,
+            i_lpf_decr       => w_lpf_decr_to_video,
+            i_hpf_incr       => w_hpf_incr_to_video,
+            i_hpf_decr       => w_hpf_decr_to_video,
+            i_waterfall_en   => w_waterfall_en,
+            i_ema_en         => w_ema_en,
+            o_rd_addr_X      => w_rd_addr_X,
+            o_rd_addr_Y      => w_rd_addr_Y,
             i_rd_data_log    => r_frame_buf_data_log_d2,
-            i_rd_data_linear => w_frame_bug_data_linear,
+            i_rd_data_linear => w_frame_buf_data_linear,
             o_TMDS_clk_p     => o_TMDS_clk_p,
             o_TMDS_clk_n     => o_TMDS_clk_n,
             o_video_0_p      => o_video_0_p,

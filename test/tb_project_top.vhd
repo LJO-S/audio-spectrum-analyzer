@@ -136,18 +136,36 @@ begin
             i_pb_vector(sel mod 4) <= '1';
         end procedure;
         ----------------------------------
+        procedure proc_set_waterfall(
+            constant active : in boolean
+        )
+        is
     begin
-        test_runner_setup(runner, runner_cfg);
-        if run("visual") then
-            info("Running tb_project_top-visual");
-            wait_clock(10, clk_period_100);
-            -- Set internally generated
-            proc_set_internal;
-            -- Select signal generator
-            select_sig_gen(2);
-            wait_clock(100_000, clk_period_100);
+        if (i_dip_vector(3) /= '1') then
+            -- Internal
+            i_dip_vector(1) <= '1' when active = true else
+            '0';
+        else
+            -- Capture
+            i_dip_vector(0) <= '1' when active = true else
+            '0';
         end if;
-        test_runner_cleanup(runner);
-    end process main;
-    -- ====================================================================
+    end procedure;
+    ----------------------------------
+begin
+    test_runner_setup(runner, runner_cfg);
+    if run("visual") then
+        info("Running tb_project_top-visual");
+        wait_clock(10, clk_period_100);
+        -- Set internally generated
+        proc_set_internal;
+        -- Select signal generator
+        select_sig_gen(2);
+        -- Activate waterfall
+        proc_set_waterfall(true);
+        wait_clock(100_000, clk_period_100);
+    end if;
+    test_runner_cleanup(runner);
+end process main;
+-- ====================================================================
 end;

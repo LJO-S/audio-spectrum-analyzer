@@ -152,7 +152,7 @@ begin
     -- ===========================================================================================
     -- Combinatorial
     o_HDMI_HPD <= '1';
-    o_TMDS_clk <= i_clk_25; -- TODO bring in a 25 MHz clock!
+    o_TMDS_clk <= i_clk_25;
     o_TMDS(2)  <= r_TMDS_shift_red(0);
     o_TMDS(1)  <= r_TMDS_shift_grn(0);
     o_TMDS(0)  <= r_TMDS_shift_blu(0);

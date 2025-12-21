@@ -43,7 +43,7 @@ architecture bench of spectrum_framebuffer_tb is
     type t_producer_state is (IDLE, PRODUCING, HOLD);
     signal tb_data_State : t_producer_state := IDLE;
 
-    type t_rd_addr_X_shreg is array (0 to 2) of UNSIGNED(tb_X_counter'range);
+    type t_rd_addr_X_shreg is array (0 to 3) of UNSIGNED(tb_X_counter'range);
     signal tb_rd_addr_X : t_rd_addr_X_shreg := (others => (others => '0'));
 begin
     -- ======================================================================

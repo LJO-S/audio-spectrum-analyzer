@@ -21,6 +21,12 @@ package sig_gen_pkg is
     constant C_MAX_FILTER_CUTOFF : natural := 23000;
     constant C_MIN_FILTER_CUTOFF : natural := 1000;
     constant C_FILTER_STEP       : natural := 1000;
+
+    -- Frame Buffer
+    constant C_FFT_LOG2_QFORMAT    : integer := 3;
+    constant C_FFT_LOG2_DATA_WIDTH : integer := 8;
+    constant C_FRAMEBUF_X_SIZE     : integer := C_SPECTRUM_X_UPPER;
+    constant C_FRAMEBUF_Y_SIZE     : integer := C_SPECTRUM_Y_UPPER / 2;
     --===============================================================================
     -- Ascii Text
     constant C_WORD_X_LEFT : natural := 512;

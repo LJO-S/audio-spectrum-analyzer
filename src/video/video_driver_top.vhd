@@ -49,7 +49,6 @@ architecture rtl of video_driver_top is
     signal r_ce_counter : unsigned(1 downto 0) := (others => '0');
     signal w_ce         : std_logic;
     signal r_ce         : std_logic := '0';
-    -- signal r_pixclk     : std_logic;
 
     -- Data Eval
     signal r_comp_limit_value : unsigned(31 downto 0) := TO_UNSIGNED(C_INTERNAL_COMP_LIMIT, 32);
@@ -105,8 +104,6 @@ begin
             r_ce_counter <= r_ce_counter + 1;
             -- Reg CE
             r_ce <= w_ce;
-            -- Create PIXCLK
-            -- r_pixclk <= r_ce_counter(1);
         end if;
     end process p_25mhz_ce;
     w_ce <= r_ce_counter(1) and not(r_ce);

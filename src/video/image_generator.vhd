@@ -49,14 +49,21 @@ architecture rtl of image_generator is
     signal r_VSYNC     : std_logic            := '0';
     signal r_draw      : std_logic            := '0';
 
-    -- Pipeline
-    signal r_counter_X_d1    : UNSIGNED(9 downto 0)          := (others => '0');
-    signal r_counter_Y_d1    : UNSIGNED(9 downto 0)          := (others => '0');
-    signal r_HSYNC_d1        : std_logic                     := '0';
-    signal r_VSYNC_d1        : std_logic                     := '0';
-    signal r_draw_d1         : std_logic                     := '0';
+    -- Input data
     signal r_fft_data_log    : std_logic_vector(7 downto 0)  := (others => '0');
     signal r_fft_data_linear : std_logic_vector(31 downto 0) := (others => '0');
+
+    -- Pipeline
+    signal r_counter_X_d1 : UNSIGNED(9 downto 0) := (others => '0');
+    signal r_counter_Y_d1 : UNSIGNED(9 downto 0) := (others => '0');
+    signal r_HSYNC_d1     : std_logic            := '0';
+    signal r_VSYNC_d1     : std_logic            := '0';
+    signal r_draw_d1      : std_logic            := '0';
+    signal r_counter_X_d2 : UNSIGNED(9 downto 0) := (others => '0');
+    signal r_counter_Y_d2 : UNSIGNED(9 downto 0) := (others => '0');
+    signal r_HSYNC_d2     : std_logic            := '0';
+    signal r_VSYNC_d2     : std_logic            := '0';
+    signal r_draw_d2      : std_logic            := '0';
 
     -- Spectrum Signals
     signal r_compare_value      : unsigned(31 downto 0) := TO_UNSIGNED(C_INTERNAL_COMP_LIMIT, 32);
@@ -95,9 +102,9 @@ architecture rtl of image_generator is
 begin
     --*****************************************************************************
     -- Concurrent assignments 
-    o_draw      <= r_draw_d1;
-    o_HSYNC     <= r_HSYNC_d1;
-    o_VSYNC     <= r_VSYNC_d1;
+    o_draw      <= r_draw_d2;
+    o_HSYNC     <= r_HSYNC_d2;
+    o_VSYNC     <= r_VSYNC_d2;
     o_rd_addr_X <= std_logic_vector(r_counter_X);
     o_rd_addr_Y <= std_logic_vector(r_counter_Y);
     --*****************************************************************************
@@ -126,7 +133,6 @@ begin
         if rising_edge(clk_100) then
 
             if (i_ce = '1') then
-                -- TODO probably have to pipe these +1 cc 25MHz more...
                 -- ------------
                 -- PIPE 1
                 -- ------------
@@ -135,8 +141,17 @@ begin
                 r_HSYNC_d1     <= r_HSYNC;
                 r_VSYNC_d1     <= r_VSYNC;
                 r_draw_d1      <= r_draw;
-                -- 3 100MHz cc latency from rd_addr --> rd_data in Ping Pong Memory,
-                -- ... i.e. should have arrived by now
+
+                -- ------------
+                -- PIPE 2
+                -- ------------
+                -- RD_addr to RD_data (framebuf): 4cc
+                -- RD_data via log2lin: 3cc (say 4cc)
+                r_counter_X_d2    <= r_counter_X_d1;
+                r_counter_Y_d2    <= r_counter_Y_d1;
+                r_HSYNC_d2        <= r_HSYNC_d1;
+                r_VSYNC_d2        <= r_VSYNC_d1;
+                r_draw_d2         <= r_draw_d1;
                 r_fft_data_log    <= i_fft_data_log;
                 r_fft_data_linear <= i_fft_data_linear;
             end if;
@@ -208,10 +223,10 @@ begin
                 ----------------------------
                 -- Update comparison value
                 ----------------------------
-                if (r_counter_X_d1 = 799) then
+                if (r_counter_X_d2 = 799) then
                     -- updating row
                     r_compare_value <= r_compare_value - i_compare_subtractor;
-                    if (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) then
+                    if (r_counter_Y_d2 >= C_SPECTRUM_Y_UPPER) then
                         -- end of screen
                         r_compare_value <= i_compare_limit;
                     end if;
@@ -220,7 +235,7 @@ begin
                 ----------------------------
                 -- Draw spectrum decision            
                 ----------------------------
-                if (r_counter_X_d1 < C_SPECTRUM_X_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER) then
+                if (r_counter_X_d2 < C_SPECTRUM_X_UPPER) and (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER) then
                     r_draw_spectrum <= '1';
                     if (i_waterfall_on = '1') then
                         r_video_red_spectrum <= w_video_red_spectrum;
@@ -245,11 +260,11 @@ begin
                 ----------------------------
                 -- X*47 = X*32 + X*8 + X*4 + X*2 + X 
                 r_curr_freq <= resize(
-                    (r_counter_X & "00000") +
-                    (r_counter_X & "000") +
-                    (r_counter_X & "00") +
-                    (r_counter_X & "0") +
-                    (r_counter_X),
+                    (r_counter_X_d1 & "00000") +
+                    (r_counter_X_d1 & "000") +
+                    (r_counter_X_d1 & "00") +
+                    (r_counter_X_d1 & "0") +
+                    (r_counter_X_d1),
                     r_curr_freq'length
                     );
             end if;
@@ -268,16 +283,16 @@ begin
                 r_video_red_gui <= x"00";
                 r_video_grn_gui <= x"00";
                 r_video_blu_gui <= x"00";
-                if (r_counter_X_d1 = C_SPECTRUM_X_UPPER) or
-                    (r_counter_Y_d1 = C_SPECTRUM_Y_UPPER) or
-                    ((r_counter_X_d1 > C_SPECTRUM_X_UPPER) and
-                    ((r_counter_Y_d1 = 48) or
-                    (r_counter_Y_d1 = 96) or
-                    (r_counter_Y_d1 = 144) or
-                    (r_counter_Y_d1 = 192) or
-                    (r_counter_Y_d1 = 240) or
-                    (r_counter_Y_d1 = 288) or
-                    (r_counter_Y_d1 = 400))) then
+                if (r_counter_X_d2 = C_SPECTRUM_X_UPPER) or
+                    (r_counter_Y_d2 = C_SPECTRUM_Y_UPPER) or
+                    ((r_counter_X_d2 > C_SPECTRUM_X_UPPER) and
+                    ((r_counter_Y_d2 = 48) or
+                    (r_counter_Y_d2 = 96) or
+                    (r_counter_Y_d2 = 144) or
+                    (r_counter_Y_d2 = 192) or
+                    (r_counter_Y_d2 = 240) or
+                    (r_counter_Y_d2 = 288) or
+                    (r_counter_Y_d2 = 400))) then
                     -- Straight lines for GUI
                     r_gui_draw      <= '1';
                     r_video_red_gui <= x"3F";
@@ -285,34 +300,34 @@ begin
                     r_video_blu_gui <= x"3F";
                     -- 5k = pxl 104
                     -- 10k = pxl 216
-                elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 16) and
-                    ((r_counter_X_d1 = 104) or
-                    (r_counter_X_d1 = 216) or
-                    (r_counter_X_d1 = 320) or
-                    (r_counter_X_d1 = 424)) then
+                elsif (r_counter_Y_d2 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER + 16) and
+                    ((r_counter_X_d2 = 104) or
+                    (r_counter_X_d2 = 216) or
+                    (r_counter_X_d2 = 320) or
+                    (r_counter_X_d2 = 424)) then
                     -- X-axis large ticks for frequency
                     r_gui_draw      <= '1';
                     r_video_red_gui <= x"9F";
                     r_video_grn_gui <= x"9F";
                     r_video_blu_gui <= x"9F";
-                elsif (r_counter_Y_d1 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER + 8) and
-                    ((r_counter_X_d1 = 52) or
-                    (r_counter_X_d1 = 160) or
-                    (r_counter_X_d1 = 268) or
-                    (r_counter_X_d1 = 372)) then
+                elsif (r_counter_Y_d2 >= C_SPECTRUM_Y_UPPER) and (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER + 8) and
+                    ((r_counter_X_d2 = 52) or
+                    (r_counter_X_d2 = 160) or
+                    (r_counter_X_d2 = 268) or
+                    (r_counter_X_d2 = 372)) then
                     -- X-axis small ticks for frequency
                     r_gui_draw      <= '1';
                     r_video_red_gui <= x"9F";
                     r_video_grn_gui <= x"9F";
                     r_video_blu_gui <= x"9F";
-                elsif (r_counter_Y_d1 < C_SPECTRUM_Y_UPPER) then
+                elsif (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER) then
                     -- LPF / HPF cutoff lines
-                    if (r_counter_X_d1 = r_lpf_x_axis) then
+                    if (r_counter_X_d2 = r_lpf_x_axis) then
                         r_gui_draw      <= i_lpf_on;
                         r_video_red_gui <= x"00";
                         r_video_grn_gui <= x"4C";
                         r_video_blu_gui <= x"99";
-                    elsif (r_counter_X_d1 = r_hpf_x_axis) then
+                    elsif (r_counter_X_d2 = r_hpf_x_axis) then
                         r_gui_draw      <= i_hpf_on;
                         r_video_red_gui <= x"99";
                         r_video_grn_gui <= x"00";
@@ -338,8 +353,8 @@ begin
         (
             clk_100          => clk_100,
             i_ce             => i_ce,
-            i_counter_X      => r_counter_X,
-            i_counter_Y      => r_counter_Y,
+            i_counter_X      => r_counter_X_d1,
+            i_counter_Y      => r_counter_Y_d1,
             i_max_freq       => r_max_freq,
             i_capture_on     => i_capture_on,
             i_lpf_on         => i_lpf_on,
@@ -358,6 +373,7 @@ begin
             o_video_blu      => w_video_blu_ascii
         );
     --*****************************************************************************
+    -- Holds colormap for waterfall
     spectrum_palette_rom_inst : entity work.spectrum_palette_rom
         port map
         (

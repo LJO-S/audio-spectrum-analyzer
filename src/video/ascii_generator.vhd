@@ -178,7 +178,6 @@ begin
                 elsif (i_counter_Y >= 304) and (i_counter_Y < 320) and
                     (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 72) then
                     -- "WATERFALL"
-                    -- TODO not sure if this'll work
                     v_tilemap_index := C_TILEMAP_WATERFALL(to_integer(unsigned(w_col_addr_1_8_double)));
                     r_draw_waterfall <= '1';
                     ------------------------------------------------------------------------------

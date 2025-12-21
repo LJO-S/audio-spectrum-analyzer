@@ -35,19 +35,20 @@ end entity gpio_ctrl;
 
 architecture rtl of gpio_ctrl is
     -- Pushbuttons 0-3:
-    -- mode A: Used to switch between Signal Generator sources (0,1,2,..,7)
-    -- mode B: Used to incr(0,2)/decr(1,3) LPF(0,1)/HPF(2,3) cutoffs
+    -- INTERNAL: Used to switch between Signal Generator sources (0,1,2,..,7)
+    -- CAPTURE: Used to incr(0,2)/decr(1,3) LPF(0,1)/HPF(2,3) cutoffs
     signal w_pb_debounce  : std_logic_vector(3 downto 0);
     signal w_dip_debounce : std_logic_vector(3 downto 0);
 
     -- dip0:
-    -- Selects between Signal Generator source 0-3 (LO) or 4-7 (HI) IFF (i_capture_en = '0')
-    -- else enables EMA
+    -- INTERNAL: Selects between Signal Generator source 0-3 (LO) or 4-7 (HI) IFF 
+    -- CAPTURE:  Enables EMA and Waterfall
     signal w_sel_up_lo            : std_logic;
     signal w_ema_and_waterfall_en : std_logic;
 
     -- dip1
-    -- LPF Enable
+    -- INTERNAL: Waterfall
+    -- CAPTURE: LPF Enable
     signal w_lpf_en      : std_logic;
     signal w_lpf_incr    : std_logic;
     signal r_lpf_incr    : std_logic := '0';
@@ -57,7 +58,8 @@ architecture rtl of gpio_ctrl is
     signal w_lpf_decr_re : std_logic;
 
     -- dip2 
-    -- HPF Enable
+    -- INTERNAL: Waterfall
+    -- CAPTURE: HPF Enable
     signal w_hpf_en      : std_logic;
     signal w_hpf_incr    : std_logic;
     signal r_hpf_incr    : std_logic := '0';
@@ -67,8 +69,7 @@ architecture rtl of gpio_ctrl is
     signal w_hpf_decr_re : std_logic;
 
     -- dip3:
-    -- Enables external capture mode. 
-    -- Activates mode B above.
+    -- Enables external CAPTURE mode. 
     signal w_capture_en : std_logic;
 
 begin
@@ -106,7 +107,7 @@ begin
                 o_ema_en <= w_ema_and_waterfall_en;
             else
                 -- Mode A: internal
-
+                o_waterfall_en <= w_lpf_en or w_hpf_en;
                 -- Signal generator sources
                 for i in 0 to 3 loop
                     o_sig_gen_src_sel(i) <= w_pb_debounce(i);
