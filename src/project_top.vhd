@@ -323,7 +323,7 @@ begin
                 G_DATA_WIDTH    => C_FFT_LOG2_DATA_WIDTH,
                 G_INPUT_QFORMAT => C_FFT_LOG2_QFORMAT,
                 G_LUT_QFORMAT   => 16,
-                G_INIT_FILE     => "../scripts/log2lin_frac_lut/log2lin_frac_lut.txt"
+                G_INIT_FILE     => "../../scripts/log2lin_frac_lut/log2lin_frac_lut.txt"
             )
             port map
             (

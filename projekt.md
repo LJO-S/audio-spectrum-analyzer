@@ -36,20 +36,15 @@ Idéen är följande:
 ## ########################################################
 ## Growth 
 - Window-funktion
+- UART comms från PS (ta emot keyboard press) för att styra e.g. Window, filter incr/decr
 ## ########################################################
 ## Notes
 
 ## ########################################################
 ## TODO
-- Klocka upp till 100 MHz
-- Fixa waterfall
-    - Behöver magnitude (32bit) -> log2 (8bit)
-    - Minneshantering (ett 480x120x12/8 bit minne)
-    - Video Driver
-        - LUT i Video Driver som gör om till vattenfallshantering 
-        - samt vanlig som tidigare
 - Ta bort BPF och ersätt med Window
-
+- Fixa större FFT för att 25k --> 12.5k (1024p --> 2048p)
+- Speed upp 100ms counter (10 ms counter)
 
 
 ## ########################################################
@@ -77,11 +72,11 @@ När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) a
       /\                                    |                                                       |
        |                                +--------+                                                  |
        |                                | I2S    |                                                  V
-       |                                | Ser    |                            +----------+      +----------+
-    LINE IN                             +--------+                            | DVI      |<-----| PingPong |
-                                            |                  SCREEN<--------| Module   |      | BRAM     |
-                                            |                                 |          |<--X--|          |
-                                            V                                 +----------+      +----------+ 
+       |                                | Ser    |                            +----------+      +-------------+
+    LINE IN                             +--------+                            | DVI      |<-----| FrameBuffer |
+                                            |                  SCREEN<--------| Module   |      | Memory      |
+                                            |                                 |          |<--X--|             |
+                                            V                                 +----------+      +-------------+ 
                                         HEADPHONES                     
                                                                
 
