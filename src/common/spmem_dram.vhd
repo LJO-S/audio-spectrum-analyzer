@@ -12,7 +12,7 @@ entity spmem_dram is
     );
     port (
         clk    : in std_logic;
-        i_addr : in std_logic_vector(9 downto 0);
+        i_addr : in std_logic_vector(integer(ceil(log2(real(G_RAM_DEPTH)))) - 1 downto 0);
         i_din  : in std_logic_vector(G_RAM_WIDTH - 1 downto 0);
         i_we   : in std_logic;
         o_dout : out std_logic_vector(G_RAM_WIDTH - 1 downto 0)

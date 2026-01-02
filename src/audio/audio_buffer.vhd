@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 entity audio_buffer is
     generic (
@@ -28,11 +29,11 @@ architecture rtl of audio_buffer is
     type t_fill_drain is (IDLE, FILLING, DRAINING);
     signal s_buffer_state : t_fill_drain := IDLE;
 
-    signal r_addr   : unsigned(9 downto 0)          := (others => '0');
-    signal r_tvalid : std_logic                     := '0';
-    signal r_tlast  : std_logic                     := '0';
-    signal r_we     : std_logic                     := '0';
-    signal r_din    : std_logic_vector(15 downto 0) := (others => 'X');
+    signal r_addr   : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0) := (others => '0');
+    signal r_tvalid : std_logic                                                      := '0';
+    signal r_tlast  : std_logic                                                      := '0';
+    signal r_we     : std_logic                                                      := '0';
+    signal r_din    : std_logic_vector(15 downto 0)                                  := (others => 'X');
     signal w_tdata  : std_logic_vector(15 downto 0);
 
 begin
