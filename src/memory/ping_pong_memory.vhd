@@ -11,7 +11,7 @@
 -- from that memory and writes to the previous. Hence "ping-pong"
 
 -- The video driver keeps reading from the same memory until the FFT
--- has written 1024 new values. Therefore, the ping-pong driver is the
+-- has written G_NFFT new values. Therefore, the ping-pong driver is the
 -- FFT which in turn is driven by the sampler.
 -- ----------------------------------------------------
 library ieee;
@@ -19,6 +19,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity ping_pong_memory is
+    generic (
+        G_DATA_DEPTH : integer := 2048
+    );
     port (
         clk_100 : in std_logic;
         -- FFT input data
@@ -108,7 +111,7 @@ begin
     BRAM0_inst : entity work.SPmem
         generic map(
             G_RAM_WIDTH       => 32,
-            G_RAM_DEPTH       => 1024,
+            G_RAM_DEPTH       => G_DATA_DEPTH,
             G_RAM_PERFORMANCE => "LOW_LATENCY",
             G_DO_NOT_PRELOAD  => '1'
         )
@@ -124,7 +127,7 @@ begin
     BRAM1_inst : entity work.SPmem
         generic map(
             G_RAM_WIDTH       => 32,
-            G_RAM_DEPTH       => 1024,
+            G_RAM_DEPTH       => G_DATA_DEPTH,
             G_RAM_PERFORMANCE => "LOW_LATENCY",
             G_DO_NOT_PRELOAD  => '1'
         )

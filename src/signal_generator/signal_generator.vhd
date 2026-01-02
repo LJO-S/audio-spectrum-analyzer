@@ -6,7 +6,7 @@ use ieee.math_real.all;
 entity signal_generator is
     generic (
         G_FFT_BIT_SIZE : natural := 16;
-        G_RAM_DEPTH    : natural := 1024;
+        G_RAM_DEPTH    : natural := 2048;
         G_INIT_FILE    : string  := "../scripts/data/sinc_15khz_16bits.txt"
     );
     port (
@@ -23,10 +23,10 @@ entity signal_generator is
 end entity signal_generator;
 
 architecture rtl of signal_generator is
-    signal r_addra            : unsigned(9 downto 0) := (others => '0');
-    signal w_re_data          : std_logic_vector(15 downto 0);
-    signal r_tlast            : std_logic;
-    signal r_tvalid           : std_logic;
+    signal r_addra   : unsigned(integer(ceil(log2(real(G_RAM_DEPTH)))) - 1 downto 0) := (others => '0');
+    signal w_re_data : std_logic_vector(15 downto 0);
+    signal r_tlast   : std_logic;
+    signal r_tvalid  : std_logic;
 
 begin
     ----------------------------------------------------------
@@ -42,9 +42,9 @@ begin
     begin
         if rising_edge(clk_100) then
             if (i_reset = '0') then
-                r_tlast           <= '0';
-                r_tvalid          <= '0';
-                r_addra           <= (others => '0');
+                r_tlast  <= '0';
+                r_tvalid <= '0';
+                r_addra  <= (others => '0');
             else
                 ------------------------------------
                 if (i_start = '1') then

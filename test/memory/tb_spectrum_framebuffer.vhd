@@ -17,7 +17,7 @@ end;
 architecture bench of spectrum_framebuffer_tb is
     -- Clock period
     constant clk_period     : time    := 5 ns;
-    constant G_NFFT         : integer := 1024;
+    constant G_NFFT         : integer := 2048;
     constant C_SCREEN_X_DIM : integer := 640;
     constant C_SCREEN_Y_DIM : integer := 480;
     -- Generics

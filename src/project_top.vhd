@@ -22,7 +22,7 @@ entity project_top is
         G_FIR_COEFF_WIDTH      : positive := 16;
         -- FFT input data config
         G_FFT_BIT_SIZE   : natural := 16;
-        G_NFFT           : natural := 1024;
+        G_NFFT           : natural := 2048;
         G_FFT_TW_QFORMAT : natural := 15;
         -- FFT refresh period
         G_100MS_CYCLES : natural := 10_000_000;
@@ -457,10 +457,11 @@ begin
     -- ============================================================================ 
     audio_top_inst : entity work.audio_top
         generic map(
-            G_NBR_OF_TAPS => G_FIR_NBR_OF_TAPS,
-            G_QFORMAT     => G_FIR_COEFF_QFORMAT,
-            G_INPUT_WIDTH => G_FIR_DATA_INPUT_WIDTH,
-            G_COEFF_WIDTH => G_FIR_COEFF_WIDTH
+            G_DATA_BUFFER_DEPTH => G_NFFT,
+            G_NBR_OF_TAPS       => G_FIR_NBR_OF_TAPS,
+            G_QFORMAT           => G_FIR_COEFF_QFORMAT,
+            G_INPUT_WIDTH       => G_FIR_DATA_INPUT_WIDTH,
+            G_COEFF_WIDTH       => G_FIR_COEFF_WIDTH
         )
         port map
         (
@@ -511,7 +512,7 @@ begin
 
     -- This FSM keeps track of internal/capture mode determined by GPIOs.
     -- If TVALID='1' for Generator/Audio, the data mux will not change the data source if capture_en should toggle. This 
-    -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts. 
+    -- holds until we have seen a TLAST. This allows the XFFT to always receive G_NFFT samples correctly without unexpected interrupts. 
     -- In other words, never change the data source when draining.
     p_drain_guard : process (i_clk_100)
     begin

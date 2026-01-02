@@ -24,7 +24,7 @@ entity SPmem is
     );
     port (
         clk     : in std_logic;
-        i_addra : in std_logic_vector(9 downto 0);
+        i_addra : in std_logic_vector(integer(ceil(log2(real(G_RAM_DEPTH)))) - 1 downto 0);
         i_dina  : in std_logic_vector(G_RAM_WIDTH - 1 downto 0);
         i_wea   : in std_logic;
 

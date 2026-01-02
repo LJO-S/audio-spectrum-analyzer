@@ -18,7 +18,7 @@ architecture bench of signal_generator_wrapper_tb is
     constant clk_period : time := 10 ns;
     -- Generics
     constant G_FFT_BIT_SIZE      : natural := 16;
-    constant G_RAM_DEPTH         : natural := 1024;
+    constant G_RAM_DEPTH         : natural := 2048;
     constant G_100MS_CYCLES      : natural := 3000;
     constant G_PRELOAD_DIRECTIVE : string  := "testbench";
     -- Ports

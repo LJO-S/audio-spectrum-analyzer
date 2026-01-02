@@ -13,7 +13,7 @@ use work.sig_gen_pkg.all;
 entity signal_generator_top is
     generic (
         G_FFT_BIT_SIZE      : natural := 16;
-        G_RAM_DEPTH         : natural := 1024;
+        G_RAM_DEPTH         : natural := 2048;
         G_100MS_CYCLES      : natural := 10_000_000;
         G_PRELOAD_DIRECTIVE : string  := "build"
     );
@@ -109,7 +109,7 @@ begin
                 r_100ms_counter <= r_100ms_counter + 1;
             end if;
             r_start_strobe_d1 <= r_start_strobe;
-            -- Wait for sig_gen to load 1024 samples into FFT
+            -- Wait for sig_gen to load G_NFFT samples into FFT
             if (r_start_strobe_d1 = '1') and (w_sig_gen_tvalid = '1') then
                 r_tlast_pending <= '1';
             elsif (r_tlast_pending = '1') and (w_sig_gen_tlast = '1') then

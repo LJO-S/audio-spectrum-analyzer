@@ -4,7 +4,7 @@ use ieee.std_logic_1164.all;
 entity signal_generator_wrapper is
     generic (
         G_FFT_BIT_SIZE      : natural := 16;
-        G_RAM_DEPTH         : natural := 1024;
+        G_RAM_DEPTH         : natural := 2048;
         G_100MS_CYCLES      : natural := 10_000_000;
         G_PRELOAD_DIRECTIVE : string  := "build"
     );

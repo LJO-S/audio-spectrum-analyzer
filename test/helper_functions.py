@@ -87,7 +87,7 @@ class fir_data_checker:
         signed_ints_out = self.get_signed(output_data)
 
         # Acquire FFT data with real FFT
-        N = 1024
+        N = 2048
         window = np.ones(N)
 
         # Normalize input/output

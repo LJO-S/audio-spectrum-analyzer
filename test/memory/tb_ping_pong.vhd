@@ -18,7 +18,7 @@ architecture bench of ping_pong_memory_tb is
     -- Clock period
     constant clk_period   : time    := 10 ns;
     constant C_RD_LATENCY : natural := 4;
-    constant C_NFFT       : natural := 1024;
+    constant C_NFFT       : natural := 2048;
     constant C_LOG2_NFFT  : integer := integer(ceil(log2(real(C_NFFT))));
     -- Generics
     -- Ports

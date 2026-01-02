@@ -224,14 +224,27 @@ class generateData:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--type", type=str, required=True)
+    # parser.add_argument("--type", type=str, required=True)
     parser.add_argument("--bits", type=int, required=False, default=16)
     parser.add_argument("--store", action="store_true")
     args = parser.parse_args()
 
-    obj = generateData(
-        a_freq=10e3, a_length=1024, a_numBits=args.bits, a_type=args.type
-    )
-    if args.store:
-        obj.writeToFile()
-    obj.plotData(saveFig=args.store)
+    allowed_types = [
+        "sin",
+        "square",
+        "sinc",
+        "multi",
+        "chirp",
+        "am",
+        "fm",
+        "pink",
+        "2_tone",
+        "white",
+    ]
+    for sig_type in allowed_types:
+        obj = generateData(
+            a_freq=8e3, a_length=2048, a_numBits=args.bits, a_type=sig_type
+        )
+        if args.store:
+            obj.writeToFile()
+        obj.plotData(saveFig=args.store)

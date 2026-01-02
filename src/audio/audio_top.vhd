@@ -8,10 +8,11 @@ use ieee.math_real.all;
 
 entity audio_top is
     generic (
-        G_NBR_OF_TAPS : positive := 101;
-        G_QFORMAT     : positive := 15;
-        G_INPUT_WIDTH : positive := 16;
-        G_COEFF_WIDTH : positive := 16
+        G_DATA_BUFFER_DEPTH : positive := 1024;
+        G_NBR_OF_TAPS       : positive := 101;
+        G_QFORMAT           : positive := 15;
+        G_INPUT_WIDTH       : positive := 16;
+        G_COEFF_WIDTH       : positive := 16
     );
     port (
         clk_100 : in std_logic;
@@ -87,7 +88,7 @@ begin
         end if;
     end process p_clk_counter;
     /* ------------------------------------------------------ */
-    -- Capture disable guard, to allow for full 1024-sample offload
+    -- Capture disable guard, to allow for full G_NFFT-sample offload
     -- before shutting down module
     w_capture_en <= i_capture_en or w_audio_buffer_draining;
     /* ------------------------------------------------------ */
@@ -138,10 +139,13 @@ begin
         );
     /* ------------------------------------------------------ */
     -- Audio Buffer
-    -- Buffers 1024 audio samples and then outputs them to FFT engine.
+    -- Buffers G_NNFT audio samples and then outputs them to FFT engine.
     -- Might miss 1 or 2 audio samples, negligable. If FFT engine temporarily 
     -- halts we might miss more.
     audio_buffer_inst : entity work.audio_buffer
+        generic map(
+            G_DATA_DEPTH => G_DATA_BUFFER_DEPTH
+        )
         port map
         (
             clk_100      => clk_100,

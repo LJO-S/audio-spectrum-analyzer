@@ -22,13 +22,14 @@ architecture bench of audio_top_tb is
     constant clk_period        : time    := 10 ns;
     constant TB_C_MAX_BIT_CNTR : natural := 16;
     -- Generics
-    constant G_NBR_OF_TAPS : positive := 101;
-    constant G_MEM_SIZE    : positive := 4 * G_NBR_OF_TAPS;
-    constant G_QFORMAT     : positive := 15;
-    constant G_INPUT_WIDTH : positive := 16;
-    constant G_COEFF_WIDTH : positive := 16;
+    constant G_DATA_BUFFER_DEPTH : positive := 2048;
+    constant G_NBR_OF_TAPS       : positive := 101;
+    constant G_MEM_SIZE          : positive := 4 * G_NBR_OF_TAPS;
+    constant G_QFORMAT           : positive := 15;
+    constant G_INPUT_WIDTH       : positive := 16;
+    constant G_COEFF_WIDTH       : positive := 16;
     -- Ports
-    signal clk_100                : std_logic := '0';
+    signal clk_100               : std_logic := '0';
     signal i_i2c_cfg_done        : std_logic;
     signal i_new_data_strobe_lpf : std_logic;
     signal i_new_data_strobe_hpf : std_logic;
@@ -100,14 +101,15 @@ begin
     /* ---------------------------------------------------------------------- */
     audio_top_inst : entity work.audio_top
         generic map(
-            G_NBR_OF_TAPS => G_NBR_OF_TAPS,
-            G_QFORMAT     => G_QFORMAT,
-            G_INPUT_WIDTH => G_INPUT_WIDTH,
-            G_COEFF_WIDTH => G_COEFF_WIDTH
+            G_DATA_BUFFER_DEPTH => G_DATA_BUFFER_DEPTH,
+            G_NBR_OF_TAPS       => G_NBR_OF_TAPS,
+            G_QFORMAT           => G_QFORMAT,
+            G_INPUT_WIDTH       => G_INPUT_WIDTH,
+            G_COEFF_WIDTH       => G_COEFF_WIDTH
         )
         port map
         (
-            clk_100                => clk_100,
+            clk_100               => clk_100,
             i_i2c_cfg_done        => i_i2c_cfg_done,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
@@ -222,7 +224,7 @@ begin
         if rising_edge(clk_100) then
             i_tready <= o_tvalid or tb_tready_override;
             if (i_tready = '1') then
-                if (tb_audio_buf_raddr = 1023) then
+                if (tb_audio_buf_raddr = G_DATA_BUFFER_DEPTH - 1) then
                     i_tready <= '0';
                 end if;
             end if;

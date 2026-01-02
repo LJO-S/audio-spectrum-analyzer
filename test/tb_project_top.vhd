@@ -25,7 +25,7 @@ architecture bench of project_top_tb is
     constant G_FIR_DATA_INPUT_WIDTH : positive := 16;
     constant G_FIR_COEFF_WIDTH      : positive := 16;
     constant G_FFT_BIT_SIZE         : natural  := 16;
-    constant G_NFFT                 : natural  := 1024;
+    constant G_NFFT                 : natural  := 2048;
     constant G_FFT_TW_QFORMAT       : natural  := 15;
     constant G_100MS_CYCLES         : natural  := 5_000;
     constant G_DEBOUNCE_LIMIT       : natural  := 250;
@@ -162,7 +162,7 @@ begin
         -- Select signal generator
         select_sig_gen(2);
         -- Activate waterfall
-        proc_set_waterfall(true);
+        proc_set_waterfall(false);
         wait_clock(100_000, clk_period_100);
     end if;
     test_runner_cleanup(runner);

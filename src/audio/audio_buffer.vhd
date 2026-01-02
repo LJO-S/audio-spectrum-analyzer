@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity audio_buffer is
+    generic (
+        G_DATA_DEPTH : integer := 1024
+    );
     port (
         clk_100 : in std_logic;
         -- CTRL logic IF
@@ -20,7 +23,7 @@ entity audio_buffer is
 end entity audio_buffer;
 
 architecture rtl of audio_buffer is
-    constant C_MAX_MEM_IDX : natural := 1023;
+    constant C_MAX_MEM_IDX : natural := G_DATA_DEPTH - 1;
 
     type t_fill_drain is (IDLE, FILLING, DRAINING);
     signal s_buffer_state : t_fill_drain := IDLE;
@@ -57,7 +60,7 @@ begin
                     -- Incr write address
                     if (r_we = '1') then
                         r_addr <= r_addr + 1;
-                        -- If r_addr = 1023 memory is filled
+                        -- If r_addr = G_DATA_DEPTH - 1 memory is filled
                         if (r_addr >= C_MAX_MEM_IDX) then
                             r_addr         <= (others => '0');
                             s_buffer_state <= DRAINING;
@@ -100,7 +103,7 @@ begin
     spmem_dram_inst : entity work.spmem_dram
         generic map(
             G_RAM_WIDTH => 16,
-            G_RAM_DEPTH => 1024
+            G_RAM_DEPTH => G_DATA_DEPTH
         )
         port map
         (
