@@ -1,10 +1,14 @@
+
+# Audio Spectrum Analyzer on a Zybo Z7-10
+
+Click for video demonstration:
 <p align="center">
   <a href="https://www.youtube.com/watch?v=OWQmLbjGhkA">
     <img src="https://github.com/user-attachments/assets/3fdea9d1-b1d0-4540-86a3-05621593b919" width="900" alt="Watch the video">
   </a>
 </p>
 
-# Video above: 
+Hackster.io article:
 https://www.hackster.io/ljo-s/spectrum-analyzer-on-a-zybo-z710-fpga-a72c1b
 
 ## ########################################################
