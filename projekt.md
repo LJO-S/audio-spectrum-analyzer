@@ -1,59 +1,11 @@
-
-## ########################################################
-# Cloning the project
-The project uses git submodules. There's 2 ways to clone the project:
-
-A. 
-- git clone <URL>
-- git submodule init
-- git submodule update
-
-OR
-
-B. 
-- git clone --recurse-submodules <URL> 
-
-## ########################################################
-# Building the project
-- bla bla bla tcl scripts bla bla vivado 2022.2
-
-
-## ########################################################
-Idéen är följande:
-
-- Vi nyttjar Zybons audio codec för att koppla mot:
-    - input: t.ex. dators AUX-sladd
-- Vi kör en IP FFT och gör om resultatet till frekvensdata
-    - Reell audio-data till reell port, kvadraturdata till '0'. 
-    - Hälften av utdatan går förlorad.
-- Vi tar resultatet och mappar över till 640x480p format på något snyggt sätt
-    - Output från FFT skrivs till BRAM0, videodata hämtas från BRAM1. När BRAM0 är fylld, gör en r_pingpong='1' och byt write till BRAM1 och läs till BRAM0. Ping-pong!
-    - Output skrivs med magnitud, t.ex. |Re| + |Im| till varje element, så i element 0 i BRAMX, så finns data för bin 0 osv. BRAM är lika stort som antalet binnar.
-    - if BRAM(bin0) > ((480 + FFT_data_offset) - curr_Y_pos) '1' else '0'
-        - Måste typ kolla lite på resultatet vilket storlek vi får...
-- Resultatet visas på HDMI/VGA protokoll på skärmen i realtid
-
-## ########################################################
-## Growth 
-- Window-funktion
-- UART comms från PS (ta emot keyboard press) för att styra e.g. Window, filter incr/decr
-## ########################################################
-## Notes
-
 ## ########################################################
 ## TODO
 - Ta bort BPF och ersätt med Window
 - Fixa större FFT för att 25k --> 12.5k (1024p --> 2048p)
 - Speed upp 100ms counter (10 ms counter)
 
-
 ## ########################################################
 ## Design
-När vi använder RealFFT rekommenderar Xilinx att vi nyttjar (N/2 + 1) to (N) av output-spektrumet. Detta pga mer brus från algoritmen hamnar i de låga binsen.
-
-
-
-
                      
 +----------+     +-----+   +-------+    +--------+        +------+          +----------+     +----------+     
 |          |     |AXI  |   | Coeff |    | Audio  |------->|Signal \         |    FFT   |     | Data     |
