@@ -3,3 +3,4 @@ test/vunit_out
 builds/*
 vitis/
 test/__pycache__
+.venv

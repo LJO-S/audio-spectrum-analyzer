@@ -122,7 +122,7 @@ fir_checker = fir_data_checker()
 
 for cfg in filter_configs:
     test.add_config(
-        name=f"{cfg["filter_type"]}_{cfg["filter_cutoff"]}_hz",
+        name=f'{cfg["filter_type"]}_{cfg["filter_cutoff"]}_hz',
         generics=dict(encoded_tb_cfg=encode(cfg)),
         # pre_config=fir_checker.pre_config_wrapper(a_type=dual_tone_stimuli),
         pre_config=fir_checker.pre_config_wrapper(a_type=noise_stimuli),
@@ -149,8 +149,8 @@ fir_bank_checker = fir_data_checker()
 
 for cfg in filter_configs:
     test.add_config(
-        name=f"lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}"
-        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}",
+        name=f'lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}'
+        + f'_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}',
         generics=dict(encoded_tb_cfg=encode(cfg)),
         pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
         post_check=fir_bank_checker.post_check,
@@ -162,8 +162,8 @@ filter_configs = [
 ]
 for cfg in filter_configs:
     test.add_config(
-        name=f"lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}"
-        + f"_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}_to_10k_hp",
+        name=f'lp_{"off".upper() if cfg["filter_1"] == "off" else cfg["fc_1"]}'
+        + f'_hp_{"off".upper() if cfg["filter_2"] == "off" else cfg["fc_2"]}_to_10k_hp',
         generics=dict(encoded_tb_cfg=encode(cfg)),
         pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
         post_check=fir_bank_checker.post_check,
@@ -174,8 +174,6 @@ for cfg in filter_configs:
 # And another testbench etc.
 # ============================================================
 
-VU.add_compile_option(
-    "modelsim.vcom_flags", ["+acc=npr", '+cover="sbcef', "-check_synthesis"]
-)
+VU.add_compile_option("modelsim.vcom_flags", ["+acc=npr", '+cover="sbcef'])
 
 VU.main()

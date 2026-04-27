@@ -1,0 +1,5 @@
+numpy
+vunit_hdl
+scipy
+bitstring
+matplotlib
