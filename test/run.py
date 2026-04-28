@@ -2,8 +2,11 @@
 
 # ============================================================
 from helper_functions import fir_data_checker
+from scripts.models.dds import dds
+from scripts.synth_and_test.dds import dds_checker
 from pathlib import Path
 from vunit import VUnit
+import random
 
 
 # ============================================================
@@ -99,8 +102,11 @@ for tb in lib.get_test_benches():
         )
 # ============================================================
 # Add test configs
+
+
 # --------------------------------------------------
 # FIR filter
+# --------------------------------------------------
 testbench = lib.entity("fir_filter_tb")
 test = testbench.test("filter-cutoffs")
 
@@ -132,6 +138,7 @@ for cfg in filter_configs:
 
 # --------------------------------------------------
 # FIR filter bank
+# --------------------------------------------------
 test = lib.entity("filter_bank_tb").test("filter-combos")
 
 filter_configs = [
@@ -168,6 +175,47 @@ for cfg in filter_configs:
         pre_config=fir_bank_checker.pre_config_wrapper(noise_stimuli),
         post_check=fir_bank_checker.post_check,
     )
+# --------------------------------------------------
+# DDS
+# --------------------------------------------------
+testbench = lib.entity("dds_tb")
+test = testbench.test("auto")
+
+# Configuration
+G_FREQ_WIDTH = 22  # 2²² / FS ≈ 4.19 MHz max frequency
+G_DATA_WIDTH = 16
+G_ACCUMULATOR_WIDTH = 32
+G_LUT_ADDR_WIDTH = 10
+G_SYS_CLK_HZ = int(100e6)
+
+cfg = dict(
+    G_FREQ_WIDTH=G_FREQ_WIDTH,
+    G_DATA_WIDTH=G_DATA_WIDTH,
+    G_ACCUMULATOR_WIDTH=G_ACCUMULATOR_WIDTH,
+    G_LUT_ADDR_WIDTH=G_LUT_ADDR_WIDTH,
+    G_SYS_CLK_HZ=G_SYS_CLK_HZ,
+)
+
+dds_checker_obj = dds_checker(a_cfg=cfg)
+
+# Create a list of random frequencies bounded by 0 to 2*22
+frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(8)]
+
+test.add_config(
+    name=f"{G_FREQ_WIDTH}bit_freq_{G_DATA_WIDTH}bit_data_{G_ACCUMULATOR_WIDTH}bit_acc_{G_LUT_ADDR_WIDTH}lut_{int(G_SYS_CLK_HZ/1e6)}MHz_clk",
+    generics=dict(
+        G_FREQ_WIDTH=cfg["G_FREQ_WIDTH"],
+        G_DATA_WIDTH=cfg["G_DATA_WIDTH"],
+        G_ACCUMULATOR_WIDTH=cfg["G_ACCUMULATOR_WIDTH"],
+        G_LUT_ADDR_WIDTH=cfg["G_LUT_ADDR_WIDTH"],
+        G_SYS_CLK_HZ=cfg["G_SYS_CLK_HZ"],
+        G_INIT_FILE=f"dds_lut.txt",
+    ),
+    pre_config=dds_checker_obj.pre_config_wrapper(
+        a_freq_list=frequency_list, a_cfg=cfg
+    ),
+    post_check=dds_checker_obj.post_check_wrapper(a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True),
+)
 # ----------------------------
 # Another testbench...
 # ----------------------------
