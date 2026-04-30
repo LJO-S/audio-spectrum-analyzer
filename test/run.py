@@ -2,11 +2,16 @@
 
 # ============================================================
 from helper_functions import fir_data_checker
-from scripts.models.dds import dds
-from scripts.synth_and_test.dds import dds_checker
 from pathlib import Path
 from vunit import VUnit
 import random
+
+import sys
+import os
+
+sys.path.append("../")
+from scripts.models.dds import dds
+from scripts.synth_and_test.dds import dds_checker
 
 
 # ============================================================

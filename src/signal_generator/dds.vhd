@@ -115,8 +115,8 @@ architecture rtl of dds is
     signal r_quadrant_sel_i_d3    : unsigned(1 downto 0)                                           := (others => '0');
     signal r_quadrant_sel_q_d3    : unsigned(1 downto 0)                                           := (others => '0');
     signal r_quadrant_sel_i_d4    : unsigned(1 downto 0)                                           := (others => '0');
-    signal w_lut_data_out_i       : signed(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
-    signal w_lut_data_out_q       : signed(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
+    signal w_lut_data_out_i       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
+    signal w_lut_data_out_q       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
     signal w_lut_valid_out_i      : std_logic                                                      := '0';
     signal r_valid_out            : std_logic                                                      := '0';
     signal r_data_out_i           : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                    := (others => '0');
@@ -227,7 +227,7 @@ begin
             clk     => clk,
             i_raddr => std_logic_vector(r_lut_addr_i_effective),
             i_valid => r_lut_addr_valid_d2,
-            o_data  => std_logic_vector(w_lut_data_out_i),
+            o_data  => w_lut_data_out_i,
             o_valid => w_lut_valid_out_i
         );
     -- Sine LUT (Quadrature)
@@ -242,7 +242,7 @@ begin
             clk     => clk,
             i_raddr => std_logic_vector(r_lut_addr_q_effective),
             i_valid => r_lut_addr_valid_d2,
-            o_data  => std_logic_vector(w_lut_data_out_q),
+            o_data  => w_lut_data_out_q,
             o_valid => open
         );
     -- =======================================================================
@@ -250,8 +250,8 @@ begin
     begin
         if rising_edge(clk) then
             r_valid_out  <= w_lut_valid_out_i;
-            r_data_out_i <= std_logic_vector(f_lut_data_map(r_quadrant_sel_i_d4, w_lut_data_out_i));
-            r_data_out_q <= std_logic_vector(f_lut_data_map(r_quadrant_sel_q_d3, w_lut_data_out_q));
+            r_data_out_i <= std_logic_vector(f_lut_data_map(r_quadrant_sel_i_d3, signed(w_lut_data_out_i)));
+            r_data_out_q <= std_logic_vector(f_lut_data_map(r_quadrant_sel_q_d2, signed(w_lut_data_out_q)));
         end if;
     end process p_map_output;
     -- =======================================================================

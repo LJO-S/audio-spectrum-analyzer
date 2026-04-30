@@ -6,12 +6,12 @@ from scripts.synth_and_test.utils import (
     format_as_bstring,
     compare_value,
 )
-from ..models.dds import dds
+from ..models.dds.dds import dds
 
 
 class dds_checker:
     def __init__(self, a_cfg: dict):
-        self.dds_object: dds = dds(
+        self.dds_object = dds(
             a_amp_width=16,
             a_data_width=a_cfg["G_DATA_WIDTH"],
             a_lut_addr_width=a_cfg["G_LUT_ADDR_WIDTH"],
@@ -76,10 +76,12 @@ class dds_checker:
                             f"New reference I=", ref_data_i, " & Q=", ref_data_q, "\n"
                         )
 
+                        # Compare I data
                         comparison_i = compare_value(
                             a_actual=output_data_i_f,
                             a_reference=ref_data_i,
                         )
+                        # Compare Q data
                         comparison_q = compare_value(
                             a_actual=output_data_q_f,
                             a_reference=ref_data_q,

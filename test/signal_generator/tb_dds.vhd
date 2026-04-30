@@ -66,7 +66,7 @@ begin
             BINARY_READ(v_line, v_freq_input);
             auto_freq_input   <= v_freq_input;
             auto_freq_valid   <= '1';
-            tb_nbr_of_samples <= integer(real(G_SYS_CLK_HZ) / real(to_integer(signed(v_freq_input)))); -- Capture 1 period of the output signal
+            tb_nbr_of_samples <= integer(real(G_SYS_CLK_HZ) / abs(real(to_integer(signed(v_freq_input))))); -- Capture 1 period of the output signal
             wait until tb_auto_set_done = true;
             wait_clock(1);
             auto_freq_valid <= '0';
@@ -119,7 +119,7 @@ begin
             G_ACCUMULATOR_WIDTH => G_ACCUMULATOR_WIDTH,
             G_LUT_ADDR_WIDTH    => G_LUT_ADDR_WIDTH,
             G_SYS_CLK_HZ        => G_SYS_CLK_HZ,
-            G_INIT_FILE         => G_INIT_FILE
+            G_INIT_FILE         => TB_INIT_FILE
         )
         port map
         (
