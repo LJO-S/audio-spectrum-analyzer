@@ -5,6 +5,7 @@ from bitstring import BitArray
 from scripts.synth_and_test.utils import (
     format_as_bstring,
     compare_value,
+    save_postcheck_plot_dds
 )
 from ..models.dds.dds import dds
 
@@ -61,8 +62,10 @@ class dds_checker:
                 output_data_path: Path = Path(output_path) / f"output_data_{i}.txt"
                 with open(output_data_path, "r") as f_out:
 
-                    # 1. Configure DDS
-                    self.dds_object.configure(a_freq=freq)
+                    # 1. Configure DDS (interpret freq as signed to match VHDL signed)
+                    freq_width = a_cfg["G_FREQ_WIDTH"]
+                    freq_signed = freq if freq < (1 << (freq_width - 1)) else freq - (1 << freq_width)
+                    self.dds_object.configure(a_freq=freq_signed)
 
                     for rd_idx, line in enumerate(f_out):
                         #  2. Fetch output
@@ -96,15 +99,24 @@ class dds_checker:
                         print("i=", rd_idx, " & freq=", freq)
                         print()
                         print()
-                        print("output I=", output_data_i_f, "\t\tQ=", output_data_q_f)
-                        print("output I=", ref_data_i, "\t\tQ=", ref_data_q)
+                        print("Out I=", output_data_i_f)
+                        print("Out Q=", output_data_q_f)
+                        print("Ref I=", ref_data_i)
+                        print("Ref Q=", ref_data_q)
                         print()
                         print()
                         print("=====================================================")
                         checker = checker and comparison_i and comparison_q
 
             # Plot
-            # TODO create plotter in /utils/
+            save_postcheck_plot_dds(
+                a_output_data_i=plt_output_i,
+                a_output_data_q=plt_output_q,
+                a_ref_data_i=plt_reference_i,
+                a_ref_data_q=plt_reference_q,
+                a_save_plot=True,
+                a_output_path=output_path
+            )
             return checker
 
         return post_check

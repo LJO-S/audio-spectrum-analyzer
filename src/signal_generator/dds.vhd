@@ -115,8 +115,8 @@ architecture rtl of dds is
     signal r_quadrant_sel_i_d3    : unsigned(1 downto 0)                                           := (others => '0');
     signal r_quadrant_sel_q_d3    : unsigned(1 downto 0)                                           := (others => '0');
     signal r_quadrant_sel_i_d4    : unsigned(1 downto 0)                                           := (others => '0');
-    signal w_lut_data_out_i       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
-    signal w_lut_data_out_q       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                              := (others => '0');
+    signal w_lut_data_out_i       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                    := (others => '0');
+    signal w_lut_data_out_q       : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                    := (others => '0');
     signal w_lut_valid_out_i      : std_logic                                                      := '0';
     signal r_valid_out            : std_logic                                                      := '0';
     signal r_data_out_i           : std_logic_vector(G_DATA_WIDTH - 1 downto 0)                    := (others => '0');
@@ -216,7 +216,7 @@ begin
     end process p_lut_addresses;
     -- =======================================================================
     -- Sine LUT (In-Phase)
-    dds_lut_inst_i : entity work.dds_lut
+    dds_lut_inst : entity work.dds_lut
         generic map(
             G_DATA_WIDTH => G_DATA_WIDTH,
             G_DATA_DEPTH => C_LUT_SIZE,
@@ -224,26 +224,17 @@ begin
         )
         port map
         (
-            clk     => clk,
-            i_raddr => std_logic_vector(r_lut_addr_i_effective),
-            i_valid => r_lut_addr_valid_d2,
-            o_data  => w_lut_data_out_i,
-            o_valid => w_lut_valid_out_i
-        );
-    -- Sine LUT (Quadrature)
-    dds_lut_inst_q : entity work.dds_lut
-        generic map(
-            G_DATA_WIDTH => G_DATA_WIDTH,
-            G_DATA_DEPTH => C_LUT_SIZE,
-            G_INIT_FILE  => G_INIT_FILE
-        )
-        port map
-        (
-            clk     => clk,
-            i_raddr => std_logic_vector(r_lut_addr_q_effective),
-            i_valid => r_lut_addr_valid_d2,
-            o_data  => w_lut_data_out_q,
-            o_valid => open
+            clk => clk,
+            -- Port A
+            i_raddr_a => std_logic_vector(r_lut_addr_i_effective),
+            i_valid_a => r_lut_addr_valid_d2,
+            o_data_a  => w_lut_data_out_i,
+            o_valid_a => w_lut_valid_out_i,
+            -- Port B
+            i_raddr_b => std_logic_vector(r_lut_addr_q_effective),
+            i_valid_b => r_lut_addr_valid_d2,
+            o_data_b  => w_lut_data_out_q,
+            o_valid_b => open
         );
     -- =======================================================================
     p_map_output : process (clk)

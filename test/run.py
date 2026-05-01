@@ -5,6 +5,8 @@ from helper_functions import fir_data_checker
 from pathlib import Path
 from vunit import VUnit
 import random
+# Seed random number generator for reproducibility
+random.seed(42)
 
 import sys
 import os
@@ -204,7 +206,7 @@ cfg = dict(
 dds_checker_obj = dds_checker(a_cfg=cfg)
 
 # Create a list of random frequencies bounded by 0 to 2*22
-frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(8)]
+frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(15)]
 
 test.add_config(
     name=f"{G_FREQ_WIDTH}bit_freq_{G_DATA_WIDTH}bit_data_{G_ACCUMULATOR_WIDTH}bit_acc_{G_LUT_ADDR_WIDTH}lut_{int(G_SYS_CLK_HZ/1e6)}MHz_clk",
