@@ -1,8 +1,6 @@
 ## ########################################################
 ## TODO
-- Ta bort BPF och ersätt med Window
-- Fixa större FFT för att 25k --> 12.5k (1024p --> 2048p)
-- Speed upp 100ms counter (10 ms counter)
+- synth DDS
 
 ## ########################################################
 ## Design
