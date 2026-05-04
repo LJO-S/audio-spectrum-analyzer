@@ -11,18 +11,19 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
-
+-- 
+use work.sig_gen_pkg.all;
+-- 
 entity ramp_generator is
     generic (
-        G_FREQ_WIDTH : natural := 16;
-        G_TIME_WIDTH : natural := 16
+        G_FREQ_WIDTH   : natural := 16;
+        G_TIME_WIDTH   : natural := 16;
+        G_SYS_CLK_FREQ : natural := 100_000_000
     );
     port (
-        clk   : in std_logic;
-        reset : in std_logic;
+        clk : in std_logic;
         -- Ctrl
-        i_en        : in std_logic;
-        i_ms_strobe : in std_logic;
+        i_en : in std_logic;
         -- Input
         i_cfg_fc_data           : in std_logic_vector(G_FREQ_WIDTH - 1 downto 0);
         i_cfg_bw_data           : in std_logic_vector(G_FREQ_WIDTH - 1 downto 0);
@@ -38,8 +39,9 @@ architecture rtl of ramp_generator is
     --------------------
     -- Constants
     --------------------
-    constant C_TIMEOUT_LIMIT   : natural := 1000;
-    constant C_PRECISION_WIDTH : natural := 16;
+    constant C_TIMEOUT_LIMIT : natural := 1000;
+    constant C_FRAC_WIDTH    : natural := 16;
+    constant C_CC_PER_US     : natural := integer(round(10.0 ** (-6) / (1.0 / real(G_SYS_CLK_FREQ))));
     --------------------
     -- Types
     --------------------
@@ -53,31 +55,36 @@ architecture rtl of ramp_generator is
     --------------------
     -- Signals
     --------------------
-    signal s_sweep_rate_state : t_sweep_rate_state                                      := IDLE;
-    signal r_cfg_bw_sign      : std_logic                                               := '0';
-    signal r_cfg_fc_data      : std_logic_vector(G_FREQ_WIDTH - 1 downto 0)             := (others => '0');
-    signal r_cfg_bw_data      : unsigned(G_FREQ_WIDTH + C_PRECISION_WIDTH - 1 downto 0) := (others => '0');
-    signal r_cfg_duration_ms  : unsigned(G_FREQ_WIDTH + C_PRECISION_WIDTH - 1 downto 0) := (others => '0');
-    signal r_div_valid_in     : std_logic                                               := '0';
+    signal s_sweep_rate_state : t_sweep_rate_state                                 := IDLE;
+    signal r_cfg_bw_sign      : std_logic                                          := '0';
+    signal r_cfg_fc_data      : std_logic_vector(G_FREQ_WIDTH - 1 downto 0)        := (others => '0');
+    signal r_cfg_bw_data      : unsigned(G_FREQ_WIDTH + C_FRAC_WIDTH - 1 downto 0) := (others => '0');
+    signal r_cfg_duration_ms  : unsigned(G_FREQ_WIDTH + C_FRAC_WIDTH - 1 downto 0) := (others => '0');
+    signal r_div_valid_in     : std_logic                                          := '0';
     signal w_div_ready_out    : std_logic;
-    signal w_div_quotient     : std_logic_vector(G_FREQ_WIDTH - 1 downto 0);
-    signal w_div_remainder    : std_logic_vector(G_FREQ_WIDTH - 1 downto 0);
+    signal w_div_quotient     : std_logic_vector(G_FREQ_WIDTH + C_FRAC_WIDTH - 1 downto 0);
+    signal w_div_remainder    : std_logic_vector(G_FREQ_WIDTH + C_FRAC_WIDTH - 1 downto 0);
     signal w_div_valid_out    : std_logic;
     signal r_timeout_cntr     : unsigned(integer(ceil(log2(real(C_TIMEOUT_LIMIT)))) - 1 downto 0) := (others => '0');
 
-    signal r_cfg_valid     : std_logic                                                       := '0';
-    signal r_delta_sign    : std_logic                                                       := '0';
-    signal r_delta_sign_d1 : std_logic                                                       := '0';
-    signal r_freq_carrier  : std_logic_vector(G_FREQ_WIDTH - 1 downto 0)                     := (others => '0');
-    signal r_freq_delta    : std_logic_vector(G_FREQ_WIDTH + C_PRECISION_WIDTH - 1 downto 0) := (others => '0');
+    signal r_cfg_valid     : std_logic                                                  := '0';
+    signal r_delta_sign    : std_logic                                                  := '0';
+    signal r_delta_sign_d1 : std_logic                                                  := '0';
+    signal r_freq_carrier  : std_logic_vector(G_FREQ_WIDTH - 1 downto 0)                := (others => '0');
+    signal r_freq_delta    : std_logic_vector(G_FREQ_WIDTH + C_FRAC_WIDTH - 1 downto 0) := (others => '0');
 
     -- Effectively 1 bit less precision due to sign bit
-    signal r_freq_accumulator      : signed(G_FREQ_WIDTH + C_PRECISION_WIDTH downto 0) := (others => '0');
-    signal r_freq_accumulator_clip : signed(G_FREQ_WIDTH + C_PRECISION_WIDTH downto 0) := (others => '0');
+    signal r_freq_accumulator      : signed(G_FREQ_WIDTH + C_FRAC_WIDTH downto 0) := (others => '0');
+    signal r_freq_accumulator_clip : signed(G_FREQ_WIDTH + C_FRAC_WIDTH downto 0) := (others => '0');
 
-    signal r_enable, r_enable_d1 : std_logic                     := '0';
-    signal r_neg_limit           : signed(G_FREQ_WIDTH downto 0) := (others => '0');
-    signal r_pos_limit           : signed(G_FREQ_WIDTH downto 0) := (others => '0');
+    signal r_enable, r_enable_d1 : std_logic                                    := '0';
+    signal r_neg_limit           : signed(G_FREQ_WIDTH + C_FRAC_WIDTH downto 0) := (others => '0');
+    signal r_pos_limit           : signed(G_FREQ_WIDTH + C_FRAC_WIDTH downto 0) := (others => '0');
+
+    -- Ms counter
+    signal r_cc_counter : unsigned(integer(ceil(log2(real(C_CC_PER_US)))) - 1 downto 0) := (others => '0');
+    signal r_us_counter : unsigned(integer(ceil(log2(real(1000)))) - 1 downto 0)        := (others => '0');
+    signal r_ms_strobe  : std_logic                                                     := '0';
 begin
     -- ============================================================
     -- Combinatorial
@@ -96,7 +103,7 @@ begin
                 when IDLE =>
                     r_cfg_fc_data     <= i_cfg_fc_data;
                     r_cfg_bw_sign     <= i_cfg_bw_data(i_cfg_bw_data'high);
-                    r_cfg_bw_data     <= unsigned(abs(resize(signed(i_cfg_bw_data), r_cfg_bw_data'length)));
+                    r_cfg_bw_data     <= shift_left(unsigned(abs(resize(signed(i_cfg_bw_data), r_cfg_bw_data'length))), C_FRAC_WIDTH);
                     r_cfg_duration_ms <= resize(unsigned(i_cfg_sweep_duration_ms), r_cfg_duration_ms'length);
                     if (i_cfg_valid = '1') and (w_div_ready_out = '1') then
                         r_div_valid_in     <= '1';
@@ -107,8 +114,8 @@ begin
                     r_timeout_cntr <= r_timeout_cntr + 1;
                     if (w_div_valid_out = '1') then
                         r_cfg_valid        <= '1';
-                        r_neg_limit        <= signed('0' & r_cfg_fc_data) - signed('0' & r_cfg_bw_data); -- Negative BW limit
-                        r_pos_limit        <= signed('0' & r_cfg_fc_data) + signed('0' & r_cfg_bw_data); -- Positive BW limit
+                        r_neg_limit        <= (signed('0' & r_cfg_fc_data) & to_signed(0, C_FRAC_WIDTH)) - signed('0' & r_cfg_bw_data); -- Negative BW limit
+                        r_pos_limit        <= (signed('0' & r_cfg_fc_data) & to_signed(0, C_FRAC_WIDTH)) + signed('0' & r_cfg_bw_data); -- Positive BW limit
                         r_delta_sign       <= r_cfg_bw_sign;
                         r_freq_delta       <= w_div_quotient;
                         r_freq_carrier     <= r_cfg_fc_data;
@@ -126,7 +133,7 @@ begin
     -- ============================================================
     restoring_divide_inst : entity work.restoring_divide
         generic map(
-            G_DATA_WIDTH => G_FREQ_WIDTH + C_PRECISION_WIDTH
+            G_DATA_WIDTH => G_FREQ_WIDTH + C_FRAC_WIDTH
         )
         port map
         (
@@ -148,7 +155,7 @@ begin
             ------------------
             r_enable        <= i_en;
             r_delta_sign_d1 <= r_delta_sign;
-            if (i_ms_strobe = '1') then
+            if (r_ms_strobe = '1') then
                 if (r_delta_sign = '1') then
                     r_freq_accumulator <= r_freq_accumulator - signed('0' & r_freq_delta);
                 else
@@ -157,20 +164,36 @@ begin
             end if;
             -- Configure
             if (r_cfg_valid = '1') then
-                r_freq_accumulator <= '0' & signed(r_freq_carrier) & to_signed(0, C_PRECISION_WIDTH);
+                r_freq_accumulator <= '0' & signed(r_freq_carrier) & to_signed(0, C_FRAC_WIDTH);
             end if;
             ------------------
             -- PIPE 1
             ------------------
             r_enable_d1 <= r_enable;
-            -- Clip if passed threshold
-            if (r_delta_sign_d1 = '1') and (r_freq_accumulator <= r_neg_limit) or
-                (r_delta_sign_d1 = '0') and (r_freq_accumulator >= r_pos_limit) then
-                r_freq_accumulator_clip <= '0' & signed(r_freq_carrier) & to_signed(0, C_PRECISION_WIDTH);
+            -- Clip if past threshold
+            if ((r_delta_sign_d1 = '1') and (r_freq_accumulator <= r_neg_limit)) or
+                ((r_delta_sign_d1 = '0') and (r_freq_accumulator >= r_pos_limit)) then
+                r_freq_accumulator_clip <= '0' & signed(r_freq_carrier) & to_signed(0, C_FRAC_WIDTH);
             else
                 r_freq_accumulator_clip <= r_freq_accumulator;
             end if;
         end if;
     end process p_calc_freq;
+    -- ============================================================
+    p_ms_strobe_generator : process (clk)
+    begin
+        if rising_edge(clk) then
+            r_ms_strobe  <= '0';
+            r_cc_counter <= r_cc_counter + 1;
+            if (r_cc_counter >= C_CC_PER_US - 1) then
+                r_cc_counter <= (others => '0');
+                r_us_counter <= r_us_counter + 1;
+                if (r_us_counter >= 999) then
+                    r_us_counter <= (others => '0');
+                    r_ms_strobe  <= '1';
+                end if;
+            end if;
+        end if;
+    end process p_ms_strobe_generator;
     -- ============================================================
 end architecture;

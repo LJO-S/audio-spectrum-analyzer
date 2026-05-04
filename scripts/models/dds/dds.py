@@ -47,8 +47,10 @@ class dds:
 
     def configure(self, a_freq, a_amp=1.0):
         # Match VHDL fixed-point: tuning_word = freq * round(2^(ACC+FRAC) / CLK) >> FRAC
-        _frac_width = 16
-        _tuning_factor = round((2**self.accumulator_width) * (2**_frac_width) / self.clk_freq)
+        _frac_width = 14
+        _tuning_factor = round(
+            (2**self.accumulator_width) * (2**_frac_width) / self.clk_freq
+        )
         self.tuning_word = (int(a_freq) * _tuning_factor) >> _frac_width
         self.amp = a_amp
 
