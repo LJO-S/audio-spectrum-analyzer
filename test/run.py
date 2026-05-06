@@ -3,8 +3,11 @@
 # ============================================================
 from helper_functions import fir_data_checker
 from pathlib import Path
-from vunit import VUnit
+from shutil import rmtree
+from vunit import VUnit, VUnitCLI
+from vunit.vivado import *
 import random
+
 # Seed random number generator for reproducibility
 random.seed(42)
 
@@ -14,6 +17,7 @@ import os
 sys.path.append("../")
 from scripts.models.dds import dds
 from scripts.synth_and_test.dds import dds_checker
+from scripts.synth_and_test.ramp_generator import ramp_generator_checker
 
 
 # ============================================================
@@ -23,8 +27,22 @@ def encode(config: dict) -> str:
 
 # ============================================================
 # Setup
+cli = VUnitCLI(description="VUnit project with Vivado Synthesis support")
+cli.parser.add_argument(
+    "--synth",
+    type=str,
+    default=None,
+    help="Run Vivado synthesis on the specified entity",
+)
+cli.parser.add_argument(
+    "--batch",
+    action="store_true",
+    default=False,
+    help="Run in batch mode",
+)
+args = cli.parse_args()
 
-VU = VUnit.from_argv(compile_builtins=False)
+VU = VUnit.from_args(args=args, compile_builtins=False)
 VU.add_vhdl_builtins()
 
 # Enable location preprocessing but exclude all but check_false to make the example less bloated
@@ -209,7 +227,7 @@ dds_checker_obj = dds_checker(a_cfg=cfg)
 frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(15)]
 
 test.add_config(
-    name=f"{G_FREQ_WIDTH}bit_freq_{G_DATA_WIDTH}bit_data_{G_ACCUMULATOR_WIDTH}bit_acc_{G_LUT_ADDR_WIDTH}lut_{int(G_SYS_CLK_HZ/1e6)}MHz_clk",
+    name=f"multiple_freqs",
     generics=dict(
         G_FREQ_WIDTH=cfg["G_FREQ_WIDTH"],
         G_DATA_WIDTH=cfg["G_DATA_WIDTH"],
@@ -221,14 +239,39 @@ test.add_config(
     pre_config=dds_checker_obj.pre_config_wrapper(
         a_freq_list=frequency_list, a_cfg=cfg
     ),
-    post_check=dds_checker_obj.post_check_wrapper(a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True),
+    post_check=dds_checker_obj.post_check_wrapper(
+        a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True
+    ),
 )
 # ----------------------------
 # Another testbench...
 # ----------------------------
 # And another testbench etc.
+
+# ============================================================
+VU.add_compile_option("modelsim.vcom_flags", ["+acc=npr", '+cover="sbcef'])
 # ============================================================
 
-VU.add_compile_option("modelsim.vcom_flags", ["+acc=npr", '+cover="sbcef'])
-
-VU.main()
+# Synthesize or simulate
+if args.synth:
+    print(f"--- Starting Vivado Synthesis for entity: {args.synth} ---")
+    root = Path(__file__).parent.resolve()
+    project_name = "vivado"
+    if (root / project_name).exists():
+        rmtree(root / project_name)
+    # Path to TCL script
+    tcl_script = (
+        Path(__file__).parent / ".." / "scripts" / "tcl" / "generate_project.tcl"
+    )
+    try:
+        run_vivado(
+            tcl_file_name=str(tcl_script),
+            tcl_args=[root, project_name, args.synth, src_dir, not (args.batch)],
+            vivado_path=None,  # Uses default 'vivado' command
+        )
+        print("--- Synthesis Complete! ---")
+    except Exception as e:
+        print(f"Synthesis failed: {e}")
+        sys.exit(1)
+else:
+    VU.main()

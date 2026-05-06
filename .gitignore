@@ -4,3 +4,4 @@ builds/*
 vitis/
 **/__pycache__
 .venv
+test/vivado/

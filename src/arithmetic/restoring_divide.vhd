@@ -28,7 +28,7 @@ entity restoring_divide is
 end entity restoring_divide;
 
 architecture rtl of restoring_divide is
-    type t_calc_state is (IDLE, CALC);
+    type t_calc_state is (IDLE, SETUP, CALC);
     signal s_calc_state : t_calc_state                                                   := IDLE;
     signal r_aq         : unsigned(2 * G_DATA_WIDTH downto 0)                            := (others => '0');
     signal r_m          : unsigned(G_DATA_WIDTH downto 0)                                := (others => '0');
@@ -60,6 +60,15 @@ begin
                     r_aq(G_DATA_WIDTH - 1 downto 0) <= unsigned(i_dividend);
                     r_counter                       <= (others => '0');
                     if (i_valid = '1') then
+                        s_calc_state <= SETUP;
+                    end if;
+                    -------------------------------------------------
+                when SETUP =>
+                    if ( or (r_aq) /= '1') or ( or (r_m) /= '1') then
+                        -- Dividend = 0 or Divisor = 0
+                        r_valid_out  <= '1';
+                        s_calc_state <= IDLE;
+                    else
                         s_calc_state <= CALC;
                     end if;
                     -------------------------------------------------
