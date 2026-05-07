@@ -12,197 +12,229 @@ use work.sig_gen_pkg.all;
 
 entity signal_generator_top is
     generic (
-        G_FFT_BIT_SIZE      : natural := 16;
-        G_RAM_DEPTH         : natural := 1024;
-        G_100MS_CYCLES      : natural := 10_000_000;
-        G_PRELOAD_DIRECTIVE : string  := "build"
+        G_DATA_WIDTH          : natural := 16;
+        G_FFT_SIZE            : natural := 1024;
+        G_SYS_CLK_FREQ        : natural := 100_000_000;
+        G_DDS_FREQ_WIDTH      : natural := 16;
+        G_DDS_FREQ_FRAC_WIDTH : natural := 16;
+        G_DDS_TIME_WIDTH      : natural := 16;
+        G_DDS_INIT_FILE       : string;
     );
     port (
-        clk_100 : in std_logic;
+        clk : in std_logic;
         -- GPIO
+        i_en        : in std_logic;
         i_pbuttons  : in std_logic_vector(3 downto 0);
         i_sel_up_lo : in std_logic;
         -- Misc
+        i_fs_strobe  : in std_logic;
         o_100ms_strb : out std_logic;
         o_reset      : out std_logic;
-        -- AXIS
-        i_s_axis_tready : in std_logic;
-        o_m_axis_tdata  : out std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-        o_m_axis_tvalid : out std_logic;
-        o_m_axis_tlast  : out std_logic
+        -- FFT
+        i_iq_ready : in std_logic;
+        o_iq_data  : out std_logic_vector(2 * G_DATA_WIDTH - 1 downto 0);
+        o_iq_valid : out std_logic;
+        o_iq_last  : out std_logic
     );
 end entity signal_generator_top;
 
 architecture rtl of signal_generator_top is
+    --------------------
     -- Constants
-    constant C_PRELOAD_STRING_SRC : t_preload_string_array := C_PRELOAD_STRING_SRC;
-    constant C_PRELOAD_STRING_TB  : t_preload_string_array := C_PRELOAD_STRING_TB;
-    constant C_100MS_CYCLES_LOG2  : integer                := integer(ceil(log2(real(G_100MS_CYCLES))));
-    -- Internals
-    type t_gpio_state is (s_IDLE, s_REQ_PENDING);
-    signal r_STATE_GPIO : t_gpio_state                 := s_IDLE;
-    signal r_pbuttons   : std_logic_vector(3 downto 0) := (others => '0');
+    --------------------
+    constant C_FREQ_FC_DELTA  : unsigned(G_DDS_FREQ_WIDTH - 1 downto 0) := to_unsigned(1000, G_DDS_FREQ_WIDTH);
+    constant C_FREQ_BW_DELTA  : unsigned(G_DDS_FREQ_WIDTH - 1 downto 0) := to_unsigned(1000, G_DDS_FREQ_WIDTH);
+    constant C_FREQ_DUR_DELTA : unsigned(G_DDS_FREQ_WIDTH - 1 downto 0) := to_unsigned(500, G_DDS_FREQ_WIDTH);
+    --------------------
+    -- Types
+    --------------------
+    type t_gpio_state is (IDLE, EVALUATE_GPIO);
+    --------------------
+    -- Signals
+    --------------------
+    signal s_gpio_state    : t_gpio_state                                          := IDLE;
+    signal r_pbuttons      : std_logic_vector(3 downto 0)                          := (others => '0');
+    signal r_100ms_counter : unsigned(integer(ceil(log2(real(100)))) - 1 downto 0) := (others => '0');
+    signal r_100ms_strobe  : std_logic                                             := '0';
+    signal r_sig_gen_reset : std_logic                                             := '0';
 
-    signal r_100ms_counter       : unsigned(C_100MS_CYCLES_LOG2 - 1 downto 0) := (others => '0');
-    signal r_sig_gen_reset       : std_logic                                  := '0';
-    signal r_start_strobe        : std_logic                                  := '0';
-    signal r_start_strobe_d1     : std_logic                                  := '0';
-    signal r_tlast_pending       : std_logic                                  := '0';
-    signal w_sig_gen_tvalid      : std_logic                                  := '0';
-    signal w_sig_gen_tlast       : std_logic                                  := '0';
-    signal w_sig_gen_tdata       : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal r_sig_gen_idx         : UNSIGNED(2 downto 0) := (others => '0');
-    signal r_sig_gen_idx_pending : UNSIGNED(2 downto 0) := (others => '0');
-    -- Signal Generators wiring
-    type t_tdata_array is array (0 to 7) of std_logic_vector(31 downto 0);
-    signal w_tdata_array   : t_tdata_array                := (others => (others => '0'));
-    signal w_start_vector  : std_logic_vector(7 downto 0) := (others => '0');
-    signal w_tvalid_vector : std_logic_vector(7 downto 0) := (others => '0');
-    signal w_tlast_vector  : std_logic_vector(7 downto 0) := (others => '0');
+    signal w_ms_strobe : std_logic;
+
+    signal r_sel : std_logic := '0';
+
+    signal r_cfg_valid    : std_logic                               := '0';
+    signal r_cfg_fc_data  : unsigned(G_DDS_FREQ_WIDTH - 1 downto 0) := (others => '0');
+    signal r_cfg_bw_data  : unsigned(G_DDS_FREQ_WIDTH - 1 downto 0) := (others => '0');
+    signal r_cfg_dur_data : unsigned(G_DDS_TIME_WIDTH - 1 downto 0) := (others => '0');
+
+    signal w_ramp_freq_data  : std_logic_vector(G_DDS_FREQ_WIDTH - 1 downto 0) := (others => '0');
+    signal w_ramp_freq_valid : std_logic;
+
+    signal w_dds_data_out_i : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal w_dds_data_out_q : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal w_dds_valid_out  : std_logic;
+
+    signal r_dds_output_cntr : unsigned(integer(ceil(log2(real(G_FFT_SIZE)))) - 1 downto 0) := (others => '0');
+    signal r_dds_data_out_iq : std_logic_vector(2 * G_DATA_WIDTH - 1 downto 0)              := (others => '0');
+    signal r_dds_valid_out   : std_logic                                                    := '0';
+    signal r_dds_last_out    : std_logic                                                    := '0';
+
+    --------------------
+    -- Functions
+    --------------------
 begin
-    -------------------------------------------------------------
-    -- Outputs
-    o_100ms_strb    <= r_start_strobe;
-    o_reset         <= r_sig_gen_reset;
-    o_m_axis_tdata  <= w_sig_gen_tdata;
-    o_m_axis_tvalid <= w_sig_gen_tvalid;
-    o_m_axis_tlast  <= w_sig_gen_tlast;
-    -------------------------------------------------------------
-    p_100ms_cntr : process (clk_100)
+    -- =========================================================================
+    -- Combinatorial
+    o_100ms_strb <= r_100ms_strobe;
+    o_reset      <= r_sig_gen_reset;
+    o_iq_data    <= r_dds_data_out_iq;
+    o_iq_valid   <= r_dds_valid_out;
+    o_iq_last    <= r_dds_last_out;
+    -- =========================================================================
+    p_gpio_ctrl : process (clk)
     begin
-        if rising_edge(clk_100) then
-            --------------------------------------
-            --------------------------------------
-            case r_STATE_GPIO is
-                    -- 
-                when s_IDLE =>
-                    for i in 0 to 3 loop
-                        if (xor i_pbuttons = '1') and (i_pbuttons(i) = '1') then
-                            if (i_sel_up_lo = '1') then
-                                r_sig_gen_idx_pending <= to_unsigned(4 + i, r_sig_gen_idx_pending'length);
-                            else
-                                r_sig_gen_idx_pending <= to_unsigned(i, r_sig_gen_idx_pending'length);
-                            end if;
-                            if (i_pbuttons /= r_pbuttons) then
-                                r_STATE_GPIO <= s_REQ_PENDING;
-                                r_pbuttons   <= i_pbuttons;
-                            end if;
-                        end if;
-                    end loop;
-                    -- 
-                when s_REQ_PENDING =>
-                    if (r_tlast_pending = '0') and (r_start_strobe_d1 = '0') then
-                        r_sig_gen_idx <= r_sig_gen_idx_pending;
-                        r_STATE_GPIO  <= s_IDLE;
+        if rising_edge(clk) then
+            -- Default
+            r_cfg_valid <= '0';
+            case s_gpio_state is
+                    ---------------------------------------------------------
+                when IDLE =>
+                    r_pbuttons <= i_pbuttons;
+                    r_sel      <= i_sel_up_lo;
+                    if ( xor (i_pbuttons) = '1') then
+                        s_gpio_state <= EVALUATE_GPIO;
                     end if;
-                    -- 
+                    ---------------------------------------------------------
+                when EVALUATE_GPIO =>
+                    case r_pbuttons is
+                        when "0001" =>
+                            -- FREQ/BW Incr
+                            if (r_sel = '1') then
+                                r_cfg_bw_data <= resize(r_cfg_bw_data + C_FREQ_BW_DELTA, r_cfg_bw_data'length);
+                            else
+                                r_cfg_fc_data <= resize(r_cfg_fc_data + C_FREQ_FC_DELTA, r_cfg_fc_data'length);
+                            end if;
+                        when "0010" =>
+                            -- Freq/BW decr
+                            if (r_sel = '1') then
+                                r_cfg_bw_data <= resize(r_cfg_bw_data - C_FREQ_BW_DELTA, r_cfg_bw_data'length);
+                            else
+                                r_cfg_fc_data <= resize(r_cfg_fc_data - C_FREQ_FC_DELTA, r_cfg_fc_data'length);
+                            end if;
+                        when "0100" =>
+                            -- BW incr
+                            if (r_sel = '1') then
+                                -- Placeholder for Square Wave
+                                null;
+                            else
+                                r_cfg_dur_data <= resize(r_cfg_dur_data + C_FREQ_DUR_DELTA, r_cfg_dur_data'length);
+                            end if;
+                        when "1000" =>
+                            -- BW decr
+                            if (r_sel = '1') then
+                                -- Placeholder for Square Wave
+                                null;
+                            else
+                                r_cfg_dur_data <= resize(r_cfg_dur_data - C_FREQ_DUR_DELTA, r_cfg_dur_data'length);
+                            end if;
+                        when others =>
+                            assert FALSE report "Ended up in faulty buttons stage" severity failure;
+                    end case;
+                    r_cfg_valid  <= '1';
+                    s_gpio_state <= IDLE;
+                    ---------------------------------------------------------
                 when others =>
-                    r_STATE_GPIO <= s_IDLE;
+                    s_gpio_state <= IDLE;
+                    ---------------------------------------------------------
             end case;
-            --------------------------------------
-            --------------------------------------
-            if (r_100ms_counter >= G_100MS_CYCLES) then
-                r_start_strobe  <= '1';
-                r_100ms_counter <= (others => '0');
-            else
-                r_start_strobe  <= '0';
-                r_100ms_counter <= r_100ms_counter + 1;
-            end if;
-            r_start_strobe_d1 <= r_start_strobe;
-            -- Wait for sig_gen to load 1024 samples into FFT
-            if (r_start_strobe_d1 = '1') and (w_sig_gen_tvalid = '1') then
-                r_tlast_pending <= '1';
-            elsif (r_tlast_pending = '1') and (w_sig_gen_tlast = '1') then
-                r_tlast_pending <= '0';
-            end if;
-            --------------------------------------
-            --------------------------------------
         end if;
-    end process p_100ms_cntr;
-    -------------------------------------------------------------
-    p_data_mux : process (
-        r_start_strobe,
-        w_tvalid_vector,
-        w_tlast_vector,
-        w_tdata_array,
-        r_sig_gen_idx
-        )
+    end process p_gpio_ctrl;
+    -- =========================================================================
+    p_100ms_strobe_gen : process (clk)
     begin
-        w_start_vector                            <= (others => '0');
-        w_start_vector(to_integer(r_sig_gen_idx)) <= r_start_strobe;
-        w_sig_gen_tvalid                          <= w_tvalid_vector(to_integer(r_sig_gen_idx));
-        w_sig_gen_tlast                           <= w_tlast_vector(to_integer(r_sig_gen_idx));
-        w_sig_gen_tdata                           <= w_tdata_array(to_integer(r_sig_gen_idx));
-    end process p_data_mux;
-    -------------------------------------------------------------
-    p_startup : process (clk_100)
+        if rising_edge(clk) then
+            r_100ms_strobe <= '0';
+            if (w_ms_strobe = '1') then
+                r_100ms_counter <= r_100ms_counter + 1;
+                if (r_100ms_counter >= 99) then
+                    r_100ms_strobe  <= '1';
+                    r_100ms_counter <= (others => '0');
+                end if;
+            end if;
+        end if;
+    end process p_100ms_strobe_gen;
+    -- =========================================================================
+    p_startup : process (clk)
     begin
-        if rising_edge(clk_100) then
+        if rising_edge(clk) then
             if (r_sig_gen_reset = '0') and (r_100ms_counter >= 80) then
                 r_sig_gen_reset <= '1';
             end if;
         end if;
     end process p_startup;
-
-    g_build_or_tb : if G_PRELOAD_DIRECTIVE = "build" generate
-        -------------------------------------------------------------
-        -- Generate Signal Generators with a preload directory
-        -- in relation to /src/
-
-        assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
-
-        gen_signal_generators : for i in 0 to 7 generate
-            signal_generator_inst : entity work.signal_generator
-                generic map(
-                    G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
-                    G_RAM_DEPTH    => G_RAM_DEPTH,
-                    G_INIT_FILE    => C_PRELOAD_STRING_SRC(i)
-                )
-                port map
-                (
-                    clk_100  => clk_100,
-                    i_start  => w_start_vector(i),
-                    i_reset  => r_sig_gen_reset,
-                    i_tready => i_s_axis_tready,
-                    o_tdata  => w_tdata_array(i),
-                    o_tvalid => w_tvalid_vector(i),
-                    o_tlast  => w_tlast_vector(i)
-                );
-        end generate;
-        -------------------------------------------------------------
-    elsif G_PRELOAD_DIRECTIVE = "testbench" generate
-            -------------------------------------------------------------
-            -- Generate Signal Generators with a preload directory
-            -- in relation to /test/vunit_out/
-
-            assert false report "signal_generator_wrapper: Using G_PRELOAD_DIRECTIVE='" & G_PRELOAD_DIRECTIVE & "'" severity note;
-            
-            gen_signal_generators : for i in 0 to 7 generate
-                signal_generator_inst : entity work.signal_generator
-                    generic map(
-                        G_FFT_BIT_SIZE => G_FFT_BIT_SIZE,
-                        G_RAM_DEPTH    => G_RAM_DEPTH,
-                        G_INIT_FILE    => C_PRELOAD_STRING_TB(i)
-                    )
-                    port map
-                    (
-                        clk_100  => clk_100,
-                        i_start  => w_start_vector(i),
-                        i_reset  => r_sig_gen_reset,
-                        i_tready => i_s_axis_tready,
-                        o_tdata  => w_tdata_array(i),
-                        o_tvalid => w_tvalid_vector(i),
-                        o_tlast  => w_tlast_vector(i)
-                    );
-            end generate;
-            -------------------------------------------------------------
-        else
-            generate
-                -- No known G_PRELOAD_DIRECTIVE!
-                assert false
-                report "Expected G_PRELOAD_DIRECTIVE = 'build' || 'testbench', but " &
-                    "got G_PRELOAD_DIRECTIVE = '" & G_PRELOAD_DIRECTIVE & "'"
-                    severity error;
-                -------------------------------------------------------------
-            end generate;
-        end architecture;
+    -- =========================================================================
+    ms_strobe_generator_inst : entity work.ms_strobe_generator
+        generic map(
+            G_SYS_CLK_FREQ => G_SYS_CLK_FREQ
+        )
+        port map
+        (
+            clk         => clk,
+            o_ms_strobe => w_ms_strobe
+        );
+    -- =========================================================================
+    ramp_generator_inst : entity work.ramp_generator
+        generic map(
+            G_FREQ_DATA_WIDTH      => G_DDS_FREQ_WIDTH,
+            G_FREQ_DATA_FRAC_WIDTH => G_DDS_FREQ_FRAC_WIDTH,
+            G_TIME_WIDTH           => G_DDS_TIME_WIDTH
+        )
+        port map
+        (
+            clk                     => clk,
+            i_en                    => i_en,
+            i_ms_strobe             => w_ms_strobe,
+            i_cfg_fc_data           => std_logic_vector(r_cfg_fc_data),
+            i_cfg_bw_data           => std_logic_vector(r_cfg_bw_data),
+            i_cfg_sweep_duration_ms => std_logic_vector(r_cfg_dur_data),
+            i_cfg_valid             => r_cfg_valid,
+            o_freq_data             => w_ramp_freq_data,
+            o_freq_valid            => w_ramp_freq_valid
+        );
+    -- =========================================================================
+    dds_inst : entity work.dds
+        generic map(
+            G_FREQ_WIDTH        => G_DDS_FREQ_WIDTH,
+            G_DATA_WIDTH        => G_DATA_WIDTH,
+            G_ACCUMULATOR_WIDTH => 32,
+            G_LUT_ADDR_WIDTH    => 10,
+            G_SYS_CLK_HZ        => G_SYS_CLK_FREQ,
+            G_INIT_FILE         => G_DDS_INIT_FILE
+        )
+        port map
+        (
+            clk         => clk,
+            i_cfg_freq  => w_ramp_freq_data,
+            i_cfg_valid => w_ramp_freq_valid,
+            o_data_i    => w_dds_data_out_i,
+            o_data_q    => w_dds_data_out_q,
+            o_valid     => w_dds_valid_out
+        );
+    -- =========================================================================
+    p_sample_output : process (clk)
+    begin
+        if rising_edge(clk) then
+            r_dds_data_out_iq <= w_dds_data_out_q & w_dds_data_out_i;
+            r_dds_valid_out   <= w_dds_valid_out and i_fs_strobe;
+            r_dds_last_out    <= '0';
+            if (i_fs_strobe = '1') then
+                r_dds_output_cntr <= r_dds_output_cntr + 1;
+                if (r_dds_output_cntr >= G_FFT_SIZE - 2) then
+                    r_dds_output_cntr <= (others => '0');
+                    r_dds_last_out    <= '1';
+                end if;
+            end if;
+        end if;
+    end process p_sample_output;
+    -- =========================================================================
+end architecture;

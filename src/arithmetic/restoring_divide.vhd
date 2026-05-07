@@ -64,7 +64,7 @@ begin
                     end if;
                     -------------------------------------------------
                 when SETUP =>
-                    if ( or (r_aq) /= '1') or ( or (r_m) /= '1') then
+                    if ( or (r_aq(G_DATA_WIDTH - 1 downto 0)) /= '1') or ( or (r_m) /= '1') then
                         -- Dividend = 0 or Divisor = 0
                         r_valid_out  <= '1';
                         s_calc_state <= IDLE;

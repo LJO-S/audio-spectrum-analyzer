@@ -17,7 +17,6 @@ import os
 sys.path.append("../")
 from scripts.models.dds import dds
 from scripts.synth_and_test.dds import dds_checker
-from scripts.synth_and_test.ramp_generator import ramp_generator_checker
 
 
 # ============================================================

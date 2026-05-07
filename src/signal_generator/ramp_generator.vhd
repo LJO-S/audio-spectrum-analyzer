@@ -72,6 +72,7 @@ architecture rtl of ramp_generator is
 
     -- Effectively 1 bit less precision due to sign bit
     signal r_freq_next    : signed(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH downto 0) := (others => '0');
+    signal r_freq_next_d1 : signed(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH downto 0) := (others => '0');
     signal r_freq_current : signed(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH downto 0) := (others => '0');
 
     signal r_strobe, r_strobe_d1 : std_logic := '0';
@@ -177,6 +178,7 @@ begin
                     r_add_freq <= '1';
                 end if;
             end if;
+            r_freq_next_d1  <= r_freq_next;
             r_strobe_d1     <= r_strobe;
             r_enable_d1     <= r_enable;
             r_delta_sign_d2 <= r_delta_sign_d1;
@@ -187,7 +189,7 @@ begin
             -- Clip if past threshold
             if (r_strobe_d1 = '1') then
                 if (r_add_freq = '1') then
-                    r_freq_current <= r_freq_next;
+                    r_freq_current <= r_freq_next_d1;
                 else
                     r_freq_current <= '0' & signed(r_freq_carrier) & to_signed(0, G_FREQ_DATA_FRAC_WIDTH);
                 end if;

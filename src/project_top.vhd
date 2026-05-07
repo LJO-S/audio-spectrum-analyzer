@@ -84,8 +84,18 @@ entity project_top is
 end entity project_top;
 
 architecture rtl of project_top is
-    constant C_NFFT_LOG2 : integer := integer(ceil(log2(real(G_NFFT))));
+    ----------------------
+    -- Constants
+    ----------------------
+    constant C_NFFT_LOG2           : integer := integer(ceil(log2(real(G_NFFT))));
+    constant C_SYS_CLK_FREQ        : natural := 100_000_000;
+    constant C_DDS_FREQ_WIDTH      : natural := 16;
+    constant C_DDS_FREQ_FRAC_WIDTH : natural := 16;
+    constant C_DDS_TIME_WIDTH      : natural := 16;
 
+    ----------------------
+    -- Signals
+    ----------------------
     -- FFT
     -- TODO rename all axis crap
     signal r_fft_tlast_out        : std_logic := '0';
@@ -177,25 +187,29 @@ begin
 
     -- ============================================================================ 
     -- ============================================================================ 
-    signal_generator_wrapper_inst : entity work.signal_generator_wrapper
+    signal_generator_top_inst : entity work.signal_generator_top
         generic map(
-            G_FFT_BIT_SIZE      => G_FFT_BIT_SIZE,
-            G_RAM_DEPTH         => G_NFFT,
-            G_100MS_CYCLES      => G_100MS_CYCLES,
-            G_PRELOAD_DIRECTIVE => G_PRELOAD_DIRECTIVE
+            G_FFT_SIZE            => G_FFT_BIT_SIZE,
+            G_SYS_CLK_FREQ        => C_SYS_CLK_FREQ,
+            G_DDS_FREQ_WIDTH      => C_DDS_FREQ_WIDTH,
+            G_DDS_FREQ_FRAC_WIDTH => C_DDS_FREQ_FRAC_WIDTH,
+            G_DDS_TIME_WIDTH      => C_DDS_TIME_WIDTH
         )
         port map
         (
-            clk_100           => i_clk_100,
-            i_sig_gen_src_sel => w_sig_gen_src_sel,
-            i_sel_up_lo       => w_sel_up_lo,
-            o_100ms_strb      => w_100ms_strb,
-            o_reset           => open,
-            i_s_axis_tready   => w_axis_tready_xfft_to_sig_gen,
-            o_m_axis_tdata    => w_axis_tdata_sig_gen_to_xfft,
-            o_m_axis_tvalid   => w_axis_tvalid_sig_gen_to_xfft,
-            o_m_axis_tlast    => w_axis_tlast_sig_gen_to_xfft
+            clk          => i_clk_100,
+            i_en         => XXX,
+            i_pbuttons   => w_sig_gen_src_sel,
+            i_sel_up_lo  => w_sel_up_lo,
+            i_fs_strobe  => XXX,
+            o_100ms_strb => w_100ms_strb,
+            o_reset      => open,
+            i_iq_ready   => w_axis_tready_xfft_to_sig_gen,
+            o_iq_data    => w_axis_tdata_sig_gen_to_xfft,
+            o_iq_valid   => w_axis_tvalid_sig_gen_to_xfft,
+            o_iq_last    => w_axis_tlast_sig_gen_to_xfft
         );
+
     -- ============================================================================ 
     -- ============================================================================ 
     fft_inst : entity work.fft
