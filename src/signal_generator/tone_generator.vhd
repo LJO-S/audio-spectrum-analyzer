@@ -12,7 +12,7 @@ use ieee.math_real.all;
 -- 
 use work.sig_gen_pkg.all;
 -- 
-entity ramp_generator is
+entity tone_generator is
     generic (
         G_FREQ_DATA_WIDTH      : natural := 16;
         G_FREQ_DATA_FRAC_WIDTH : natural := 16;
@@ -32,9 +32,9 @@ entity ramp_generator is
         o_freq_data  : out std_logic_vector(G_FREQ_DATA_WIDTH - 1 downto 0);
         o_freq_valid : out std_logic
     );
-end entity ramp_generator;
+end entity tone_generator;
 
-architecture rtl of ramp_generator is
+architecture rtl of tone_generator is
     --------------------
     -- Constants
     --------------------
@@ -64,11 +64,11 @@ architecture rtl of ramp_generator is
     signal w_div_valid_out    : std_logic;
     signal r_timeout_cntr     : unsigned(integer(ceil(log2(real(C_TIMEOUT_LIMIT)))) - 1 downto 0) := (others => '0');
 
-    signal r_cfg_valid                      : std_logic                                                                 := '0';
-    signal r_delta_sign                     : std_logic                                                                 := '0';
-    signal r_delta_sign_d1, r_delta_sign_d2 : std_logic                                                                 := '0';
-    signal r_freq_carrier                   : std_logic_vector(G_FREQ_DATA_WIDTH - 1 downto 0)                          := (others => '0');
-    signal r_freq_delta                     : std_logic_vector(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH - 1 downto 0) := (others => '0');
+    signal r_cfg_valid     : std_logic                                                                 := '0';
+    signal r_delta_sign    : std_logic                                                                 := '0';
+    signal r_delta_sign_d1 : std_logic                                                                 := '0';
+    signal r_freq_carrier  : std_logic_vector(G_FREQ_DATA_WIDTH - 1 downto 0)                          := (others => '0');
+    signal r_freq_delta    : std_logic_vector(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH - 1 downto 0) := (others => '0');
 
     -- Effectively 1 bit less precision due to sign bit
     signal r_freq_next    : signed(G_FREQ_DATA_WIDTH + G_FREQ_DATA_FRAC_WIDTH downto 0) := (others => '0');
@@ -178,10 +178,9 @@ begin
                     r_add_freq <= '1';
                 end if;
             end if;
-            r_freq_next_d1  <= r_freq_next;
-            r_strobe_d1     <= r_strobe;
-            r_enable_d1     <= r_enable;
-            r_delta_sign_d2 <= r_delta_sign_d1;
+            r_freq_next_d1 <= r_freq_next;
+            r_strobe_d1    <= r_strobe;
+            r_enable_d1    <= r_enable;
             ------------------
             -- PIPE 2
             ------------------

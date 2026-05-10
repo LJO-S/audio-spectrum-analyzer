@@ -6,13 +6,13 @@ use ieee.math_real.all;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-entity ramp_generator_tb is
+entity tone_generator_tb is
     generic (
         runner_cfg : string
     );
 end;
 
-architecture bench of ramp_generator_tb is
+architecture testbench of tone_generator_tb is
     constant clk_period             : time    := 5 ns;
     constant G_FREQ_DATA_WIDTH      : natural := 16;
     constant G_TIME_WIDTH           : natural := 16;
@@ -51,7 +51,7 @@ begin
             o_ms_strobe => w_ms_strobe
         );
     -- ================================================================
-    ramp_generator_inst : entity work.ramp_generator
+    tone_generator_inst : entity work.tone_generator
         generic map(
             G_FREQ_DATA_WIDTH      => G_FREQ_DATA_WIDTH,
             G_FREQ_DATA_FRAC_WIDTH => G_FREQ_DATA_FRAC_WIDTH,
