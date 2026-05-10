@@ -189,7 +189,7 @@ begin
     -- ============================================================================ 
     signal_generator_top_inst : entity work.signal_generator_top
         generic map(
-            G_FFT_SIZE            => G_FFT_BIT_SIZE,
+            G_FFT_SIZE            => (2 ** G_FFT_BIT_SIZE),
             G_SYS_CLK_FREQ        => C_SYS_CLK_FREQ,
             G_DDS_FREQ_WIDTH      => C_DDS_FREQ_WIDTH,
             G_DDS_FREQ_FRAC_WIDTH => C_DDS_FREQ_FRAC_WIDTH,
@@ -198,10 +198,10 @@ begin
         port map
         (
             clk          => i_clk_100,
-            i_en         => XXX,
+            i_en         => not(w_capture_en_drain_guard),
             i_pbuttons   => w_sig_gen_src_sel,
             i_sel_up_lo  => w_sel_up_lo,
-            i_fs_strobe  => XXX,
+            i_fs_clk     => w_lrclk,
             o_100ms_strb => w_100ms_strb,
             o_reset      => open,
             i_iq_ready   => w_axis_tready_xfft_to_sig_gen,

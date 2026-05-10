@@ -18,7 +18,7 @@ entity signal_generator_top is
         G_DDS_FREQ_WIDTH      : natural := 16;
         G_DDS_FREQ_FRAC_WIDTH : natural := 16;
         G_DDS_TIME_WIDTH      : natural := 16;
-        G_DDS_INIT_FILE       : string;
+        G_DDS_INIT_FILE       : string  := "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/signal_generator/dds/dds_lut.txt"
     );
     port (
         clk : in std_logic;
@@ -27,7 +27,7 @@ entity signal_generator_top is
         i_pbuttons  : in std_logic_vector(3 downto 0);
         i_sel_up_lo : in std_logic;
         -- Misc
-        i_fs_strobe  : in std_logic;
+        i_fs_clk     : in std_logic;
         o_100ms_strb : out std_logic;
         o_reset      : out std_logic;
         -- FFT
@@ -59,6 +59,7 @@ architecture rtl of signal_generator_top is
     signal r_sig_gen_reset : std_logic                                             := '0';
 
     signal w_ms_strobe : std_logic;
+    signal r_fs_clk    : std_logic := '0';
 
     signal r_sel : std_logic := '0';
 
@@ -101,7 +102,7 @@ begin
                 when IDLE =>
                     r_pbuttons <= i_pbuttons;
                     r_sel      <= i_sel_up_lo;
-                    if ( xor (i_pbuttons) = '1') then
+                    if ( xor (i_pbuttons) = '1') and (r_pbuttons /= i_pbuttons) then
                         s_gpio_state <= EVALUATE_GPIO;
                     end if;
                     ---------------------------------------------------------
@@ -183,7 +184,7 @@ begin
             o_ms_strobe => w_ms_strobe
         );
     -- =========================================================================
-    ramp_generator_inst : entity work.ramp_generator
+    tone_generator_inst : entity work.tone_generator
         generic map(
             G_FREQ_DATA_WIDTH      => G_DDS_FREQ_WIDTH,
             G_FREQ_DATA_FRAC_WIDTH => G_DDS_FREQ_FRAC_WIDTH,
@@ -224,10 +225,11 @@ begin
     p_sample_output : process (clk)
     begin
         if rising_edge(clk) then
+            r_fs_clk          <= i_fs_clk;
             r_dds_data_out_iq <= w_dds_data_out_q & w_dds_data_out_i;
-            r_dds_valid_out   <= w_dds_valid_out and i_fs_strobe;
+            r_dds_valid_out   <= w_dds_valid_out and i_fs_clk and not(r_fs_clk);
             r_dds_last_out    <= '0';
-            if (i_fs_strobe = '1') then
+            if (i_fs_clk = '1') and (r_fs_clk = '0') then
                 r_dds_output_cntr <= r_dds_output_cntr + 1;
                 if (r_dds_output_cntr >= G_FFT_SIZE - 2) then
                     r_dds_output_cntr <= (others => '0');
