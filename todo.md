@@ -1,6 +1,7 @@
 ## ########################################################
 ## TODO
-- Remove anything to do with sig gen wrapper
+- Set max/min for tone_generator.vhd
+- Oscilloscope feature
 
 ## ########################################################
 ## Design
