@@ -88,11 +88,11 @@ architecture rtl of async_fifo is
     -- -------------
     -- Attributes
     -- -------------
-    attribute ram_style                        : string;
-    attribute ram_style of r_memory            : signal is "block";
+    attribute ram_style             : string;
+    attribute ram_style of r_memory : signal is "block";
     -- ASYNC_REG packs each synchronizer pair into the same SLICE (minimises
-    -- metastability re-convergence time) and suppresses CDC lint warnings.
-    attribute async_reg                        : string;
+    -- metastability re-convergence time) and suppresses CDC lint warnings
+    attribute async_reg                            : string;
     attribute async_reg of r_rd_gray_sync_to_wr    : signal is "true";
     attribute async_reg of r_rd_gray_sync_to_wr_d1 : signal is "true";
     attribute async_reg of r_wr_gray_sync_to_rd    : signal is "true";

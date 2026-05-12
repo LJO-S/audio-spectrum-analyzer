@@ -54,6 +54,47 @@ if { $list_projs eq "" } {
    set_property BOARD_PART digilentinc.com:zybo-z7-10:part0:1.2 [current_project]
 }
 
+################################################################
+# Add source files
+################################################################
+set src_dir [file normalize [file join $script_folder "../src"]]
+
+proc find_src_files {dir pattern} {
+  set result {}
+  foreach f [glob -nocomplain -directory $dir $pattern] {
+    lappend result $f
+  }
+  foreach d [glob -nocomplain -directory $dir -type d *] {
+    set result [concat $result [find_src_files $d $pattern]]
+  }
+  return $result
+}
+
+# Exclude fft submodule testbenches — they use VUnit libraries not available in Vivado
+set all_vhd_files [find_src_files $src_dir "*.vhd"]
+set vhd_files {}
+foreach f $all_vhd_files {
+  if { ![string match "*/fft-radix2-dit/test/*" $f] } {
+    lappend vhd_files $f
+  }
+}
+set txt_files [find_src_files $src_dir "*.txt"]
+
+if { [llength $vhd_files] > 0 } {
+  add_files -norecurse -fileset sources_1 $vhd_files
+}
+if { [llength $txt_files] > 0 } {
+  add_files -norecurse -fileset sources_1 $txt_files
+}
+
+# Set VHDL 2008 for all .vhd sources except project_top.vhd.
+# project_top is referenced as a module in the block design and must remain plain VHDL.
+set project_top_path [file normalize "$src_dir/project_top.vhd"]
+foreach f [get_files -filter {FILE_TYPE == VHDL} -of_objects [get_filesets sources_1]] {
+  if { [file normalize $f] ne $project_top_path } {
+    set_property file_type {VHDL 2008} [get_files $f]
+  }
+}
 
 # CHANGE DESIGN NAME HERE
 variable design_name
@@ -831,5 +872,9 @@ proc create_root_design { parentCell } {
 ##################################################################
 
 create_root_design ""
+
+# Generate VHDL wrapper for the block design and import it into the project
+make_wrapper -files [get_files ${design_name}.bd] -top -import
+
 
 

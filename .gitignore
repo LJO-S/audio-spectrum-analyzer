@@ -1,6 +1,8 @@
 scripts/.venv
 test/vunit_out
-builds/*
+builds/build_*
+builds/vitis_ws
+tcl/.Xil
 vitis/
 **/__pycache__
 .venv
