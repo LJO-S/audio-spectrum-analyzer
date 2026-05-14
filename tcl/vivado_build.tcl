@@ -42,8 +42,6 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 # module references:
 # project_top
 
-# Please add the sources of those modules before sourcing this Tcl script.
-
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
 # <./myproj/project_1.xpr> in the current working folder.

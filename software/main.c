@@ -6,13 +6,14 @@
 #include "bram.h"
 #include "i2c.h"
 #include "fir_coeffs.h"
+#include "uart.h"
 // Xilinx
 #include "xparameters.h"
 #include "xgpio.h"
 #include "xscugic.h"
 #include "xil_exception.h"
 #include "xil_types.h"
-#include "xil_printf.h"
+#include "xil_printf.h" // used for pre-uart-init error messages only
 #include "sleep.h"
 
 /************************** Constant Definitions ******************************/
@@ -72,7 +73,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("HPF at max! \r\n");
+                uart_print("HPF at max!\r\n");
             }
             size_t index = (size_t)(current_hpf_cutoff - 1);
             if (index < HPF_SETS)
@@ -81,7 +82,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("HPF index OOB: %u\r\n", (unsigned)index);
+                uart_printf("HPF index OOB: %u\r\n", (unsigned)index);
                 status = XST_FAILURE;
             }
         }
@@ -95,7 +96,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("HPF at min! \r\n");
+                uart_print("HPF at min!\r\n");
             }
             size_t index = (size_t)(current_hpf_cutoff - 1);
             if (index < HPF_SETS)
@@ -104,11 +105,11 @@ int service_event(void)
             }
             else
             {
-                xil_printf("HPF index OOB: %u\r\n", (unsigned)index);
+                uart_printf("HPF index OOB: %u\r\n", (unsigned)index);
                 status = XST_FAILURE;
             }
         }
-        
+
         else if (b == 1)
         {
             // LPF increment
@@ -118,7 +119,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("LPF at max! \r\n");
+                uart_print("LPF at max!\r\n");
             }
             size_t index = (size_t)(current_lpf_cutoff - 1);
             if (index < LPF_SETS)
@@ -127,7 +128,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("LPF index OOB: %u\r\n", (unsigned)index);
+                uart_printf("LPF index OOB: %u\r\n", (unsigned)index);
                 status = XST_FAILURE;
             }
         }
@@ -140,7 +141,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("LPF at min! \r\n");
+                uart_print("LPF at min!\r\n");
             }
             size_t index = (size_t)(current_lpf_cutoff - 1);
             if (index < LPF_SETS)
@@ -149,7 +150,7 @@ int service_event(void)
             }
             else
             {
-                xil_printf("LPF index OOB: %u\r\n", (unsigned)index);
+                uart_printf("LPF index OOB: %u\r\n", (unsigned)index);
                 status = XST_FAILURE;
             }
         }
@@ -164,6 +165,32 @@ int service_event(void)
     return overall_status;
 }
 /******************************************************************************/
+/**
+ *
+ * UART Event
+ * 1)
+ *
+ * @return	None
+ *
+ *
+ */
+static int service_uart_line(const char *line)
+{
+    if (!strcmp(line, "osc on"))
+    {
+        uart_set_osc(1);
+        return XST_SUCCESS;
+    }
+    if (!strcmp(line, "osc off"))
+    {
+        uart_set_osc(0);
+        return XST_SUCCESS;
+    }
+    uart_print("?\r\n");
+    return XST_SUCCESS;
+}
+/******************************************************************************/
+
 /**
  *
  * Main.
@@ -203,8 +230,15 @@ int main(void)
         return XST_FAILURE;
     }
 
-    // 4) Start polling....
-
+    // 4) Setup UART
+    status = uart_init();
+    if (status != XST_SUCCESS)
+    {
+        xil_printf("-- Fail! UART setup --\r\n");
+        return XST_FAILURE;
+    }
+    // 5) Start polling....
+    uart_print("\r\n > ");
     while (1)
     {
         if (event_flags)
@@ -212,10 +246,18 @@ int main(void)
             status = service_event();
             if (status != XST_SUCCESS)
             {
-                xil_printf("-- Fail! Service Event Poll --\r\n");
+                uart_print("-- Fail! Service Event Poll --\r\n");
                 return XST_FAILURE;
             }
-            usleep(1);
+            uart_print("\r\n > Filter update... ");
+            uart_print("\r\n > ");
+        }
+
+        char *line;
+        if (uart_poll_line(&line))
+        {
+            service_uart_line(line);
+            uart_print(" > ");
         }
     }
     return XST_SUCCESS;

@@ -38,19 +38,20 @@ importsources -name {audio_analyzer} -path {../software}
 app config -name {audio_analyzer} include-path {../src/i2c}
 app config -name {audio_analyzer} include-path {../src/bram}
 app config -name {audio_analyzer} include-path {../src/irq}
+app config -name {audio_analyzer} include-path {../src/uart}
 
 # Build
 app build -name {audio_analyzer}
 
 # Program and run
-connect
-targets -set -filter {name =~ "APU*"}
-fpga $bit_file
-targets -set -filter {name =~ "ARM*#0"}
-# Initialize PS (DDR controller, clocks) — replaces FSBL when loading over JTAG
-source ../builds/vitis_ws/zybo_platform/export/zybo_platform/hw/ps7_init.tcl
-ps7_init
-ps7_post_config
-dow ../builds/vitis_ws/audio_analyzer/Debug/audio_analyzer.elf
-con
+# connect
+# targets -set -filter {name =~ "APU*"}
+# fpga $bit_file
+# targets -set -filter {name =~ "ARM*#0"}
+# # Initialize PS (DDR controller, clocks) — replaces FSBL when loading over JTAG
+# source ../builds/vitis_ws/zybo_platform/export/zybo_platform/hw/ps7_init.tcl
+# ps7_init
+# ps7_post_config
+# dow ../builds/vitis_ws/audio_analyzer/Debug/audio_analyzer.elf
+# con
 

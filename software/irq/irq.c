@@ -48,6 +48,7 @@ static void gpio_isr(void *InstancePtr)
     if ((status & GPIO_INT_CH_MASK) != GPIO_INT_CH_MASK)
     {
         xil_printf("Interrupt triggered, but wrong channel!\n");
+        XGpio_InterruptEnable(&GpioIn, GPIO_INT_CH_MASK);
         return;
     }
 
@@ -56,7 +57,7 @@ static void gpio_isr(void *InstancePtr)
 
     // 2) Send request ACK to PL
     XGpio_DiscreteWrite(&GpioOut, 1, 0x1);
-    (void) XGpio_DiscreteRead(&GpioOut, 1);
+    (void)XGpio_DiscreteRead(&GpioOut, 1);
     XGpio_DiscreteWrite(&GpioOut, 1, 0);
 
     // 3) Clear channel interrupt & ACK
@@ -67,6 +68,7 @@ static void gpio_isr(void *InstancePtr)
     {
         // Nothing to do, clear interrupt
         xil_printf("Interrupt triggered, but empty trigger!\n");
+        XGpio_InterruptEnable(&GpioIn, GPIO_INT_CH_MASK);
         return;
     }
     else
@@ -139,7 +141,7 @@ int irq_init(void)
     status = XScuGic_Connect(&Intc,
                              INTC_GPIO_INTERRUPT_ID,
                              (Xil_ExceptionHandler)gpio_isr,
-                             (void *)&GpioIn); 
+                             (void *)&GpioIn);
     if (status != XST_SUCCESS)
     {
         return XST_FAILURE;
