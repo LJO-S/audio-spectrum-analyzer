@@ -12,7 +12,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-use work.sig_gen_pkg.all;
+use work.project_common_pkg.all;
 
 entity project_top is
     generic (
@@ -43,6 +43,7 @@ entity project_top is
         i_clk_250 : in std_logic;
 
         -- PS IF 
+        i_uart_gpio_if        : in std_logic_vector(31 downto 0);
         i_i2c_cfg_done        : in std_logic;
         i_new_data_strobe_lpf : in std_logic;
         i_new_data_strobe_hpf : in std_logic;
@@ -58,6 +59,7 @@ entity project_top is
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
+        o_led        : out std_logic;
 
         -- Audio Codec IF (SSM2603)
         i_sdata     : in std_logic;
@@ -179,14 +181,35 @@ architecture rtl of project_top is
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
     signal s_state_drain_guard : t_drain_guard := IDLE;
 
-    signal w_lrclk : std_logic;
+    signal w_lrclk     : std_logic;
+    signal w_ms_strobe : std_logic;
+
+    signal r_led : std_logic := '0';
 begin
     -- ============================================================================ 
     -- ============================================================================ 
     -- Combinatorial Assignments
 
     -- ============================================================================ 
+    -- TEMPORARY
+    process (i_clk_100)
+    begin
+        if rising_edge(i_clk_100) then
+            r_led <= i_uart_gpio_if(0);
+            o_led <= r_led;
+        end if;
+    end process;
     -- ============================================================================ 
+    ms_strobe_generator_inst : entity work.ms_strobe_generator
+        generic map(
+            G_SYS_CLK_FREQ => C_SYS_CLK_FREQ
+        )
+        port map
+        (
+            clk         => i_clk_100,
+            o_ms_strobe => w_ms_strobe
+        );
+    -- =========================================================================
     signal_generator_top_inst : entity work.signal_generator_top
         generic map(
             G_FFT_SIZE            => (2 ** G_FFT_BIT_SIZE),
@@ -202,6 +225,7 @@ begin
             i_pbuttons   => w_sig_gen_src_sel,
             i_sel_up_lo  => w_sel_up_lo,
             i_fs_clk     => w_lrclk,
+            i_ms_strobe  => w_ms_strobe,
             o_100ms_strb => w_100ms_strb,
             o_reset      => open,
             i_iq_ready   => w_axis_tready_xfft_to_sig_gen,
@@ -210,7 +234,6 @@ begin
             o_iq_last    => w_axis_tlast_sig_gen_to_xfft
         );
 
-    -- ============================================================================ 
     -- ============================================================================ 
     fft_inst : entity work.fft
         generic map(
@@ -232,7 +255,6 @@ begin
             o_xk_index => w_xk_index,
             o_tvalid   => w_fft_tvalid_out
         );
-    -- ============================================================================ 
     -- ============================================================================ 
     -- Calculate output magnitude
     p_magnitude_calc : process (i_clk_100)
@@ -279,7 +301,6 @@ begin
     end process p_fft_output_tlast;
     ---------------------------------------
 
-    -- ============================================================================ 
     -- ============================================================================
     log_2_inst : entity work.log_2
         generic map(
@@ -295,7 +316,6 @@ begin
             o_tdata  => w_mag_log2_data_out,
             o_tvalid => w_mag_log2_valid_out
         );
-    -- ============================================================================ 
     -- ============================================================================ 
     -- Refit to insize
     p_framebuf_resize : process (w_rd_addr_X, w_rd_addr_Y)
@@ -327,7 +347,6 @@ begin
             i_rd_addr_Y => w_rd_addr_Y_framebuf,
             o_rd_data   => w_frame_buf_data_log
         );
-    -- ============================================================================ 
     -- ============================================================================ 
 
     -- Synthesis
@@ -369,7 +388,6 @@ begin
     end generate;
 
     -- ============================================================================ 
-    -- ============================================================================ 
     p_pipe_log_lin_data : process (i_clk_100)
     begin
         if rising_edge(i_clk_100) then
@@ -378,7 +396,6 @@ begin
             r_frame_buf_data_log_d2 <= r_frame_buf_data_log_d1;
         end if;
     end process p_pipe_log_lin_data;
-    -- ============================================================================ 
     -- ============================================================================ 
     video_driver_top_inst : entity work.video_driver_top
         port map
@@ -410,7 +427,6 @@ begin
             o_video_2_n      => o_video_2_n
         );
     -- ============================================================================ 
-    -- ============================================================================ 
     gpio_ctrl_inst : entity work.gpio_ctrl
         generic map(
             G_DEBOUNCE_LIMIT => G_DEBOUNCE_LIMIT,
@@ -439,7 +455,7 @@ begin
             -- Capture/Internal
             o_capture_en => w_capture_en
         );
-
+    -- ============================================================================ 
     gpio_ps_interface_inst : entity work.gpio_ps_interface
         port map
         (
@@ -467,7 +483,6 @@ begin
             o_fir_ctrl            => o_fir_ctrl
         );
 
-    -- ============================================================================ 
     -- ============================================================================ 
     audio_top_inst : entity work.audio_top
         generic map(
@@ -504,7 +519,7 @@ begin
             o_tlast      => w_axis_tlast_audio_to_xfft,
             i_tready     => w_axis_tready_xfft_to_audio
         );
-
+    -- ============================================================================ 
     -- DAC Output Mute, Active Low
     o_dac_muten <= '1';
     o_rec_lrclk <= w_lrclk;
@@ -516,7 +531,6 @@ begin
 
     o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
     w_rdata_hpf <= i_rdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0);
-    -- ============================================================================ 
     -- ============================================================================
     -- This capture_en will only switch ON when a state declares that we are dealing with audio data
     -- This capture_en will only switch OFF when a state declares that we are not currently sending audio data  
@@ -569,7 +583,7 @@ begin
             end case;
         end if;
     end process p_drain_guard;
-
+    -- ============================================================================ 
     -- Combinatorial source mux
     p_sample_src_mux : process (
         s_state_drain_guard,
@@ -599,6 +613,5 @@ begin
             w_axis_tready_xfft_to_sig_gen <= w_axis_tready_xfft_out;
         end if;
     end process p_sample_src_mux;
-    -- ============================================================================ 
     -- ============================================================================ 
 end architecture;
