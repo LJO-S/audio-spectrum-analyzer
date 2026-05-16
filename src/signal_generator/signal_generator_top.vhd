@@ -8,7 +8,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
-use work.sig_gen_pkg.all;
+use work.project_common_pkg.all;
 
 entity signal_generator_top is
     generic (
@@ -28,6 +28,7 @@ entity signal_generator_top is
         i_sel_up_lo : in std_logic;
         -- Misc
         i_fs_clk     : in std_logic;
+        i_ms_strobe  : in std_logic;
         o_100ms_strb : out std_logic;
         o_reset      : out std_logic;
         -- FFT
@@ -58,8 +59,7 @@ architecture rtl of signal_generator_top is
     signal r_100ms_strobe  : std_logic                                             := '0';
     signal r_sig_gen_reset : std_logic                                             := '0';
 
-    signal w_ms_strobe : std_logic;
-    signal r_fs_clk    : std_logic := '0';
+    signal r_fs_clk : std_logic := '0';
 
     signal r_sel : std_logic := '0';
 
@@ -155,7 +155,7 @@ begin
     begin
         if rising_edge(clk) then
             r_100ms_strobe <= '0';
-            if (w_ms_strobe = '1') then
+            if (i_ms_strobe = '1') then
                 r_100ms_counter <= r_100ms_counter + 1;
                 if (r_100ms_counter >= 99) then
                     r_100ms_strobe  <= '1';
@@ -174,16 +174,6 @@ begin
         end if;
     end process p_startup;
     -- =========================================================================
-    ms_strobe_generator_inst : entity work.ms_strobe_generator
-        generic map(
-            G_SYS_CLK_FREQ => G_SYS_CLK_FREQ
-        )
-        port map
-        (
-            clk         => clk,
-            o_ms_strobe => w_ms_strobe
-        );
-    -- =========================================================================
     tone_generator_inst : entity work.tone_generator
         generic map(
             G_FREQ_DATA_WIDTH      => G_DDS_FREQ_WIDTH,
@@ -194,7 +184,7 @@ begin
         (
             clk                     => clk,
             i_en                    => i_en,
-            i_ms_strobe             => w_ms_strobe,
+            i_ms_strobe             => i_ms_strobe,
             i_cfg_fc_data           => std_logic_vector(r_cfg_fc_data),
             i_cfg_bw_data           => std_logic_vector(r_cfg_bw_data),
             i_cfg_sweep_duration_ms => std_logic_vector(r_cfg_dur_data),

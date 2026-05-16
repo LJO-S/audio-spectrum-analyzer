@@ -12,7 +12,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 -- 
-use work.sig_gen_pkg.all;
+use work.project_common_pkg.all;
 -- 
 
 entity spectrum_framebuffer is

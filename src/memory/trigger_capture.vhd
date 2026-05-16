@@ -24,8 +24,9 @@ use work.project_common_pkg.all;
 -- 
 entity trigger_capture is
     generic (
-        G_DATA_WIDTH : natural := 16;
-        G_DATA_DEPTH : natural := C_SPECTRUM_X_UPPER
+        G_DATA_WIDTH  : natural := 16;
+        G_DATA_DEPTH  : natural := C_SPECTRUM_X_UPPER;
+        G_HOLD_OFF_MS : natural := 10
     );
     port (
         clk : in std_logic;
@@ -47,7 +48,6 @@ architecture rtl of trigger_capture is
     constant C_THRESH_HI             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed((2 ** (G_DATA_WIDTH - 1) - 1), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
     constant C_THRESH_LO             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed( - (2 ** (G_DATA_WIDTH - 1)), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
     constant C_PRE_TRIGGER_COUNT     : natural                           := 10;
-    constant C_HOLD_OFF_MS_CNT       : natural                           := 10;
     constant C_CEIL_DATA_DEPTH_WIDTH : natural                           := integer(ceil(log2(real(G_DATA_DEPTH))));
     constant C_CEIL_DATA_DEPTH       : natural                           := 2 ** C_CEIL_DATA_DEPTH_WIDTH;
 
@@ -61,21 +61,27 @@ architecture rtl of trigger_capture is
     --------------------
     signal s_capture_state : t_capture_state := IDLE;
 
-    signal r_audio_valid      : std_logic                                                           := '0';
-    signal r_sample_curr      : signed(G_DATA_WIDTH - 1 downto 0)                                   := (others => '0');
-    signal r_sample_prev      : signed(G_DATA_WIDTH - 1 downto 0)                                   := (others => '0');
-    signal r_mem_sel          : std_logic                                                           := '0';
-    signal r_trigger_addr     : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)      := (others => '0');
-    signal r_raddr_start_addr : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)      := (others => '0');
-    signal r_circ_buf_waddr   : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)      := (others => '0');
-    signal r_circ_buf_raddr   : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)      := (others => '0');
-    signal r_sample_cnt       : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)      := (others => '0');
-    signal r_ms_cnt           : unsigned(integer(ceil(log2(real(C_HOLD_OFF_MS_CNT)))) - 1 downto 0) := (others => '0');
-    signal w_circ_buf_a_we    : std_logic;
-    signal w_circ_buf_b_we    : std_logic;
-    signal r_video_rdata      : std_logic_vector(G_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal w_circ_buf_a_rdata : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
-    signal w_circ_buf_b_rdata : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal r_audio_valid           : std_logic                                                       := '0';
+    signal r_sample_curr           : signed(G_DATA_WIDTH - 1 downto 0)                               := (others => '0');
+    signal r_sample_prev           : signed(G_DATA_WIDTH - 1 downto 0)                               := (others => '0');
+    signal r_mem_sel               : std_logic                                                       := '0';
+    signal r_mem_sel_d1            : std_logic                                                       := '0';
+    signal r_mem_sel_d2            : std_logic                                                       := '0';
+    signal r_trigger_addr          : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
+    signal r_raddr_start_addr      : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
+    signal r_circ_buf_waddr        : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
+    signal r_circ_buf_raddr        : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
+    signal r_sample_cnt            : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
+    signal r_ms_cnt                : unsigned(integer(ceil(log2(real(G_HOLD_OFF_MS)))) - 1 downto 0) := (others => '0');
+    signal w_circ_buf_a_we         : std_logic;
+    signal w_circ_buf_b_we         : std_logic;
+    signal r_circ_buf_a_re         : std_logic;
+    signal r_circ_buf_b_re         : std_logic;
+    signal w_circ_buf_a_rvalid_out : std_logic;
+    signal w_circ_buf_b_rvalid_out : std_logic;
+    signal r_video_rdata           : std_logic_vector(G_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal w_circ_buf_a_rdata      : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
+    signal w_circ_buf_b_rdata      : std_logic_vector(G_DATA_WIDTH - 1 downto 0);
 begin
     -- ============================================================================ 
     -- Combinatorial
@@ -84,6 +90,8 @@ begin
     p_trigger_fsm : process (clk)
     begin
         if rising_edge(clk) then
+            r_mem_sel_d1 <= r_mem_sel;
+            r_mem_sel_d2 <= r_mem_sel_d1;
             case s_capture_state is
                     ------------------------------------------------
                 when IDLE =>
@@ -107,7 +115,7 @@ begin
                     if (i_audio_valid = '1') then
                         r_sample_cnt <= r_sample_cnt + 1;
                         -- Account for read latency
-                        if (r_sample_cnt >= C_SPECTRUM_X_UPPER - 2) then
+                        if (r_sample_cnt >= C_SPECTRUM_X_UPPER - C_PRE_TRIGGER_COUNT) then
                             r_sample_cnt       <= (others => '0');
                             r_raddr_start_addr <= r_trigger_addr;
                             r_mem_sel          <= not(r_mem_sel);
@@ -120,7 +128,7 @@ begin
                     if (i_ms_strobe = '1') then
                         -- Count milliseconds
                         r_ms_cnt <= r_ms_cnt + 1;
-                        if (r_ms_cnt >= C_HOLD_OFF_MS_CNT - 1) then
+                        if (r_ms_cnt >= G_HOLD_OFF_MS - 1) then
                             r_ms_cnt        <= (others => '0');
                             s_capture_state <= ARMED;
                         end if;
@@ -164,8 +172,10 @@ begin
             i_wdata => i_audio_data,
             i_waddr => std_logic_vector(r_circ_buf_waddr),
             -- Rd
-            i_raddr => std_logic_vector(r_circ_buf_raddr),
-            o_rdata => w_circ_buf_a_rdata
+            i_re     => r_circ_buf_a_re,
+            i_raddr  => std_logic_vector(r_circ_buf_raddr),
+            o_rdata  => w_circ_buf_a_rdata,
+            o_rvalid => w_circ_buf_a_rvalid_out
         );
     -- ============================================================================ 
     -- Circular Buffer B
@@ -183,18 +193,22 @@ begin
             i_wdata => i_audio_data,
             i_waddr => std_logic_vector(r_circ_buf_waddr),
             -- Rd
-            i_raddr => std_logic_vector(r_circ_buf_raddr),
-            o_rdata => w_circ_buf_b_rdata
+            i_re     => r_circ_buf_b_re,
+            i_raddr  => std_logic_vector(r_circ_buf_raddr),
+            o_rdata  => w_circ_buf_b_rdata,
+            o_rvalid => w_circ_buf_b_rvalid_out
         );
     -- ============================================================================ 
     p_readout : process (clk)
     begin
         if rising_edge(clk) then
             r_circ_buf_raddr <= resize(unsigned(i_video_raddr) + r_raddr_start_addr, r_circ_buf_raddr'length);
-            if (r_mem_sel = '0') then
-                r_video_rdata <= w_circ_buf_b_rdata;
-            else
+            r_circ_buf_a_re  <= r_mem_sel;
+            r_circ_buf_b_re  <= not(r_mem_sel);
+            if (w_circ_buf_a_rvalid_out = '1') then
                 r_video_rdata <= w_circ_buf_a_rdata;
+            elsif (w_circ_buf_b_rvalid_out = '1') then
+                r_video_rdata <= w_circ_buf_b_rdata;
             end if;
         end if;
     end process p_readout;

@@ -3,11 +3,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-package sig_gen_pkg is
+package project_common_pkg is
     --===============================================================================
     -- Spectrum
     constant C_SPECTRUM_X_UPPER : natural := 480;
-    constant C_SPECTRUM_Y_UPPER : natural := 400;
+constant C_SPECTRUM_Y_UPPER : natural := 400;
 
     constant C_CHAR_WIDTH  : natural := 8;
     constant C_CHAR_HEIGHT : natural := 16;
