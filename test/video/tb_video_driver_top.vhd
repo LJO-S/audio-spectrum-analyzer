@@ -21,31 +21,32 @@ architecture bench of video_driver_top_tb is
     constant clk_period_250 : time := 4 ns;
     -- Generics
     -- Ports
-    signal clk_25           : std_logic := '0';
-    signal clk_100          : std_logic := '0';
-    signal clk_tmds_250     : std_logic := '0';
-    signal i_100ms_strb     : std_logic;
-    signal i_capture_en     : std_logic;
-    signal i_lpf_en         : std_logic;
-    signal i_hpf_en         : std_logic;
-    signal i_waterfall_en   : std_logic;
-    signal i_ema_en         : std_logic;
-    signal i_lpf_incr       : std_logic;
-    signal i_lpf_decr       : std_logic;
-    signal i_hpf_incr       : std_logic;
-    signal i_hpf_decr       : std_logic;
-    signal o_rd_addr_X      : std_logic_vector(9 downto 0);
-    signal o_rd_addr_Y      : std_logic_vector(9 downto 0);
-    signal i_rd_data_log    : std_logic_vector(7 downto 0);
-    signal i_rd_data_linear : std_logic_vector(31 downto 0);
-    signal o_TMDS_clk_p     : std_logic;
-    signal o_TMDS_clk_n     : std_logic;
-    signal o_video_0_p      : std_logic;
-    signal o_video_0_n      : std_logic;
-    signal o_video_1_p      : std_logic;
-    signal o_video_1_n      : std_logic;
-    signal o_video_2_p      : std_logic;
-    signal o_video_2_n      : std_logic;
+    signal clk_25            : std_logic := '0';
+    signal clk_100           : std_logic := '0';
+    signal clk_tmds_250      : std_logic := '0';
+    signal i_100ms_strb      : std_logic;
+    signal i_capture_en      : std_logic;
+    signal i_lpf_en          : std_logic;
+    signal i_hpf_en          : std_logic;
+    signal i_waterfall_en    : std_logic;
+    signal i_oscilloscope_en : std_logic;
+    signal i_lpf_incr        : std_logic;
+    signal i_lpf_decr        : std_logic;
+    signal i_hpf_incr        : std_logic;
+    signal i_hpf_decr        : std_logic;
+    signal o_rd_addr_X       : std_logic_vector(9 downto 0);
+    signal o_rd_addr_Y       : std_logic_vector(9 downto 0);
+    signal i_rd_data_log     : std_logic_vector(7 downto 0);
+    signal i_rd_data_linear  : std_logic_vector(31 downto 0);
+    signal i_rd_data_trigger : std_logic_vector(15 downto 0);
+    signal o_TMDS_clk_p      : std_logic;
+    signal o_TMDS_clk_n      : std_logic;
+    signal o_video_0_p       : std_logic;
+    signal o_video_0_n       : std_logic;
+    signal o_video_1_p       : std_logic;
+    signal o_video_1_n       : std_logic;
+    signal o_video_2_p       : std_logic;
+    signal o_video_2_n       : std_logic;
 begin
     -- ===============================================================
     clk_25       <= not clk_25 after clk_period_25/2;
@@ -55,31 +56,32 @@ begin
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25           => clk_25,
-            clk_100          => clk_100,
-            clk_tmds_250     => clk_tmds_250,
-            i_100ms_strb     => i_100ms_strb,
-            i_capture_en     => i_capture_en,
-            i_lpf_en         => i_lpf_en,
-            i_hpf_en         => i_hpf_en,
-            i_waterfall_en   => i_waterfall_en,
-            i_ema_en         => i_ema_en,
-            i_lpf_incr       => i_lpf_incr,
-            i_lpf_decr       => i_lpf_decr,
-            i_hpf_incr       => i_hpf_incr,
-            i_hpf_decr       => i_hpf_decr,
-            o_rd_addr_X      => o_rd_addr_X,
-            o_rd_addr_Y      => o_rd_addr_Y,
-            i_rd_data_log    => i_rd_data_log,
-            i_rd_data_linear => i_rd_data_linear,
-            o_TMDS_clk_p     => o_TMDS_clk_p,
-            o_TMDS_clk_n     => o_TMDS_clk_n,
-            o_video_0_p      => o_video_0_p,
-            o_video_0_n      => o_video_0_n,
-            o_video_1_p      => o_video_1_p,
-            o_video_1_n      => o_video_1_n,
-            o_video_2_p      => o_video_2_p,
-            o_video_2_n      => o_video_2_n
+            clk_25            => clk_25,
+            clk_100           => clk_100,
+            clk_tmds_250      => clk_tmds_250,
+            i_100ms_strb      => i_100ms_strb,
+            i_capture_en      => i_capture_en,
+            i_lpf_en          => i_lpf_en,
+            i_hpf_en          => i_hpf_en,
+            i_waterfall_en    => i_waterfall_en,
+            i_oscilloscope_en => i_oscilloscope_en,
+            i_lpf_incr        => i_lpf_incr,
+            i_lpf_decr        => i_lpf_decr,
+            i_hpf_incr        => i_hpf_incr,
+            i_hpf_decr        => i_hpf_decr,
+            o_rd_addr_X       => o_rd_addr_X,
+            o_rd_addr_Y       => o_rd_addr_Y,
+            i_rd_data_log     => i_rd_data_log,
+            i_rd_data_linear  => i_rd_data_linear,
+            i_rd_data_trigger => i_rd_data_trigger,
+            o_TMDS_clk_p      => o_TMDS_clk_p,
+            o_TMDS_clk_n      => o_TMDS_clk_n,
+            o_video_0_p       => o_video_0_p,
+            o_video_0_n       => o_video_0_n,
+            o_video_1_p       => o_video_1_p,
+            o_video_1_n       => o_video_1_n,
+            o_video_2_p       => o_video_2_p,
+            o_video_2_n       => o_video_2_n
         );
     -- ===============================================================
     main : process

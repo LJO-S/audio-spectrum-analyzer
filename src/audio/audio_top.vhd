@@ -36,6 +36,9 @@ entity audio_top is
         o_lrclk : out std_logic; -- left/right clk
         o_bclk  : out std_logic; -- bit clk
         o_pbdat : out std_logic; -- serialized data
+        -- Raw output
+        o_raw_tdata  : out std_logic_vector(15 downto 0);
+        o_raw_tvalid : out std_logic;
         -- FFT i/f
         o_tdata  : out std_logic_vector(31 downto 0);
         o_tvalid : out std_logic;
@@ -79,6 +82,8 @@ begin
     -- Fill Imaginary part with 0s and Real part with capture data
     o_tdata <= x"0000" & w_buffer_to_top_data;
 
+    o_raw_tdata  <= w_filter_to_buffer_data;
+    o_raw_tvalid <= w_filter_to_buffer_valid;
     /* ------------------------------------------------------ */
     p_clk_counter : process (clk_100)
     begin

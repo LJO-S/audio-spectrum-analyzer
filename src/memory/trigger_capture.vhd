@@ -45,8 +45,8 @@ architecture rtl of trigger_capture is
     --------------------
     -- Constants
     --------------------
-    constant C_THRESH_HI             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed((2 ** (G_DATA_WIDTH - 1) - 1), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
-    constant C_THRESH_LO             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed( - (2 ** (G_DATA_WIDTH - 1)), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
+    constant C_THRESH_HI             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed((2 ** (G_DATA_WIDTH - 1) - 1), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 2);
+    constant C_THRESH_LO             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed( - (2 ** (G_DATA_WIDTH - 1)), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 2);
     constant C_PRE_TRIGGER_COUNT     : natural                           := 10;
     constant C_REQUIRED_SAMPLE_CNT   : natural                           := C_SPECTRUM_X_UPPER - C_PRE_TRIGGER_COUNT;
     constant C_CEIL_DATA_DEPTH_WIDTH : natural                           := integer(ceil(log2(real(G_DATA_DEPTH))));

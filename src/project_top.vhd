@@ -139,6 +139,10 @@ architecture rtl of project_top is
     signal w_axis_tvalid_audio_to_xfft : std_logic;
     signal w_axis_tlast_audio_to_xfft  : std_logic;
 
+    -- Audio Capture to Trigger
+    signal w_audio_to_capture_tdata  : std_logic_vector(15 downto 0);
+    signal w_audio_to_capture_tvalid : std_logic;
+
     -- Video-FrameBufMem IF
     signal w_rd_addr_X              : std_logic_vector(9 downto 0);
     signal w_rd_addr_Y              : std_logic_vector(9 downto 0);
@@ -493,8 +497,8 @@ begin
         (
             clk           => i_clk_100,
             i_ms_strobe   => w_ms_strobe,
-            i_audio_data  => w_axis_tdata_audio_to_xfft(G_FFT_BIT_SIZE - 1 downto 0),
-            i_audio_valid => w_axis_tvalid_audio_to_xfft,
+            i_audio_data  => w_audio_to_capture_tdata,
+            i_audio_valid => w_audio_to_capture_tvalid,
             i_video_raddr => w_video_to_trigger_capture_raddr,
             o_video_rdata => w_trigger_capture_to_video_rdata
         );
@@ -529,10 +533,14 @@ begin
             o_lrclk      => w_lrclk,
             o_bclk       => o_bclk,
             o_pbdat      => o_pbdat,
-            o_tdata      => w_axis_tdata_audio_to_xfft,
-            o_tvalid     => w_axis_tvalid_audio_to_xfft,
-            o_tlast      => w_axis_tlast_audio_to_xfft,
-            i_tready     => w_axis_tready_xfft_to_audio
+            -- Raw output
+            o_raw_tdata  => w_audio_to_capture_tdata,
+            o_raw_tvalid => w_audio_to_capture_tvalid,
+            -- FFT IF
+            o_tdata  => w_axis_tdata_audio_to_xfft,
+            o_tvalid => w_axis_tvalid_audio_to_xfft,
+            o_tlast  => w_axis_tlast_audio_to_xfft,
+            i_tready => w_axis_tready_xfft_to_audio
         );
     -- ============================================================================ 
     -- DAC Output Mute, Active Low

@@ -104,15 +104,16 @@ architecture rtl of image_generator is
     -- Bins/columns 0-512 --> 0-48 kHz. Columns 513-640 are left as freeplay (such as capture/internal). 
 
     -- Oscilloscope
-    signal r_draw_oscilloscope      : std_logic                     := '0';
-    signal r_video_red_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
-    signal r_video_grn_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
-    signal r_video_blu_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
-    signal r_time_data_linear       : std_logic_vector(15 downto 0) := (others => '0');
-    signal r_time_data_y_delta      : signed(15 - 14 + 9 downto 0)  := (others => '0');
-    signal r_osc_ypos_curr          : signed(10 downto 0)           := (others => '0');
-    signal r_osc_ypos_curr_clip     : unsigned(9 downto 0)          := (others => '0');
-    signal r_osc_ypos_prev          : unsigned(9 downto 0)          := to_unsigned(C_SPECTRUM_Y_UPPER / 2, 10);
+    signal r_draw_oscilloscope         : std_logic                     := '0';
+    signal r_video_red_oscilloscope    : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_video_grn_oscilloscope    : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_video_blu_oscilloscope    : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_time_data_linear          : std_logic_vector(15 downto 0) := (others => '0');
+    signal r_time_data_y_delta_mult    : signed(15 + 9 downto 0)       := (others => '0');
+    signal r_time_data_y_delta_shifted : signed(15 - 14 + 9 downto 0)  := (others => '0');
+    signal r_osc_ypos_curr             : signed(10 downto 0)           := (others => '0');
+    signal r_osc_ypos_curr_clip        : unsigned(9 downto 0)          := (others => '0');
+    signal r_osc_ypos_prev             : unsigned(9 downto 0)          := to_unsigned(C_SPECTRUM_Y_UPPER / 2, 10);
 
 begin
     -- ============================================================================ 
@@ -176,28 +177,6 @@ begin
                 r_fft_data_log     <= i_fft_data_log;
                 r_fft_data_linear  <= i_fft_data_linear;
                 r_time_data_linear <= i_time_data_linear;
-                -- ------------
-                -- PIPE 3
-                -- ------------
--- r_counter_X_d3        <= r_counter_X_d2;
--- r_counter_Y_d3        <= r_counter_Y_d2;
--- r_HSYNC_d3            <= r_HSYNC_d2;
--- r_VSYNC_d3            <= r_VSYNC_d2;
--- r_draw_d3             <= r_draw_d2;
--- r_fft_data_log_d1     <= r_fft_data_log;
--- r_fft_data_linear_d1  <= r_fft_data_linear;
--- r_time_data_linear_d1 <= r_time_data_linear;
--- -- ------------
--- -- PIPE 4
--- -- ------------
--- r_counter_X_d4        <= r_counter_X_d3;
--- r_counter_Y_d4        <= r_counter_Y_d3;
--- r_HSYNC_d4            <= r_HSYNC_d3;
--- r_VSYNC_d4            <= r_VSYNC_d3;
--- r_draw_d4             <= r_draw_d3;
--- r_fft_data_log_d2     <= r_fft_data_log_d1;
--- r_fft_data_linear_d2  <= r_fft_data_linear_d1;
--- r_time_data_linear_d2 <= r_time_data_linear_d1;
             end if;
         end if;
     end process p_pipeline;
@@ -331,22 +310,26 @@ begin
             -------------
             -- PIPE 0
             -------------
-            r_time_data_y_delta <= resize(
-                shift_right(
+            r_time_data_y_delta_mult <= resize(
                 signed(r_time_data_linear) * to_signed(C_SPECTRUM_Y_UPPER / 2, 9),
-                r_time_data_linear'length - 1),
-                r_time_data_y_delta'length);
+                r_time_data_y_delta_mult'length);
             -------------
             -- PIPE 1
             -------------
-            r_osc_ypos_curr <= to_signed(C_SPECTRUM_Y_UPPER / 2, r_osc_ypos_curr'length) - r_time_data_y_delta;
+            r_time_data_y_delta_shifted <= resize(
+                shift_right(r_time_data_y_delta_mult, 14),
+                r_time_data_y_delta_shifted'length);
             -------------
             -- PIPE 2
+            -------------
+            r_osc_ypos_curr <= to_signed(C_SPECTRUM_Y_UPPER / 2, r_osc_ypos_curr'length) - r_time_data_y_delta_shifted;
+            -------------
+            -- PIPE 3
             -------------
             if (r_osc_ypos_curr < 0) then
                 r_osc_ypos_curr_clip <= (others => '0');
             elsif (r_osc_ypos_curr >= C_SPECTRUM_Y_UPPER) then
-                r_osc_ypos_curr_clip <= to_unsigned(C_SPECTRUM_Y_UPPER, r_osc_ypos_curr_clip'length);
+                r_osc_ypos_curr_clip <= to_unsigned(C_SPECTRUM_Y_UPPER - 1, r_osc_ypos_curr_clip'length);
             else
                 r_osc_ypos_curr_clip <= unsigned(r_osc_ypos_curr(r_osc_ypos_curr'high - 1 downto 0));
             end if;

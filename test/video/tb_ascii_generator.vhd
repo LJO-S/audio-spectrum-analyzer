@@ -19,25 +19,25 @@ architecture bench of ascii_generator_tb is
     constant clk_period : time := 10 ns;
     -- Generics
     -- Ports
-    signal clk_100          : std_logic             := '0';
-    signal i_counter_X      : unsigned(9 downto 0)  := (others => '0');
-    signal i_counter_Y      : unsigned(9 downto 0)  := (others => '0');
-    signal i_max_freq       : unsigned(16 downto 0) := (others => '0');
-    signal i_capture_on     : std_logic             := '0';
-    signal i_lpf_on         : std_logic             := '0';
-    signal i_lpf_cutoff     : unsigned(16 downto 0) := (others => '0');
-    signal i_bpf_on         : std_logic             := '0';
-    signal i_bpf_cutoff     : unsigned(16 downto 0) := (others => '0');
-    signal i_hpf_on         : std_logic             := '0';
-    signal i_hpf_cutoff     : unsigned(16 downto 0) := (others => '0');
-    signal i_waterfall_on   : std_logic             := '0';
-    signal i_ema_on         : std_logic             := '0';
-    signal o_freq_lpf_1000s : unsigned(6 downto 0);
-    signal o_freq_hpf_1000s : unsigned(6 downto 0);
-    signal o_glyph_active   : std_logic;
-    signal o_video_red      : std_logic_vector(7 downto 0);
-    signal o_video_grn      : std_logic_vector(7 downto 0);
-    signal o_video_blu      : std_logic_vector(7 downto 0);
+    signal clk_100           : std_logic             := '0';
+    signal i_counter_X       : unsigned(9 downto 0)  := (others => '0');
+    signal i_counter_Y       : unsigned(9 downto 0)  := (others => '0');
+    signal i_max_freq        : unsigned(16 downto 0) := (others => '0');
+    signal i_capture_on      : std_logic             := '0';
+    signal i_lpf_on          : std_logic             := '0';
+    signal i_lpf_cutoff      : unsigned(16 downto 0) := (others => '0');
+    signal i_bpf_on          : std_logic             := '0';
+    signal i_bpf_cutoff      : unsigned(16 downto 0) := (others => '0');
+    signal i_hpf_on          : std_logic             := '0';
+    signal i_hpf_cutoff      : unsigned(16 downto 0) := (others => '0');
+    signal i_waterfall_on    : std_logic             := '0';
+    signal i_oscilloscope_en : std_logic             := '0';
+    signal o_freq_lpf_1000s  : unsigned(6 downto 0);
+    signal o_freq_hpf_1000s  : unsigned(6 downto 0);
+    signal o_glyph_active    : std_logic;
+    signal o_video_red       : std_logic_vector(7 downto 0);
+    signal o_video_grn       : std_logic_vector(7 downto 0);
+    signal o_video_blu       : std_logic_vector(7 downto 0);
 
     signal tb_HSYNC         : std_logic;
     signal tb_VSYNC         : std_logic;
@@ -52,26 +52,26 @@ begin
     ascii_generator_inst : entity work.ascii_generator
         port map
         (
-            clk_100          => clk_100,
-            i_ce             => tb_ce,
-            i_counter_X      => i_counter_X,
-            i_counter_Y      => i_counter_Y,
-            i_max_freq       => i_max_freq,
-            i_capture_on     => i_capture_on,
-            i_lpf_on         => i_lpf_on,
-            i_lpf_cutoff     => i_lpf_cutoff,
-            i_bpf_on         => i_bpf_on,
-            i_bpf_cutoff     => i_bpf_cutoff,
-            i_hpf_on         => i_hpf_on,
-            i_hpf_cutoff     => i_hpf_cutoff,
-            i_waterfall_on   => i_waterfall_on,
-            i_ema_on         => i_ema_on,
-            o_freq_lpf_1000s => o_freq_lpf_1000s,
-            o_freq_hpf_1000s => o_freq_hpf_1000s,
-            o_glyph_active   => o_glyph_active,
-            o_video_red      => o_video_red,
-            o_video_grn      => o_video_grn,
-            o_video_blu      => o_video_blu
+            clk_100           => clk_100,
+            i_ce              => tb_ce,
+            i_counter_X       => i_counter_X,
+            i_counter_Y       => i_counter_Y,
+            i_max_freq        => i_max_freq,
+            i_capture_on      => i_capture_on,
+            i_lpf_on          => i_lpf_on,
+            i_lpf_cutoff      => i_lpf_cutoff,
+            i_bpf_on          => i_bpf_on,
+            i_bpf_cutoff      => i_bpf_cutoff,
+            i_hpf_on          => i_hpf_on,
+            i_hpf_cutoff      => i_hpf_cutoff,
+            i_waterfall_on    => i_waterfall_on,
+            i_oscilloscope_en => i_oscilloscope_en,
+            o_freq_lpf_1000s  => o_freq_lpf_1000s,
+            o_freq_hpf_1000s  => o_freq_hpf_1000s,
+            o_glyph_active    => o_glyph_active,
+            o_video_red       => o_video_red,
+            o_video_grn       => o_video_grn,
+            o_video_blu       => o_video_blu
         );
     -- ===============================================================
     clk_100 <= not clk_100 after clk_period/2;
@@ -167,7 +167,7 @@ begin
             i_hpf_on     <= '1';
             i_hpf_cutoff <= TO_UNSIGNED(5_111, i_max_freq'length);
             -- 
-            i_ema_on <= '1';
+            i_oscilloscope_en <= '1';
             -- 
             i_waterfall_on <= '1';
             -- 

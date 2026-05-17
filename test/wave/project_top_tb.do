@@ -55,7 +55,6 @@ add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_axis_tready_xff
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_axis_tdata_audio_to_xfft
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_axis_tvalid_audio_to_xfft
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_axis_tlast_audio_to_xfft
-add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_sig_gen_src_sel
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_lpf_en
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_lpf_incr
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_lpf_incr_to_video
@@ -66,7 +65,6 @@ add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_hpf_incr
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_hpf_incr_to_video
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_hpf_decr
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_hpf_decr_to_video
-add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_ema_en
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_sel_up_lo
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_capture_en
 add wave -noupdate -group TOP /project_top_tb/project_top_inst/w_capture_en_drain_guard
@@ -84,10 +82,6 @@ add wave -noupdate -group TOP -divider {framebuf mag}
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_mag_log2_data_out
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_mag_log2_valid_out
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_rd_addr_X
-add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_frame_buf_data_log
-add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/r_frame_buf_data_log
-add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/r_frame_buf_data_log_d1
-add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/r_frame_buf_data_log_d2
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_frame_buf_data_linear
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_rd_addr_Y
 add wave -noupdate -group TOP -radix unsigned /project_top_tb/project_top_inst/w_rd_addr_X_framebuf
@@ -162,16 +156,17 @@ add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_capture_en
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_lpf_en
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_hpf_en
-add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_ema_en
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_lpf_incr
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_lpf_decr
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_hpf_incr
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_hpf_decr
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_waterfall_en
+add wave -noupdate -group {Video Driver} /project_top_tb/project_top_inst/video_driver_top_inst/i_oscilloscope_en
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/o_rd_addr_X
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/o_rd_addr_Y
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_rd_data_log
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/i_rd_data_linear
+add wave -noupdate -group {Video Driver} /project_top_tb/project_top_inst/video_driver_top_inst/i_rd_data_trigger
 add wave -noupdate -group {Video Driver} -group {TMDS p/n} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/o_TMDS_clk_p
 add wave -noupdate -group {Video Driver} -group {TMDS p/n} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/o_TMDS_clk_n
 add wave -noupdate -group {Video Driver} -group {TMDS p/n} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/o_video_0_p
@@ -197,74 +192,86 @@ add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/w_TMDS_out_clk_p
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/w_TMDS_out_clk_n
 add wave -noupdate -group {Video Driver} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/w_TMDS
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/spectrum_framebuffer_inst/dpmem_bram_inst/clk
-add wave -noupdate -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_compare_limit
-add wave -noupdate -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_compare_subtractor
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_100ms_strb
-add wave -noupdate -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_ce
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_capture_on
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_fft_data_log
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_fft_data_linear
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_rd_addr_X
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_rd_addr_Y
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_on
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_incr
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_decr
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_bpf_on
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_bpf_cutoff
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_on
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_incr
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_decr
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_ema_on
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_HSYNC
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_VSYNC
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_draw
-add wave -noupdate -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_red
-add wave -noupdate -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_grn
-add wave -noupdate -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_blu
-add wave -noupdate -group {Image Generator} -divider non-pipe
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw
-add wave -noupdate -group {Image Generator} -group piping -divider {PIPE 1}
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X_d1
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y_d1
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC_d1
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC_d1
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_d1
-add wave -noupdate -group {Image Generator} -group piping -divider {PIPE 2}
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X_d2
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y_d2
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC_d2
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC_d2
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_d2
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_fft_data_log
-add wave -noupdate -group {Image Generator} -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_fft_data_linear
-add wave -noupdate -group {Image Generator} -divider misc
-add wave -noupdate -group {Image Generator} -radix unsigned -childformat {{/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(31) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(30) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(29) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(28) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(27) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(26) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(25) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(24) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(23) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(22) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(21) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(20) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(19) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(18) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(17) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(16) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(15) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(14) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(13) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(12) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(11) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(10) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(9) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(8) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(7) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(6) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(5) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(4) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(3) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(2) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(1) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(0) -radix decimal}} -subitemconfig {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(31) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(30) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(29) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(28) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(27) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(26) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(25) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(24) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(23) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(22) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(21) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(20) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(19) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(18) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(17) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(16) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(15) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(14) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(13) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(12) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(11) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(10) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(9) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(8) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(7) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(6) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(5) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(4) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(3) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(2) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(1) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(0) {-height 17 -radix decimal}} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value
-add wave -noupdate -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_spectrum
-add wave -noupdate -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_red_spectrum
-add wave -noupdate -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_grn_spectrum
-add wave -noupdate -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_blu_spectrum
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_curr_freq
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_freq
-add wave -noupdate -group {Image Generator} -radix unsigned -childformat {{/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(31) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(30) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(29) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(28) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(27) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(26) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(25) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(24) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(23) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(22) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(21) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(20) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(19) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(18) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(17) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(16) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(15) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(14) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(13) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(12) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(11) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(10) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(9) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(8) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(7) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(6) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(5) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(4) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(3) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(2) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(1) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(0) -radix unsigned}} -subitemconfig {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(31) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(30) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(29) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(28) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(27) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(26) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(25) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(24) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(23) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(22) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(21) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(20) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(19) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(18) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(17) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(16) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(15) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(14) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(13) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(12) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(11) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(10) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(9) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(8) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(7) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(6) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(5) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(4) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(3) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(2) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(1) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(0) {-height 17 -radix unsigned}} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_lpf_cutoff
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_hpf_cutoff
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_freq_lpf_1000s
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_freq_hpf_1000s
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_lpf_x_axis
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_hpf_x_axis
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_ascii_draw
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_red_ascii
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_grn_ascii
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_blu_ascii
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_gui_draw
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_red_gui
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_grn_gui
-add wave -noupdate -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_blu_gui
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/spectrum_framebuffer_inst/dpmem_bram_inst/clk
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_compare_limit
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_compare_subtractor
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_100ms_strb
+add wave -noupdate -expand -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_ce
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_capture_on
+add wave -noupdate -expand -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_waterfall_on
+add wave -noupdate -expand -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_oscilloscope_en
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_fft_data_log
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_fft_data_linear
+add wave -noupdate -expand -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_time_data_linear
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_rd_addr_X
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_rd_addr_Y
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_on
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_incr
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_lpf_decr
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_bpf_on
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_bpf_cutoff
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_on
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_incr
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/i_hpf_decr
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_HSYNC
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_VSYNC
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_draw
+add wave -noupdate -expand -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_red
+add wave -noupdate -expand -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_grn
+add wave -noupdate -expand -group {Image Generator} -radix hexadecimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/o_video_blu
+add wave -noupdate -expand -group {Image Generator} -divider non-pipe
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -divider {PIPE 1}
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X_d1
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y_d1
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC_d1
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC_d1
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_d1
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -divider {PIPE 2}
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_X_d2
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_counter_Y_d2
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_HSYNC_d2
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_VSYNC_d2
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_d2
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_fft_data_log
+add wave -noupdate -expand -group {Image Generator} -expand -group piping -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_fft_data_linear
+add wave -noupdate -expand -group {Image Generator} -divider misc
+add wave -noupdate -expand -group {Image Generator} -radix unsigned -childformat {{/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(31) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(30) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(29) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(28) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(27) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(26) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(25) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(24) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(23) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(22) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(21) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(20) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(19) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(18) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(17) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(16) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(15) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(14) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(13) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(12) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(11) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(10) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(9) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(8) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(7) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(6) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(5) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(4) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(3) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(2) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(1) -radix decimal} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(0) -radix decimal}} -subitemconfig {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(31) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(30) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(29) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(28) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(27) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(26) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(25) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(24) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(23) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(22) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(21) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(20) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(19) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(18) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(17) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(16) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(15) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(14) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(13) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(12) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(11) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(10) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(9) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(8) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(7) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(6) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(5) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(4) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(3) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(2) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(1) {-height 17 -radix decimal} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value(0) {-height 17 -radix decimal}} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_compare_value
+add wave -noupdate -expand -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_spectrum
+add wave -noupdate -expand -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_red_spectrum
+add wave -noupdate -expand -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_grn_spectrum
+add wave -noupdate -expand -group {Image Generator} -color {Cornflower Blue} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_blu_spectrum
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_curr_freq
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_freq
+add wave -noupdate -expand -group {Image Generator} -radix unsigned -childformat {{/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(31) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(30) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(29) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(28) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(27) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(26) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(25) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(24) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(23) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(22) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(21) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(20) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(19) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(18) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(17) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(16) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(15) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(14) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(13) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(12) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(11) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(10) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(9) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(8) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(7) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(6) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(5) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(4) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(3) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(2) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(1) -radix unsigned} {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(0) -radix unsigned}} -subitemconfig {/project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(31) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(30) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(29) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(28) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(27) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(26) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(25) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(24) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(23) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(22) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(21) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(20) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(19) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(18) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(17) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(16) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(15) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(14) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(13) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(12) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(11) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(10) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(9) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(8) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(7) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(6) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(5) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(4) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(3) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(2) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(1) {-height 17 -radix unsigned} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value(0) {-height 17 -radix unsigned}} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_max_value
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_lpf_cutoff
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_hpf_cutoff
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_freq_lpf_1000s
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_freq_hpf_1000s
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_lpf_x_axis
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_hpf_x_axis
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_ascii_draw
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_red_ascii
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_grn_ascii
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/w_video_blu_ascii
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_gui_draw
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_red_gui
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_grn_gui
+add wave -noupdate -expand -group {Image Generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_blu_gui
+add wave -noupdate -expand -group {Image Generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_draw_oscilloscope
+add wave -noupdate -expand -group {Image Generator} -radix binary /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_red_oscilloscope
+add wave -noupdate -expand -group {Image Generator} -radix binary /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_grn_oscilloscope
+add wave -noupdate -expand -group {Image Generator} -radix binary /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_video_blu_oscilloscope
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_time_data_linear
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_time_data_y_delta_mult
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_time_data_y_delta_shifted
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_osc_ypos_curr
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_osc_ypos_curr_clip
+add wave -noupdate -expand -group {Image Generator} -radix decimal /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/r_osc_ypos_prev
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_counter_X
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_counter_Y
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_max_freq
@@ -275,7 +282,6 @@ add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/proj
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_bpf_cutoff
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_hpf_on
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_hpf_cutoff
-add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/i_ema_on
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/o_freq_lpf_1000s
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/o_freq_hpf_1000s
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/o_glyph_active
@@ -295,7 +301,6 @@ add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/proj
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_lpf
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_bpf
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_hpf
-add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_ema
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_capture
 add wave -noupdate -group {ascii generator} -radix unsigned /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_internal
 add wave -noupdate -group {ascii generator} /project_top_tb/project_top_inst/video_driver_top_inst/image_generator_inst/ascii_generator_inst/r_draw_waterfall
@@ -356,14 +361,12 @@ add wave -noupdate -group {palette rom} /project_top_tb/project_top_inst/video_d
 add wave -noupdate -divider GPIO
 add wave -noupdate -group {Gpio Ctrl} -radix binary /project_top_tb/project_top_inst/gpio_ctrl_inst/i_pb_vector
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/i_dip_vector
-add wave -noupdate -group {Gpio Ctrl} -radix binary /project_top_tb/project_top_inst/gpio_ctrl_inst/o_sig_gen_src_sel
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_lpf_en
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_lpf_incr
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_lpf_decr
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_hpf_en
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_hpf_incr
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_hpf_decr
-add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_ema_en
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_sel_up_lo
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/o_capture_en
 add wave -noupdate -group {Gpio Ctrl} /project_top_tb/project_top_inst/gpio_ctrl_inst/w_pb_debounce
@@ -412,43 +415,37 @@ add wave -noupdate -group {Gpio PS IF} /project_top_tb/project_top_inst/gpio_ps_
 add wave -noupdate -group {Gpio PS IF} /project_top_tb/project_top_inst/gpio_ps_interface_inst/w_new_data_strobe_hpf
 add wave -noupdate -group {Gpio PS IF} /project_top_tb/project_top_inst/gpio_ps_interface_inst/r_new_data_strobe_hpf
 add wave -noupdate -divider {Signal Generators}
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/clk
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_en
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_pbuttons
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_sel_up_lo
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_fs_clk
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_100ms_strb
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_reset
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_iq_ready
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_data
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_valid
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_last
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/s_gpio_state
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_pbuttons
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_100ms_counter
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_100ms_strobe
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_sig_gen_reset
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_ms_strobe
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_fs_clk
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_sel
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_valid
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_fc_data
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_bw_data
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_dur_data
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_ramp_freq_data
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_ramp_freq_valid
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_data_out_i
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_data_out_q
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_valid_out
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_output_cntr
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_data_out_iq
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_valid_out
-add wave -noupdate -expand -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_last_out
-add wave -noupdate -group {Ms Strobe} /project_top_tb/project_top_inst/signal_generator_top_inst/ms_strobe_generator_inst/clk
-add wave -noupdate -group {Ms Strobe} /project_top_tb/project_top_inst/signal_generator_top_inst/ms_strobe_generator_inst/o_ms_strobe
-add wave -noupdate -group {Ms Strobe} /project_top_tb/project_top_inst/signal_generator_top_inst/ms_strobe_generator_inst/r_cc_counter
-add wave -noupdate -group {Ms Strobe} /project_top_tb/project_top_inst/signal_generator_top_inst/ms_strobe_generator_inst/r_us_counter
-add wave -noupdate -group {Ms Strobe} /project_top_tb/project_top_inst/signal_generator_top_inst/ms_strobe_generator_inst/r_ms_strobe
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/clk
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_en
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_pbuttons
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_sel_up_lo
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_fs_clk
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_100ms_strb
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_reset
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/i_iq_ready
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_data
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_valid
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/o_iq_last
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/s_gpio_state
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_pbuttons
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_100ms_counter
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_100ms_strobe
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_sig_gen_reset
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_fs_clk
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_sel
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_valid
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_fc_data
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_bw_data
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_cfg_dur_data
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_ramp_freq_data
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_ramp_freq_valid
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_data_out_i
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_data_out_q
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/w_dds_valid_out
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_output_cntr
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_data_out_iq
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_valid_out
+add wave -noupdate -group {Signal Generator Top} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/r_dds_last_out
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/clk
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/i_en
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/i_ms_strobe
@@ -472,7 +469,6 @@ add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/projec
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_cfg_valid
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_delta_sign
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_delta_sign_d1
-add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_delta_sign_d2
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_freq_carrier
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_freq_delta
 add wave -noupdate -group {Tone Generator} -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/tone_generator_inst/r_freq_next
@@ -529,98 +525,160 @@ add wave -noupdate -group DDS -radix decimal /project_top_tb/project_top_inst/si
 add wave -noupdate -group DDS -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/dds_inst/r_data_out_i
 add wave -noupdate -group DDS -radix decimal /project_top_tb/project_top_inst/signal_generator_top_inst/dds_inst/r_data_out_q
 add wave -noupdate -divider FFT
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/clk
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/reset
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/i_tdata_re
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/i_tdata_im
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/i_tvalid
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/o_tready
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/o_tdata_re
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/o_tdata_im
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/o_xk_index
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/o_tvalid
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_addr_mem_a_pipe
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_addr_mem_b_pipe
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_en_mem_pipe
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/s_fft_state
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_start
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_done
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_wr_en
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_a
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_b
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_tw
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_agu_wr_en
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_mem_a
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_mem_b
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle_d1
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle_d2
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_mem_select
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_1
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_2
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_xr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_xi
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_yr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_yi
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_xr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_xi
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_yr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_yi
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_tdata_re
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_tdata_im
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_addr_reversed
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_addr_normal
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_br_tvalid_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_twiddle_tr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_twiddle_ti
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_tvalid_in
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_input_buf_addr
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_im_in
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_im_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_im_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_buffer_tvalid_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_wr_rising_edge
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_mem_ab
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_addr_mem_a
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_addr_mem_b
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_hold_counter
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/w_tready_out
-add wave -noupdate -expand -group fft /project_top_tb/project_top_inst/fft_inst/r_tvalid_out_pipeline
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/clk
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/reset
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/i_tdata_re
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/i_tdata_im
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/i_tvalid
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/o_tready
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/o_tdata_re
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/o_tdata_im
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/o_xk_index
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/o_tvalid
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_addr_mem_a_pipe
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_addr_mem_b_pipe
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_wr_en_mem_pipe
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/s_fft_state
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_start
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_done
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_wr_en
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_a
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_b
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_rd_addr_tw
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_agu_wr_en
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_mem_a
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_mem_b
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle_d1
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_rd_addr_twiddle_d2
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_mem_select
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_1
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_2
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_xr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_xi
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_yr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_stored_yi
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_xr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_xi
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_yr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_calculated_yi
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_tdata_re
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_tdata_im
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_addr_reversed
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_br_to_mb_addr_normal
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_br_tvalid_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_twiddle_tr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_twiddle_ti
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_tvalid_in
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_input_buf_addr
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_im_in
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_im_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_re_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_buffer_im_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_buffer_tvalid_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_agu_wr_rising_edge
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_en_mem_ab
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_addr_mem_a
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_wr_addr_mem_b
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_hold_counter
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/w_tready_out
+add wave -noupdate -group fft /project_top_tb/project_top_inst/fft_inst/r_tvalid_out_pipeline
 add wave -noupdate -divider Audio
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_i2c_cfg_done
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_new_data_strobe_lpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_updating_coeffs_lpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_raddr_lpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_rdata_lpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_new_data_strobe_hpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_updating_coeffs_hpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_raddr_hpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_rdata_hpf
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_capture_en
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_lpf_en
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_hpf_en
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_sdata
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_mclk
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_lrclk
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_bclk
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_pbdat
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tdata
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tvalid
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tlast
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_tready
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/r_clk_counter
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_lrclk
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_bclk
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_i2s_to_filter_data
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_i2s_to_filter_valid
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_filter_to_buffer_data
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_filter_to_buffer_valid
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_buffer_to_top_data
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_audio_buffer_draining
-add wave -noupdate -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_capture_en
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_i2c_cfg_done
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_new_data_strobe_lpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_updating_coeffs_lpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_raddr_lpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_rdata_lpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_new_data_strobe_hpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_updating_coeffs_hpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_raddr_hpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_rdata_hpf
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_capture_en
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_lpf_en
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_hpf_en
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_sdata
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_mclk
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_lrclk
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_bclk
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_pbdat
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tdata
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tvalid
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/o_tlast
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/i_tready
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/r_clk_counter
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_lrclk
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_bclk
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_i2s_to_filter_data
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_i2s_to_filter_valid
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_filter_to_buffer_data
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_filter_to_buffer_valid
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_buffer_to_top_data
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_audio_buffer_draining
+add wave -noupdate -expand -group {Audio Top} /project_top_tb/project_top_inst/audio_top_inst/w_capture_en
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/clk_100
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/i_capture_en
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/o_draining
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} -format Analog-Step -height 84 -max 32767.0 -min -32728.0 -radix decimal /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/i_pdata
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/i_valid
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/o_tdata
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/o_tvalid
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/o_tlast
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/i_tready
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/s_buffer_state
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} -radix unsigned /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/r_addr
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/r_tvalid
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/r_tlast
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/r_we
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/r_din
+add wave -noupdate -expand -group {Audio Top} -expand -group {Audio Buffer} /project_top_tb/project_top_inst/audio_top_inst/audio_buffer_inst/w_tdata
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/clk
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/i_ms_strobe
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/i_audio_data
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/i_audio_valid
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/i_video_raddr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/o_video_rdata
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/s_capture_state
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_audio_valid
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_sample_curr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_sample_prev
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_mem_sel
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_mem_ready
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_trigger_addr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_raddr_start_addr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_circ_buf_waddr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_circ_buf_raddr
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_sample_cnt
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_ms_cnt
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_a_we
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_b_we
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_circ_buf_a_re
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_circ_buf_b_re
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_a_rvalid_out
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_b_rvalid_out
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/r_video_rdata
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_a_rdata
+add wave -noupdate -expand -group {Trigger Capture} -radix decimal /project_top_tb/project_top_inst/trigger_capture_inst/w_circ_buf_b_rdata
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/clk_100
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/i_pbclk
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/i_bclk
+add wave -noupdate -group {Audio Gen} -format Analog-Step -height 84 -max 32767.0 -radix decimal /project_top_tb/i2s_ser_inst/i_tdata
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/i_tvalid
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/i_en
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/o_pbdat
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/s_ser_state
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_pbclk
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_bclk
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/w_left
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/w_right
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/w_bclk_re
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/w_bclk_fe
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_bit_cntr
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_data_pending
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_data_left
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_data_right
+add wave -noupdate -group {Audio Gen} -radix decimal /project_top_tb/i2s_ser_inst/r_sdata
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {296965000 ps} 0} {{Cursor 6} {472585000 ps} 1}
+WaveRestoreCursors {{Cursor 7} {19688347 ps} 0} {{Cursor 6} {472585000 ps} 1}
 quietly wave cursor active 1
 configure wave -namecolwidth 198
 configure wave -valuecolwidth 100
@@ -636,4 +694,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {1906632192 ps}
+WaveRestoreZoom {0 ps} {50048250 ps}

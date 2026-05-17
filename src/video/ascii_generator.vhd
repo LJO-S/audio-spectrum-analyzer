@@ -184,7 +184,7 @@ begin
                 elsif (i_counter_Y >= 336) and (i_counter_Y < 352) and
                     (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 56) then
                     -- "O-SCOPE"
-                    v_tilemap_index := C_TILEMAP_OSCILLOSCOPE(to_integer(unsigned(w_col_addr_1_8_half)));
+                    v_tilemap_index := C_TILEMAP_OSCILLOSCOPE(to_integer(unsigned(w_col_addr_1_8_double)));
                     r_draw_oscilloscope <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 416) and (i_counter_Y < 432) and
