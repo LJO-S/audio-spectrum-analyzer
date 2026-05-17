@@ -14,21 +14,24 @@ entity image_generator is
         -- Frame Buffer memory
         i_fft_data_log    : in std_logic_vector(7 downto 0);
         i_fft_data_linear : in std_logic_vector(31 downto 0);
-        o_rd_addr_X       : out std_logic_vector(9 downto 0);
-        o_rd_addr_Y       : out std_logic_vector(9 downto 0);
-        -- GUI data
-        i_100ms_strb   : in std_logic;
-        i_capture_on   : in std_logic;
-        i_lpf_on       : in std_logic;
-        i_lpf_incr     : in std_logic;
-        i_lpf_decr     : in std_logic;
-        i_bpf_on       : in std_logic;
-        i_bpf_cutoff   : in unsigned(16 downto 0) := (others => '0');
-        i_hpf_on       : in std_logic;
-        i_hpf_incr     : in std_logic;
-        i_hpf_decr     : in std_logic;
-        i_waterfall_on : in std_logic;
-        i_ema_on       : in std_logic;
+        -- Trigger Capture data
+        i_time_data_linear : in std_logic_vector(15 downto 0);
+        -- X/Y positions
+        o_rd_addr_X : out std_logic_vector(9 downto 0);
+        o_rd_addr_Y : out std_logic_vector(9 downto 0);
+        -- GUI config
+        i_100ms_strb      : in std_logic;
+        i_capture_on      : in std_logic;
+        i_lpf_on          : in std_logic;
+        i_lpf_incr        : in std_logic;
+        i_lpf_decr        : in std_logic;
+        i_bpf_on          : in std_logic;
+        i_bpf_cutoff      : in unsigned(16 downto 0) := (others => '0');
+        i_hpf_on          : in std_logic;
+        i_hpf_incr        : in std_logic;
+        i_hpf_decr        : in std_logic;
+        i_waterfall_on    : in std_logic;
+        i_oscilloscope_en : in std_logic;
         -- TMDS
         o_HSYNC : out std_logic;
         o_VSYNC : out std_logic;
@@ -99,15 +102,29 @@ architecture rtl of image_generator is
     -- Line draw
     -- We have a 640x480p image. Count 800x525p. Copy-pasted from previous project
     -- Bins/columns 0-512 --> 0-48 kHz. Columns 513-640 are left as freeplay (such as capture/internal). 
+
+    -- Oscilloscope
+    signal r_draw_oscilloscope      : std_logic                     := '0';
+    signal r_video_red_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_video_grn_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_video_blu_oscilloscope : std_logic_vector(7 downto 0)  := (others => '0');
+    signal r_time_data_linear       : std_logic_vector(15 downto 0) := (others => '0');
+    signal r_time_data_y_delta      : signed(15 - 14 + 9 downto 0)  := (others => '0');
+    signal r_osc_ypos_curr          : signed(10 downto 0)           := (others => '0');
+    signal r_osc_ypos_curr_clip     : unsigned(9 downto 0)          := (others => '0');
+    signal r_osc_ypos_prev          : unsigned(9 downto 0)          := to_unsigned(C_SPECTRUM_Y_UPPER / 2, 10);
+
 begin
-    --*****************************************************************************
+    -- ============================================================================ 
     -- Concurrent assignments 
     o_draw      <= r_draw_d2;
     o_HSYNC     <= r_HSYNC_d2;
     o_VSYNC     <= r_VSYNC_d2;
     o_rd_addr_X <= std_logic_vector(r_counter_X);
     o_rd_addr_Y <= std_logic_vector(r_counter_Y);
-    --*****************************************************************************
+    -- ============================================================================ 
+    -- HIERARCHY: 
+    -- GUI --> OSC --> FFT --> ASCII
     p_output_mux : process (all)
     begin
         o_video_red <= (others => '0');
@@ -117,6 +134,10 @@ begin
             o_video_red <= r_video_red_gui;
             o_video_grn <= r_video_grn_gui;
             o_video_blu <= r_video_blu_gui;
+        elsif (r_draw_oscilloscope = '1') then
+            o_video_red <= r_video_red_oscilloscope;
+            o_video_grn <= r_video_grn_oscilloscope;
+            o_video_blu <= r_video_blu_oscilloscope;
         elsif (r_draw_spectrum = '1') then
             o_video_red <= r_video_red_spectrum;
             o_video_grn <= r_video_grn_spectrum;
@@ -127,11 +148,11 @@ begin
             o_video_blu <= w_video_blu_ascii;
         end if;
     end process p_output_mux;
-    --*****************************************************************************
+    -- ============================================================================ 
+    -- Multiple input data sources have different read latencies and post-processing
     p_pipeline : process (clk_100)
     begin
         if rising_edge(clk_100) then
-
             if (i_ce = '1') then
                 -- ------------
                 -- PIPE 1
@@ -141,23 +162,46 @@ begin
                 r_HSYNC_d1     <= r_HSYNC;
                 r_VSYNC_d1     <= r_VSYNC;
                 r_draw_d1      <= r_draw;
-
                 -- ------------
                 -- PIPE 2
                 -- ------------
                 -- RD_addr to RD_data (framebuf): 4cc
                 -- RD_data via log2lin: 3cc (say 4cc)
-                r_counter_X_d2    <= r_counter_X_d1;
-                r_counter_Y_d2    <= r_counter_Y_d1;
-                r_HSYNC_d2        <= r_HSYNC_d1;
-                r_VSYNC_d2        <= r_VSYNC_d1;
-                r_draw_d2         <= r_draw_d1;
-                r_fft_data_log    <= i_fft_data_log;
-                r_fft_data_linear <= i_fft_data_linear;
+                -- RD_data via trigger_capture: 2cc (say 4cc)
+                r_counter_X_d2     <= r_counter_X_d1;
+                r_counter_Y_d2     <= r_counter_Y_d1;
+                r_HSYNC_d2         <= r_HSYNC_d1;
+                r_VSYNC_d2         <= r_VSYNC_d1;
+                r_draw_d2          <= r_draw_d1;
+                r_fft_data_log     <= i_fft_data_log;
+                r_fft_data_linear  <= i_fft_data_linear;
+                r_time_data_linear <= i_time_data_linear;
+                -- ------------
+                -- PIPE 3
+                -- ------------
+-- r_counter_X_d3        <= r_counter_X_d2;
+-- r_counter_Y_d3        <= r_counter_Y_d2;
+-- r_HSYNC_d3            <= r_HSYNC_d2;
+-- r_VSYNC_d3            <= r_VSYNC_d2;
+-- r_draw_d3             <= r_draw_d2;
+-- r_fft_data_log_d1     <= r_fft_data_log;
+-- r_fft_data_linear_d1  <= r_fft_data_linear;
+-- r_time_data_linear_d1 <= r_time_data_linear;
+-- -- ------------
+-- -- PIPE 4
+-- -- ------------
+-- r_counter_X_d4        <= r_counter_X_d3;
+-- r_counter_Y_d4        <= r_counter_Y_d3;
+-- r_HSYNC_d4            <= r_HSYNC_d3;
+-- r_VSYNC_d4            <= r_VSYNC_d3;
+-- r_draw_d4             <= r_draw_d3;
+-- r_fft_data_log_d2     <= r_fft_data_log_d1;
+-- r_fft_data_linear_d2  <= r_fft_data_linear_d1;
+-- r_time_data_linear_d2 <= r_time_data_linear_d1;
             end if;
         end if;
     end process p_pipeline;
-    --*****************************************************************************
+    -- ============================================================================ 
     p_video_draw : process (clk_100)
     begin
         if rising_edge(clk_100) then
@@ -189,7 +233,7 @@ begin
             end if;
         end if;
     end process p_video_draw;
-    --*****************************************************************************
+    -- ============================================================================ 
     p_update_cutoffs : process (clk_100)
     begin
         if rising_edge(clk_100) then
@@ -207,7 +251,7 @@ begin
             end if;
         end if;
     end process p_update_cutoffs;
-    --*****************************************************************************
+    -- ============================================================================ 
     p_eval_fft_data : process (clk_100)
     begin
         if rising_edge(clk_100) then
@@ -236,7 +280,7 @@ begin
                 -- Draw spectrum decision            
                 ----------------------------
                 if (r_counter_X_d2 < C_SPECTRUM_X_UPPER) and (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER) then
-                    r_draw_spectrum <= '1';
+                    r_draw_spectrum <= not(i_oscilloscope_en);
                     if (i_waterfall_on = '1') then
                         r_video_red_spectrum <= w_video_red_spectrum;
                         r_video_grn_spectrum <= w_video_grn_spectrum;
@@ -274,7 +318,72 @@ begin
             end if;
         end if;
     end process p_eval_fft_data;
-    --*****************************************************************************
+    -- ============================================================================ 
+    p_eval_osc_data : process (clk_100)
+        variable v_ypos_lo : unsigned(9 downto 0) := (others => '0');
+        variable v_ypos_hi : unsigned(9 downto 0) := (others => '0');
+    begin
+        if rising_edge(clk_100) then
+            -- Sample is 16-bit signed, range [-32768, +32767]
+            -- Region height = C_SPECTRUM_Y_UPPER = 400 --> half = 200
+            -- osc_y = 200 - (sample * 200) / 32768 = 200 - (sample × 200) >> 15
+
+            -------------
+            -- PIPE 0
+            -------------
+            r_time_data_y_delta <= resize(
+                shift_right(
+                signed(r_time_data_linear) * to_signed(C_SPECTRUM_Y_UPPER / 2, 9),
+                r_time_data_linear'length - 1),
+                r_time_data_y_delta'length);
+            -------------
+            -- PIPE 1
+            -------------
+            r_osc_ypos_curr <= to_signed(C_SPECTRUM_Y_UPPER / 2, r_osc_ypos_curr'length) - r_time_data_y_delta;
+            -------------
+            -- PIPE 2
+            -------------
+            if (r_osc_ypos_curr < 0) then
+                r_osc_ypos_curr_clip <= (others => '0');
+            elsif (r_osc_ypos_curr >= C_SPECTRUM_Y_UPPER) then
+                r_osc_ypos_curr_clip <= to_unsigned(C_SPECTRUM_Y_UPPER, r_osc_ypos_curr_clip'length);
+            else
+                r_osc_ypos_curr_clip <= unsigned(r_osc_ypos_curr(r_osc_ypos_curr'high - 1 downto 0));
+            end if;
+
+            -- Every pixel strobe
+            if (i_ce = '1') then
+                -- Default
+                r_draw_oscilloscope      <= '0';
+                r_video_red_oscilloscope <= (others => '0');
+                r_video_grn_oscilloscope <= (others => '0');
+                r_video_blu_oscilloscope <= (others => '0');
+
+                -- Y mapping
+                if (r_counter_X_d2 < C_SPECTRUM_X_UPPER) and (r_counter_Y_d2 < C_SPECTRUM_Y_UPPER) then
+                    r_draw_oscilloscope <= i_oscilloscope_en;
+                    if (r_counter_X_d2 = 0) and (r_counter_Y_d2 = r_osc_ypos_curr_clip) then
+                        r_video_grn_oscilloscope <= x"FF";
+                    else
+                        -- Set HI/LO limits
+                        if (r_osc_ypos_prev <= r_osc_ypos_curr_clip) then
+                            v_ypos_lo := r_osc_ypos_prev;
+                            v_ypos_hi := r_osc_ypos_curr_clip;
+                        else
+                            v_ypos_lo := r_osc_ypos_curr_clip;
+                            v_ypos_hi := r_osc_ypos_prev;
+                        end if;
+                        -- Gap fill between columns
+                        if (r_counter_Y_d2 >= v_ypos_lo) and (r_counter_Y_d2 <= v_ypos_hi) then
+                            r_video_grn_oscilloscope                             <= x"FF";
+                        end if;
+                    end if;
+                end if;
+                r_osc_ypos_prev <= r_osc_ypos_curr_clip;
+            end if;
+        end if;
+    end process p_eval_osc_data;
+    -- ============================================================================ 
     p_draw_lines : process (clk_100)
     begin
         if rising_edge(clk_100) then
@@ -337,7 +446,7 @@ begin
             end if;
         end if;
     end process p_draw_lines;
-    --*****************************************************************************
+    -- ============================================================================ 
     -- Converting cutoff to x-axis position. Each kHz occupies ~ 21 pixels on the screen 
     -- Multiply by 21 = 16 + 4 + 1 = (X << 4) + (X << 2) + (X << 0)
     p_convert_freq_to_x_pos : process (clk_100)
@@ -347,32 +456,32 @@ begin
             r_hpf_x_axis <= resize((w_freq_hpf_1000s & "0000") + (w_freq_hpf_1000s & "00") + w_freq_hpf_1000s, r_hpf_x_axis'length);
         end if;
     end process p_convert_freq_to_x_pos;
-    --*****************************************************************************
+    -- ============================================================================ 
     ascii_generator_inst : entity work.ascii_generator
         port map
         (
-            clk_100          => clk_100,
-            i_ce             => i_ce,
-            i_counter_X      => r_counter_X_d1,
-            i_counter_Y      => r_counter_Y_d1,
-            i_max_freq       => r_max_freq,
-            i_capture_on     => i_capture_on,
-            i_lpf_on         => i_lpf_on,
-            i_lpf_cutoff     => r_lpf_cutoff,
-            i_bpf_on         => i_bpf_on,
-            i_bpf_cutoff     => i_bpf_cutoff,
-            i_hpf_on         => i_hpf_on,
-            i_hpf_cutoff     => r_hpf_cutoff,
-            i_waterfall_on   => i_waterfall_on,
-            i_ema_on         => i_ema_on,
-            o_freq_lpf_1000s => w_freq_lpf_1000s,
-            o_freq_hpf_1000s => w_freq_hpf_1000s,
-            o_glyph_active   => w_ascii_draw,
-            o_video_red      => w_video_red_ascii,
-            o_video_grn      => w_video_grn_ascii,
-            o_video_blu      => w_video_blu_ascii
+            clk_100           => clk_100,
+            i_ce              => i_ce,
+            i_counter_X       => r_counter_X_d1,
+            i_counter_Y       => r_counter_Y_d1,
+            i_max_freq        => r_max_freq,
+            i_capture_on      => i_capture_on,
+            i_lpf_on          => i_lpf_on,
+            i_lpf_cutoff      => r_lpf_cutoff,
+            i_bpf_on          => i_bpf_on,
+            i_bpf_cutoff      => i_bpf_cutoff,
+            i_hpf_on          => i_hpf_on,
+            i_hpf_cutoff      => r_hpf_cutoff,
+            i_waterfall_on    => i_waterfall_on,
+            i_oscilloscope_en => i_oscilloscope_en,
+            o_freq_lpf_1000s  => w_freq_lpf_1000s,
+            o_freq_hpf_1000s  => w_freq_hpf_1000s,
+            o_glyph_active    => w_ascii_draw,
+            o_video_red       => w_video_red_ascii,
+            o_video_grn       => w_video_grn_ascii,
+            o_video_blu       => w_video_blu_ascii
         );
-    --*****************************************************************************
+    -- ============================================================================ 
     -- Holds colormap for waterfall
     spectrum_palette_rom_inst : entity work.spectrum_palette_rom
         port map
@@ -384,5 +493,5 @@ begin
             o_grn  => w_video_grn_spectrum,
             o_blu  => w_video_blu_spectrum
         );
-    --*****************************************************************************
+    -- ============================================================================ 
 end architecture;
