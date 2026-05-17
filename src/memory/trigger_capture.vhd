@@ -48,25 +48,25 @@ architecture rtl of trigger_capture is
     constant C_THRESH_HI             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed((2 ** (G_DATA_WIDTH - 1) - 1), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
     constant C_THRESH_LO             : signed(G_DATA_WIDTH - 1 downto 0) := shift_right(to_signed( - (2 ** (G_DATA_WIDTH - 1)), G_DATA_WIDTH), (G_DATA_WIDTH - 1) / 3);
     constant C_PRE_TRIGGER_COUNT     : natural                           := 10;
+    constant C_REQUIRED_SAMPLE_CNT   : natural                           := C_SPECTRUM_X_UPPER - C_PRE_TRIGGER_COUNT;
     constant C_CEIL_DATA_DEPTH_WIDTH : natural                           := integer(ceil(log2(real(G_DATA_DEPTH))));
     constant C_CEIL_DATA_DEPTH       : natural                           := 2 ** C_CEIL_DATA_DEPTH_WIDTH;
 
     --------------------
     -- Types
     --------------------
-    type t_capture_state is (IDLE, ARMED, CAPTURE, HOLD_OFF);
+    type t_capture_state is (SETUP, ARMED, CAPTURE, HOLD_OFF);
 
     --------------------
     -- Signals
     --------------------
-    signal s_capture_state : t_capture_state := IDLE;
+    signal s_capture_state : t_capture_state := SETUP;
 
     signal r_audio_valid           : std_logic                                                       := '0';
     signal r_sample_curr           : signed(G_DATA_WIDTH - 1 downto 0)                               := (others => '0');
     signal r_sample_prev           : signed(G_DATA_WIDTH - 1 downto 0)                               := (others => '0');
     signal r_mem_sel               : std_logic                                                       := '0';
-    signal r_mem_sel_d1            : std_logic                                                       := '0';
-    signal r_mem_sel_d2            : std_logic                                                       := '0';
+    signal r_mem_ready             : std_logic                                                       := '0';
     signal r_trigger_addr          : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
     signal r_raddr_start_addr      : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
     signal r_circ_buf_waddr        : unsigned(integer(ceil(log2(real(G_DATA_DEPTH)))) - 1 downto 0)  := (others => '0');
@@ -90,14 +90,16 @@ begin
     p_trigger_fsm : process (clk)
     begin
         if rising_edge(clk) then
-            r_mem_sel_d1 <= r_mem_sel;
-            r_mem_sel_d2 <= r_mem_sel_d1;
             case s_capture_state is
                     ------------------------------------------------
-                when IDLE =>
+                when SETUP =>
                     -- Wait for half of display to fill in buffer
-                    r_mem_sel <= '0';
+                    r_mem_sel   <= '0';
+                    r_mem_ready <= '0';
                     if (r_circ_buf_waddr >= C_PRE_TRIGGER_COUNT) then
+                        r_mem_ready <= '1';
+                    end if;
+                    if (r_mem_ready = '1') then
                         s_capture_state <= ARMED;
                     end if;
                     ------------------------------------------------
@@ -107,16 +109,16 @@ begin
                         if (r_sample_curr > C_THRESH_HI) and (r_sample_prev < C_THRESH_LO) then
                             -- Capture starting point
                             r_trigger_addr  <= resize(r_circ_buf_waddr - C_PRE_TRIGGER_COUNT, r_trigger_addr'length);
+                            r_sample_cnt    <= to_unsigned(C_REQUIRED_SAMPLE_CNT, r_sample_cnt'length);
                             s_capture_state <= CAPTURE;
                         end if;
                     end if;
                     ------------------------------------------------
                 when CAPTURE =>
                     if (i_audio_valid = '1') then
-                        r_sample_cnt <= r_sample_cnt + 1;
+                        r_sample_cnt <= r_sample_cnt - 1;
                         -- Account for read latency
-                        if (r_sample_cnt >= C_SPECTRUM_X_UPPER - C_PRE_TRIGGER_COUNT) then
-                            r_sample_cnt       <= (others => '0');
+                        if (r_sample_cnt   <= 0) then
                             r_raddr_start_addr <= r_trigger_addr;
                             r_mem_sel          <= not(r_mem_sel);
                             s_capture_state    <= HOLD_OFF;
@@ -135,7 +137,7 @@ begin
                     end if;
                     ------------------------------------------------
                 when others =>
-                    s_capture_state <= IDLE;
+                    s_capture_state <= SETUP;
                     ------------------------------------------------
             end case;
         end if;

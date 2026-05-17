@@ -21,13 +21,14 @@ entity video_driver_top is
         i_hpf_incr : in std_logic;
         i_hpf_decr : in std_logic;
         -- Display Settings
-        i_waterfall_en : in std_logic;
-        i_ema_en       : in std_logic;
+        i_waterfall_en    : in std_logic;
+        i_oscilloscope_en : in std_logic;
         -- Ping Pong Mem IF
-        o_rd_addr_X      : out std_logic_vector(9 downto 0);
-        o_rd_addr_Y      : out std_logic_vector(9 downto 0);
-        i_rd_data_log    : in std_logic_vector(7 downto 0);
-        i_rd_data_linear : in std_logic_vector(31 downto 0);
+        o_rd_addr_X       : out std_logic_vector(9 downto 0);
+        o_rd_addr_Y       : out std_logic_vector(9 downto 0);
+        i_rd_data_log     : in std_logic_vector(7 downto 0);
+        i_rd_data_linear  : in std_logic_vector(31 downto 0);
+        i_rd_data_trigger : in std_logic_vector(15 downto 0);
         -- PIN mapping ports
         o_TMDS_clk_p : out std_logic;
         o_TMDS_clk_n : out std_logic;
@@ -126,27 +127,32 @@ begin
     image_generator_inst : entity work.image_generator
         port map
         (
-            clk_100              => clk_100,
-            i_ce                 => w_ce,
+            clk_100 => clk_100,
+            i_ce    => w_ce,
+            -- FFT image limits
             i_compare_limit      => r_comp_limit_value,
             i_compare_subtractor => r_subtract_value,
-            i_fft_data_log       => i_rd_data_log,
-            i_fft_data_linear    => i_rd_data_linear,
-            o_rd_addr_X          => o_rd_addr_X,
-            o_rd_addr_Y          => o_rd_addr_Y,
-            i_100ms_strb         => i_100ms_strb,
-            i_capture_on         => i_capture_en,
-            i_lpf_on             => i_lpf_en,
-            i_lpf_incr           => i_lpf_incr,
-            i_lpf_decr           => i_lpf_decr,
-            i_bpf_on             => '0',
+            -- FFT Data
+            i_fft_data_log     => i_rd_data_log,
+            i_fft_data_linear  => i_rd_data_linear,
+            i_time_data_linear => i_rd_data_trigger,
+            -- X/Y positions
+            o_rd_addr_X => o_rd_addr_X,
+            o_rd_addr_Y => o_rd_addr_Y,
+            -- Video configurations
+            i_100ms_strb      => i_100ms_strb,
+            i_capture_on      => i_capture_en,
+            i_lpf_on          => i_lpf_en,
+            i_lpf_incr        => i_lpf_incr,
+            i_lpf_decr        => i_lpf_decr,
+            i_bpf_on          => '0',
             i_bpf_cutoff => (others => '0'),
-            i_hpf_on             => i_hpf_en,
-            i_hpf_incr           => i_hpf_incr,
-            i_hpf_decr           => i_hpf_decr,
-            i_waterfall_on       => i_waterfall_en,
-            i_ema_on             => i_ema_en,
-            -- 
+            i_hpf_on          => i_hpf_en,
+            i_hpf_incr        => i_hpf_incr,
+            i_hpf_decr        => i_hpf_decr,
+            i_waterfall_on    => i_waterfall_en,
+            i_oscilloscope_en => i_oscilloscope_en,
+            -- Video signals
             o_HSYNC     => w_HSYNC,
             o_VSYNC     => w_VSYNC,
             o_draw      => w_draw,

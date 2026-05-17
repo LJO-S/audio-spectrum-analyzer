@@ -7,7 +7,7 @@ package project_common_pkg is
     --===============================================================================
     -- Spectrum
     constant C_SPECTRUM_X_UPPER : natural := 480;
-constant C_SPECTRUM_Y_UPPER : natural := 400;
+    constant C_SPECTRUM_Y_UPPER : natural := 400;
 
     constant C_CHAR_WIDTH  : natural := 8;
     constant C_CHAR_HEIGHT : natural := 16;
@@ -120,12 +120,16 @@ constant C_SPECTRUM_Y_UPPER : natural := 400;
     2 => 16, -- F
     3 => 10  -- :
     );
-    -- "EMA"
-    constant C_TILEMAP_EMA : t_tilemap_short := (
-    0 => 15, -- E
-    1 => 23, -- M
-    2 => 11, -- A
-    3 => 37  -- 
+    -- "O-SCOPE "
+    constant C_TILEMAP_OSCILLOSCOPE : t_tilemap_long := (
+    0 => 25, -- O
+    1 => 39, -- -
+    2 => 29, -- S
+    3 => 13, -- C
+    4 => 25, -- O
+    5 => 26, -- P
+    6 => 15, -- E
+    7 => 37  --
     );
 
     -- "WATERFALL"
@@ -166,7 +170,7 @@ constant C_SPECTRUM_Y_UPPER : natural := 400;
     );
 
     type t_font_glyph is array (0 to 15) of std_logic_vector(7 downto 0);
-    type t_font_rom is array(0 to 38) of t_font_glyph;
+    type t_font_rom is array(0 to 39) of t_font_glyph;
 
     constant C_FONT_ROM : t_font_rom := (
     0  => (x"00", x"00", x"00", x"18", x"24", x"42", x"42", x"42", x"42", x"42", x"42", x"42", x"24", x"18", x"00", x"00"), -- 0 
@@ -207,7 +211,8 @@ constant C_SPECTRUM_Y_UPPER : natural := 400;
     35 => (x"00", x"00", x"00", x"EE", x"44", x"44", x"28", x"28", x"10", x"10", x"10", x"10", x"10", x"38", x"00", x"00"), -- Y 
     36 => (x"00", x"00", x"00", x"7E", x"84", x"04", x"08", x"08", x"10", x"20", x"20", x"42", x"42", x"FC", x"00", x"00"), -- Z
     37 => (x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00"), -- " "
-    38 => (x"00", x"00", x"00", x"38", x"44", x"5A", x"AA", x"AA", x"AA", x"AA", x"B4", x"42", x"44", x"38", x"00", x"00")  -- @ 
+    38 => (x"00", x"00", x"00", x"38", x"44", x"5A", x"AA", x"AA", x"AA", x"AA", x"B4", x"42", x"44", x"38", x"00", x"00"), -- @
+    39 => (x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"7E", x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00")  -- -
     );
     --===============================================================================
     -- SpMem initializations
