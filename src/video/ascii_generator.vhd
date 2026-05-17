@@ -23,8 +23,8 @@ entity ascii_generator is
         i_hpf_on     : in std_logic;
         i_hpf_cutoff : in unsigned(16 downto 0);
         -- Misc
-        i_waterfall_on : in std_logic;
-        i_ema_on       : in std_logic;
+        i_waterfall_on    : in std_logic;
+        i_oscilloscope_en : in std_logic;
         -- 
         o_freq_lpf_1000s : out unsigned(6 downto 0);
         o_freq_hpf_1000s : out unsigned(6 downto 0);
@@ -52,7 +52,7 @@ architecture rtl of ascii_generator is
     signal r_draw_bpf            : std_logic                    := '0';
     signal r_draw_hpf            : std_logic                    := '0';
     signal r_draw_waterfall      : std_logic                    := '0';
-    signal r_draw_ema            : std_logic                    := '0';
+    signal r_draw_oscilloscope   : std_logic                    := '0';
     signal r_draw_capture        : std_logic                    := '0';
     signal r_draw_internal       : std_logic                    := '0';
     -- Variable frequency tilemaps
@@ -90,14 +90,14 @@ begin
         -- 3. Get bit (with bit reverse)
         if rising_edge(clk_100) then
             if (i_ce = '1') then
-                r_draw           <= '0';
-                r_draw_lpf       <= '0';
-                r_draw_bpf       <= '0';
-                r_draw_hpf       <= '0';
-                r_draw_ema       <= '0';
-                r_draw_waterfall <= '0';
-                r_draw_capture   <= '0';
-                r_draw_internal  <= '0';
+                r_draw              <= '0';
+                r_draw_lpf          <= '0';
+                r_draw_bpf          <= '0';
+                r_draw_hpf          <= '0';
+                r_draw_oscilloscope <= '0';
+                r_draw_waterfall    <= '0';
+                r_draw_capture      <= '0';
+                r_draw_internal     <= '0';
                 ------------------------------------------------------------------------------
                 if (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < (C_WORD_X_LEFT + 64)) and
                     (i_counter_Y >= 16) and (i_counter_Y < 32) then
@@ -182,10 +182,10 @@ begin
                     r_draw_waterfall <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 336) and (i_counter_Y < 352) and
-                    (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 32) then
-                    -- "EMA"
-                    v_tilemap_index := C_TILEMAP_EMA(to_integer(unsigned(w_col_addr_1_8_half)));
-                    r_draw_ema <= '1';
+                    (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 56) then
+                    -- "O-SCOPE"
+                    v_tilemap_index := C_TILEMAP_OSCILLOSCOPE(to_integer(unsigned(w_col_addr_1_8_half)));
+                    r_draw_oscilloscope <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 416) and (i_counter_Y < 432) and
                     (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 64) then
@@ -288,7 +288,7 @@ begin
                     r_draw_bpf or
                     r_draw_hpf or
                     r_draw_waterfall or
-                    r_draw_ema);
+                    r_draw_oscilloscope);
                 if (r_draw = '1') then
                     -- Note: the not() causes bit-reversion, i.e. 0-->7, 1-->6 and so on
                     o_video_red <= (others => (r_font_line(to_integer(unsigned(not(r_col_addr))))));
@@ -356,12 +356,12 @@ begin
                         o_video_grn <= (others => '1');
                         o_video_blu <= (others => '0');
                     end if;
-                elsif (r_draw_ema = '1') then
+                elsif (r_draw_oscilloscope = '1') then
                     if (r_font_line(to_integer(unsigned(not(r_col_addr)))) = '1') then
-                        o_video_red <= (others => not(i_ema_on));
-                        o_video_grn <= (others => not(i_ema_on));
-                        o_video_blu <= (others => not(i_ema_on));
-                    elsif (i_ema_on = '1') then
+                        o_video_red <= (others => not(i_oscilloscope_en));
+                        o_video_grn <= (others => not(i_oscilloscope_en));
+                        o_video_blu <= (others => not(i_oscilloscope_en));
+                    elsif (i_oscilloscope_en = '1') then
                         o_video_red <= (others => '1');
                         o_video_grn <= (others => '1');
                         o_video_blu <= (others => '0');

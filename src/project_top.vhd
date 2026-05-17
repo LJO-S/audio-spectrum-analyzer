@@ -59,7 +59,6 @@ entity project_top is
         -- GPIO
         i_pb_vector  : in std_logic_vector(3 downto 0);
         i_dip_vector : in std_logic_vector(3 downto 0);
-        o_led        : out std_logic;
 
         -- Audio Codec IF (SSM2603)
         i_sdata     : in std_logic;
@@ -141,18 +140,18 @@ architecture rtl of project_top is
     signal w_axis_tlast_audio_to_xfft  : std_logic;
 
     -- Video-FrameBufMem IF
-    signal w_rd_addr_X             : std_logic_vector(9 downto 0);
-    signal w_rd_addr_Y             : std_logic_vector(9 downto 0);
-    signal w_rd_addr_X_framebuf    : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_X_SIZE)))) - 1 downto 0);
-    signal w_rd_addr_Y_framebuf    : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_Y_SIZE)))) - 1 downto 0);
-    signal w_frame_buf_data_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0);
-    signal r_frame_buf_data_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal r_frame_buf_data_log_d1 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal r_frame_buf_data_log_d2 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal w_frame_buf_data_linear : std_logic_vector(2 ** (C_FFT_LOG2_DATA_WIDTH - C_FFT_LOG2_QFORMAT) - 1 downto 0);
+    signal w_rd_addr_X              : std_logic_vector(9 downto 0);
+    signal w_rd_addr_Y              : std_logic_vector(9 downto 0);
+    signal w_rd_addr_X_framebuf     : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_X_SIZE)))) - 1 downto 0);
+    signal w_rd_addr_Y_framebuf     : std_logic_vector(integer(ceil(log2(real(C_FRAMEBUF_Y_SIZE)))) - 1 downto 0);
+    signal w_frame_buf_rdata_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0);
+    signal r_frame_buf_rdata_log    : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal r_frame_buf_rdata_log_d1 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal r_frame_buf_rdata_log_d2 : std_logic_vector(C_FFT_LOG2_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal w_frame_buf_data_linear  : std_logic_vector(2 ** (C_FFT_LOG2_DATA_WIDTH - C_FFT_LOG2_QFORMAT) - 1 downto 0);
 
     -- GPIO
-    signal w_sig_gen_src_sel        : std_logic_vector(3 downto 0);
+    signal w_dds_ctrl               : std_logic_vector(3 downto 0);
     signal w_lpf_en                 : std_logic;
     signal w_lpf_incr               : std_logic;
     signal w_lpf_incr_to_video      : std_logic;
@@ -163,7 +162,7 @@ architecture rtl of project_top is
     signal w_hpf_incr_to_video      : std_logic;
     signal w_hpf_decr               : std_logic;
     signal w_hpf_decr_to_video      : std_logic;
-    signal w_ema_en                 : std_logic;
+    signal w_oscilloscope_en        : std_logic;
     signal w_waterfall_en           : std_logic;
     signal w_sel_up_lo              : std_logic;
     signal w_capture_en             : std_logic;
@@ -173,32 +172,26 @@ architecture rtl of project_top is
     signal w_new_data_strobe_lpf    : std_logic;
     signal w_new_data_strobe_hpf    : std_logic;
 
+    -- Filters
     signal w_raddr_hpf : unsigned(8 downto 0);
     signal w_rdata_hpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
     signal w_raddr_lpf : unsigned(8 downto 0);
     signal w_rdata_lpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
 
+    -- Drain Guard
     type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
     signal s_state_drain_guard : t_drain_guard := IDLE;
 
+    -- Sampling Clocks
     signal w_lrclk     : std_logic;
     signal w_ms_strobe : std_logic;
 
-    signal r_led : std_logic := '0';
+    -- Misc
+    signal w_video_to_trigger_capture_raddr : std_logic_vector(integer(ceil(log2(real(C_SPECTRUM_X_UPPER)))) - 1 downto 0);
+    signal w_trigger_capture_to_video_rdata : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
 begin
     -- ============================================================================ 
-    -- ============================================================================ 
     -- Combinatorial Assignments
-
-    -- ============================================================================ 
-    -- TEMPORARY
-    process (i_clk_100)
-    begin
-        if rising_edge(i_clk_100) then
-            r_led <= i_uart_gpio_if(0);
-            o_led <= r_led;
-        end if;
-    end process;
     -- ============================================================================ 
     ms_strobe_generator_inst : entity work.ms_strobe_generator
         generic map(
@@ -222,7 +215,7 @@ begin
         (
             clk          => i_clk_100,
             i_en         => not(w_capture_en_drain_guard),
-            i_pbuttons   => w_sig_gen_src_sel,
+            i_pbuttons   => w_dds_ctrl,
             i_sel_up_lo  => w_sel_up_lo,
             i_fs_clk     => w_lrclk,
             i_ms_strobe  => w_ms_strobe,
@@ -289,7 +282,7 @@ begin
             r_fft_tlast_out_d3 <= r_fft_tlast_out_d2;
         end if;
     end process p_magnitude_calc;
-    ---------------------------------------
+    -- ============================================================================ 
     p_fft_output_tlast : process (i_clk_100)
     begin
         if rising_edge(i_clk_100) then
@@ -299,8 +292,6 @@ begin
             end if;
         end if;
     end process p_fft_output_tlast;
-    ---------------------------------------
-
     -- ============================================================================
     log_2_inst : entity work.log_2
         generic map(
@@ -345,7 +336,7 @@ begin
             -- Out
             i_rd_addr_X => w_rd_addr_X_framebuf,
             i_rd_addr_Y => w_rd_addr_Y_framebuf,
-            o_rd_data   => w_frame_buf_data_log
+            o_rd_data   => w_frame_buf_rdata_log
         );
     -- ============================================================================ 
 
@@ -361,7 +352,7 @@ begin
             port map
             (
                 clk      => i_clk_100,
-                i_tdata  => w_frame_buf_data_log,
+                i_tdata  => w_frame_buf_rdata_log,
                 i_tvalid => '1',
                 o_tdata  => w_frame_buf_data_linear,
                 o_tvalid => open
@@ -380,7 +371,7 @@ begin
             port map
             (
                 clk      => i_clk_100,
-                i_tdata  => w_frame_buf_data_log,
+                i_tdata  => w_frame_buf_rdata_log,
                 i_tvalid => '1',
                 o_tdata  => w_frame_buf_data_linear,
                 o_tvalid => open
@@ -391,40 +382,47 @@ begin
     p_pipe_log_lin_data : process (i_clk_100)
     begin
         if rising_edge(i_clk_100) then
-            r_frame_buf_data_log    <= w_frame_buf_data_log;
-            r_frame_buf_data_log_d1 <= r_frame_buf_data_log;
-            r_frame_buf_data_log_d2 <= r_frame_buf_data_log_d1;
+            r_frame_buf_rdata_log    <= w_frame_buf_rdata_log;
+            r_frame_buf_rdata_log_d1 <= r_frame_buf_rdata_log;
+            r_frame_buf_rdata_log_d2 <= r_frame_buf_rdata_log_d1;
         end if;
     end process p_pipe_log_lin_data;
     -- ============================================================================ 
     video_driver_top_inst : entity work.video_driver_top
         port map
         (
-            clk_25           => i_clk_25,
-            clk_100          => i_clk_100,
-            clk_tmds_250     => i_clk_250,
-            i_100ms_strb     => w_100ms_strb,
-            i_capture_en     => w_capture_en_drain_guard,
-            i_lpf_en         => w_lpf_en,
-            i_hpf_en         => w_hpf_en,
-            i_lpf_incr       => w_lpf_incr_to_video,
-            i_lpf_decr       => w_lpf_decr_to_video,
-            i_hpf_incr       => w_hpf_incr_to_video,
-            i_hpf_decr       => w_hpf_decr_to_video,
-            i_waterfall_en   => w_waterfall_en,
-            i_ema_en         => w_ema_en,
-            o_rd_addr_X      => w_rd_addr_X,
-            o_rd_addr_Y      => w_rd_addr_Y,
-            i_rd_data_log    => r_frame_buf_data_log_d2,
-            i_rd_data_linear => w_frame_buf_data_linear,
-            o_TMDS_clk_p     => o_TMDS_clk_p,
-            o_TMDS_clk_n     => o_TMDS_clk_n,
-            o_video_0_p      => o_video_0_p,
-            o_video_0_n      => o_video_0_n,
-            o_video_1_p      => o_video_1_p,
-            o_video_1_n      => o_video_1_n,
-            o_video_2_p      => o_video_2_p,
-            o_video_2_n      => o_video_2_n
+            -- CLKs
+            clk_25       => i_clk_25,
+            clk_100      => i_clk_100,
+            clk_tmds_250 => i_clk_250,
+            -- Strobe
+            i_100ms_strb => w_100ms_strb,
+            -- GUI configuration
+            i_capture_en      => w_capture_en_drain_guard,
+            i_lpf_en          => w_lpf_en,
+            i_hpf_en          => w_hpf_en,
+            i_lpf_incr        => w_lpf_incr_to_video,
+            i_lpf_decr        => w_lpf_decr_to_video,
+            i_hpf_incr        => w_hpf_incr_to_video,
+            i_hpf_decr        => w_hpf_decr_to_video,
+            i_waterfall_en    => w_waterfall_en,
+            i_oscilloscope_en => w_oscilloscope_en,
+            -- X/Y positions
+            o_rd_addr_X => w_rd_addr_X,
+            o_rd_addr_Y => w_rd_addr_Y,
+            -- Input values
+            i_rd_data_log     => r_frame_buf_rdata_log_d2,
+            i_rd_data_linear  => w_frame_buf_data_linear,
+            i_rd_data_trigger => w_trigger_capture_to_video_rdata,
+            -- TMDS signals
+            o_TMDS_clk_p => o_TMDS_clk_p,
+            o_TMDS_clk_n => o_TMDS_clk_n,
+            o_video_0_p  => o_video_0_p,
+            o_video_0_n  => o_video_0_n,
+            o_video_1_p  => o_video_1_p,
+            o_video_1_n  => o_video_1_n,
+            o_video_2_p  => o_video_2_p,
+            o_video_2_n  => o_video_2_n
         );
     -- ============================================================================ 
     gpio_ctrl_inst : entity work.gpio_ctrl
@@ -434,12 +432,13 @@ begin
         )
         port map
         (
-            clk_100      => i_clk_100,
-            i_pb_vector  => i_pb_vector,
-            i_dip_vector => i_dip_vector,
+            clk_100        => i_clk_100,
+            i_pb_vector    => i_pb_vector,
+            i_dip_vector   => i_dip_vector,
+            i_uart_gpio_if => i_uart_gpio_if,
             -- Internal Src Selection
-            o_sig_gen_src_sel => w_sig_gen_src_sel,
-            o_sel_up_lo       => w_sel_up_lo,
+            o_dds_ctrl  => w_dds_ctrl,
+            o_sel_up_lo => w_sel_up_lo,
             -- LPF
             o_lpf_en   => w_lpf_en,
             o_lpf_incr => w_lpf_incr,
@@ -450,8 +449,8 @@ begin
             o_hpf_decr => w_hpf_decr,
             -- WATERFALL
             o_waterfall_en => w_waterfall_en,
-            -- EMA
-            o_ema_en => w_ema_en,
+            -- OSCILLOSCOPE
+            o_oscilloscope_en => w_oscilloscope_en,
             -- Capture/Internal
             o_capture_en => w_capture_en
         );
@@ -482,7 +481,23 @@ begin
             i_ps_ack              => i_ps_fir_ctrl_ack,
             o_fir_ctrl            => o_fir_ctrl
         );
-
+    -- ============================================================================ 
+    w_video_to_trigger_capture_raddr <= w_rd_addr_X(w_video_to_trigger_capture_raddr'range);
+    trigger_capture_inst : entity work.trigger_capture
+        generic map(
+            G_DATA_WIDTH  => G_FFT_BIT_SIZE,
+            G_DATA_DEPTH  => C_SPECTRUM_X_UPPER,
+            G_HOLD_OFF_MS => 50
+        )
+        port map
+        (
+            clk           => i_clk_100,
+            i_ms_strobe   => w_ms_strobe,
+            i_audio_data  => w_axis_tdata_audio_to_xfft(G_FFT_BIT_SIZE - 1 downto 0),
+            i_audio_valid => w_axis_tvalid_audio_to_xfft,
+            i_video_raddr => w_video_to_trigger_capture_raddr,
+            o_video_rdata => w_trigger_capture_to_video_rdata
+        );
     -- ============================================================================ 
     audio_top_inst : entity work.audio_top
         generic map(
