@@ -110,8 +110,8 @@ architecture rtl of image_generator is
     signal r_video_blu_oscilloscope    : std_logic_vector(7 downto 0)  := (others => '0');
     signal r_time_data_linear          : std_logic_vector(15 downto 0) := (others => '0');
     signal r_time_data_y_delta_mult    : signed(15 + 9 downto 0)       := (others => '0');
-    signal r_time_data_y_delta_shifted : signed(15 - 14 + 9 downto 0)  := (others => '0');
-    signal r_osc_ypos_curr             : signed(10 downto 0)           := (others => '0');
+    signal r_time_data_y_delta_shifted : signed(15 - 13 + 9 downto 0)  := (others => '0');
+    signal r_osc_ypos_curr             : signed(11 downto 0)           := (others => '0');
     signal r_osc_ypos_curr_clip        : unsigned(9 downto 0)          := (others => '0');
     signal r_osc_ypos_prev             : unsigned(9 downto 0)          := to_unsigned(C_SPECTRUM_Y_UPPER / 2, 10);
 
@@ -304,8 +304,9 @@ begin
     begin
         if rising_edge(clk_100) then
             -- Sample is 16-bit signed, range [-32768, +32767]
+            -- Sample seldom uses full scale --> range [-16384, 16383]
             -- Region height = C_SPECTRUM_Y_UPPER = 400 --> half = 200
-            -- osc_y = 200 - (sample * 200) / 32768 = 200 - (sample × 200) >> 15
+            -- osc_y = 200 - (sample * 200) / 16384 = 200 - (sample × 200) >> 14
 
             -------------
             -- PIPE 0

@@ -56,8 +56,8 @@ architecture rtl of audio_top is
     signal w_i2s_to_filter_data  : std_logic_vector(15 downto 0);
     signal w_i2s_to_filter_valid : std_logic;
 
-    signal w_filter_to_buffer_data  : std_logic_vector(15 downto 0);
-    signal w_filter_to_buffer_valid : std_logic;
+    signal w_filter_bank_data_out  : std_logic_vector(15 downto 0);
+    signal w_filter_bank_valid_out : std_logic;
 
     signal w_buffer_to_top_data : std_logic_vector(15 downto 0);
 
@@ -82,8 +82,8 @@ begin
     -- Fill Imaginary part with 0s and Real part with capture data
     o_tdata <= x"0000" & w_buffer_to_top_data;
 
-    o_raw_tdata  <= w_filter_to_buffer_data;
-    o_raw_tvalid <= w_filter_to_buffer_valid;
+    o_raw_tdata  <= w_filter_bank_data_out;
+    o_raw_tvalid <= w_filter_bank_valid_out;
     /* ------------------------------------------------------ */
     p_clk_counter : process (clk_100)
     begin
@@ -138,8 +138,8 @@ begin
             o_raddr_hpf           => o_raddr_hpf,
             i_rdata_hpf           => i_rdata_hpf,
             -- Output data
-            o_tvalid => w_filter_to_buffer_valid,
-            o_tdata  => w_filter_to_buffer_data
+            o_tvalid => w_filter_bank_valid_out,
+            o_tdata  => w_filter_bank_data_out
         );
     /* ------------------------------------------------------ */
     -- Audio Buffer
@@ -152,8 +152,8 @@ begin
             clk_100      => clk_100,
             i_capture_en => w_capture_en,
             o_draining   => w_audio_buffer_draining,
-            i_pdata      => w_filter_to_buffer_data,
-            i_valid      => w_filter_to_buffer_valid,
+            i_pdata      => w_filter_bank_data_out,
+            i_valid      => w_filter_bank_valid_out,
             i_tready     => i_tready,
             o_tdata      => w_buffer_to_top_data,
             o_tvalid     => o_tvalid,
@@ -171,8 +171,8 @@ begin
             i_en     => w_capture_en,
             i_pbclk  => w_lrclk,
             i_bclk   => w_bclk,
-            i_tdata  => w_filter_to_buffer_data,
-            i_tvalid => w_filter_to_buffer_valid,
+            i_tdata  => w_filter_bank_data_out,
+            i_tvalid => w_filter_bank_valid_out,
             o_pbdat  => o_pbdat
         );
     /* ------------------------------------------------------ */

@@ -28,7 +28,7 @@ architecture bench of audio_top_tb is
     constant G_INPUT_WIDTH : positive := 16;
     constant G_COEFF_WIDTH : positive := 16;
     -- Ports
-    signal clk_100                : std_logic := '0';
+    signal clk_100               : std_logic := '0';
     signal i_i2c_cfg_done        : std_logic;
     signal i_new_data_strobe_lpf : std_logic;
     signal i_new_data_strobe_hpf : std_logic;
@@ -58,6 +58,9 @@ architecture bench of audio_top_tb is
     signal o_tvalid     : std_logic;
     signal o_tlast      : std_logic;
     signal i_tready     : std_logic;
+
+    signal o_raw_tdata  : std_logic_vector(15 downto 0);
+    signal o_raw_tvalid : std_logic;
 
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
@@ -107,7 +110,7 @@ begin
         )
         port map
         (
-            clk_100                => clk_100,
+            clk_100               => clk_100,
             i_i2c_cfg_done        => i_i2c_cfg_done,
             i_new_data_strobe_lpf => i_new_data_strobe_lpf,
             i_new_data_strobe_hpf => i_new_data_strobe_hpf,
@@ -124,6 +127,8 @@ begin
             o_mclk                => o_mclk,
             o_lrclk               => o_lrclk,
             o_bclk                => o_bclk,
+            o_raw_tdata           => o_raw_tdata,
+            o_raw_tvalid          => o_raw_tvalid,
             o_tdata               => o_tdata,
             o_tvalid              => o_tvalid,
             o_tlast               => o_tlast,
