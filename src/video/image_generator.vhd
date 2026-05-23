@@ -332,7 +332,7 @@ begin
             elsif (r_osc_ypos_curr >= C_SPECTRUM_Y_UPPER) then
                 r_osc_ypos_curr_clip <= to_unsigned(C_SPECTRUM_Y_UPPER - 1, r_osc_ypos_curr_clip'length);
             else
-                r_osc_ypos_curr_clip <= unsigned(r_osc_ypos_curr(r_osc_ypos_curr'high - 1 downto 0));
+                r_osc_ypos_curr_clip <= unsigned(r_osc_ypos_curr(r_osc_ypos_curr'high - 2 downto 0));
             end if;
 
             -- Every pixel strobe
