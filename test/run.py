@@ -17,6 +17,7 @@ import os
 sys.path.append("../")
 from scripts.models.dds import dds
 from scripts.synth_and_test.dds import dds_checker
+from scripts.synth_and_test.window import window_checker
 
 
 # ============================================================
@@ -245,47 +246,32 @@ test.add_config(
 # --------------------------------------------------
 # Window Function
 # --------------------------------------------------
-TODO
-testbench = lib.entity("dds_tb")
+testbench = lib.entity("window_function_time_tb")
 test = testbench.test("auto")
 
 # Configuration
-G_FREQ_WIDTH = 22  # 2²² / FS ≈ 4.19 MHz max frequency
-G_DATA_WIDTH = 16
-G_ACCUMULATOR_WIDTH = 32
-G_LUT_ADDR_WIDTH = 10
-G_SYS_CLK_HZ = int(100e6)
+G_INPUT_DATA_WIDTH = 16
+G_INPUT_DATA_DEPTH = 1024
+G_WINDOW_DATA_WIDTH = 16
 
-cfg = dict(
-    G_FREQ_WIDTH=G_FREQ_WIDTH,
-    G_DATA_WIDTH=G_DATA_WIDTH,
-    G_ACCUMULATOR_WIDTH=G_ACCUMULATOR_WIDTH,
-    G_LUT_ADDR_WIDTH=G_LUT_ADDR_WIDTH,
-    G_SYS_CLK_HZ=G_SYS_CLK_HZ,
-)
+for window_type in ["hamming", "hann", "blackman"]:
+    window_checker_obj = window_checker(
+        a_window_type=window_type,
+        a_window_length=G_INPUT_DATA_DEPTH,
+        a_data_width=G_WINDOW_DATA_WIDTH,
+        a_sampling_freq=44100,  # Assuming 44.1 kHz sampling frequency for test signal generation
+    )
 
-dds_checker_obj = dds_checker(a_cfg=cfg)
-
-# Create a list of random frequencies bounded by 0 to 2*22
-frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(15)]
-
-test.add_config(
-    name=f"multiple_freqs",
-    generics=dict(
-        G_FREQ_WIDTH=cfg["G_FREQ_WIDTH"],
-        G_DATA_WIDTH=cfg["G_DATA_WIDTH"],
-        G_ACCUMULATOR_WIDTH=cfg["G_ACCUMULATOR_WIDTH"],
-        G_LUT_ADDR_WIDTH=cfg["G_LUT_ADDR_WIDTH"],
-        G_SYS_CLK_HZ=cfg["G_SYS_CLK_HZ"],
-        G_INIT_FILE=f"dds_lut.txt",
-    ),
-    pre_config=dds_checker_obj.pre_config_wrapper(
-        a_freq_list=frequency_list, a_cfg=cfg
-    ),
-    post_check=dds_checker_obj.post_check_wrapper(
-        a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True
-    ),
-)
+    test.add_config(
+        name=f"{window_type.upper()}",
+        generics=dict(
+            G_INPUT_DATA_WIDTH=G_INPUT_DATA_WIDTH,
+            G_INPUT_DATA_DEPTH=G_INPUT_DATA_DEPTH,
+            G_WINDOW_DATA_WIDTH=G_WINDOW_DATA_WIDTH,
+        ),
+        pre_config=window_checker_obj.pre_config_wrapper(a_input_samples=5e3),
+        post_check=window_checker_obj.post_check_wrapper(),
+    )
 # ----------------------------
 # Another testbench...
 # ----------------------------

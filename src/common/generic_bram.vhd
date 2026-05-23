@@ -52,7 +52,6 @@ architecture rtl of generic_bram is
     -- Types
     --------------------
     type t_array_slv is array (natural range <>) of std_logic_vector;
-    type t_array_of_array_slv is array (natural range <>) of t_array_slv;
     --------------------
     -- Signals
     --------------------
