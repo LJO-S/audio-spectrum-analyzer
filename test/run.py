@@ -242,6 +242,50 @@ test.add_config(
         a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True
     ),
 )
+# --------------------------------------------------
+# Window Function
+# --------------------------------------------------
+TODO
+testbench = lib.entity("dds_tb")
+test = testbench.test("auto")
+
+# Configuration
+G_FREQ_WIDTH = 22  # 2²² / FS ≈ 4.19 MHz max frequency
+G_DATA_WIDTH = 16
+G_ACCUMULATOR_WIDTH = 32
+G_LUT_ADDR_WIDTH = 10
+G_SYS_CLK_HZ = int(100e6)
+
+cfg = dict(
+    G_FREQ_WIDTH=G_FREQ_WIDTH,
+    G_DATA_WIDTH=G_DATA_WIDTH,
+    G_ACCUMULATOR_WIDTH=G_ACCUMULATOR_WIDTH,
+    G_LUT_ADDR_WIDTH=G_LUT_ADDR_WIDTH,
+    G_SYS_CLK_HZ=G_SYS_CLK_HZ,
+)
+
+dds_checker_obj = dds_checker(a_cfg=cfg)
+
+# Create a list of random frequencies bounded by 0 to 2*22
+frequency_list = [int(random.uniform(0, 2**G_FREQ_WIDTH)) for _ in range(15)]
+
+test.add_config(
+    name=f"multiple_freqs",
+    generics=dict(
+        G_FREQ_WIDTH=cfg["G_FREQ_WIDTH"],
+        G_DATA_WIDTH=cfg["G_DATA_WIDTH"],
+        G_ACCUMULATOR_WIDTH=cfg["G_ACCUMULATOR_WIDTH"],
+        G_LUT_ADDR_WIDTH=cfg["G_LUT_ADDR_WIDTH"],
+        G_SYS_CLK_HZ=cfg["G_SYS_CLK_HZ"],
+        G_INIT_FILE=f"dds_lut.txt",
+    ),
+    pre_config=dds_checker_obj.pre_config_wrapper(
+        a_freq_list=frequency_list, a_cfg=cfg
+    ),
+    post_check=dds_checker_obj.post_check_wrapper(
+        a_freq_list=frequency_list, a_cfg=cfg, a_save_plot=True
+    ),
+)
 # ----------------------------
 # Another testbench...
 # ----------------------------
