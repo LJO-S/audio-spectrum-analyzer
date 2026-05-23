@@ -34,13 +34,9 @@ architecture rtl of dds is
     --------------------
     -- Constants
     --------------------
-    constant C_LUT_SIZE               : natural                                                          := 2 ** G_LUT_ADDR_WIDTH;
-    constant C_QUADRATURE_PHASE_SHIFT : unsigned(G_ACCUMULATOR_WIDTH - 1 downto 0)                       := (G_ACCUMULATOR_WIDTH - 2 => '1', others => '0');
-    constant C_TUNING_FRAC_WIDTH      : integer                                                          := 14;
-    constant C_TUNING_FACTOR          : unsigned(G_ACCUMULATOR_WIDTH + C_TUNING_FRAC_WIDTH - 1 downto 0) := to_unsigned(
-    integer(round((2.0 ** G_ACCUMULATOR_WIDTH) * (2.0 ** C_TUNING_FRAC_WIDTH) / real(G_SYS_CLK_HZ))),
-    G_ACCUMULATOR_WIDTH + C_TUNING_FRAC_WIDTH
-    );
+    constant C_LUT_SIZE               : natural                                    := 2 ** G_LUT_ADDR_WIDTH;
+    constant C_QUADRATURE_PHASE_SHIFT : unsigned(G_ACCUMULATOR_WIDTH - 1 downto 0) := (G_ACCUMULATOR_WIDTH - 2 => '1', others => '0');
+    constant C_TUNING_FRAC_WIDTH      : integer                                    := 14;
     --------------------
     -- Types
     --------------------
@@ -49,6 +45,29 @@ architecture rtl of dds is
     --------------------
     -- Functions
     --------------------
+
+    -- Converts a real value to unsigned by extracting bits without going through
+    -- the 32-bit integer type, allowing arbitrarily wide constants.
+    function f_real_to_unsigned(
+        val   : real;
+        width : natural
+    ) return unsigned is
+        variable v_result : unsigned(width - 1 downto 0) := (others => '0');
+        variable v_real   : real                         := round(val);
+    begin
+        for i in width - 1 downto 0 loop
+            if v_real >= 2.0 ** i then
+                v_result(i) := '1';
+                v_real      := v_real - 2.0 ** i;
+            end if;
+        end loop;
+        return v_result;
+    end function;
+
+    constant C_TUNING_FACTOR : unsigned(G_ACCUMULATOR_WIDTH + C_TUNING_FRAC_WIDTH - 1 downto 0) := f_real_to_unsigned(
+    (2.0 ** G_ACCUMULATOR_WIDTH) * (2.0 ** C_TUNING_FRAC_WIDTH) / real(G_SYS_CLK_HZ),
+    G_ACCUMULATOR_WIDTH + C_TUNING_FRAC_WIDTH
+    );
 
     -- Maps the LUT index based on the quadrant of the phase accumulator
     function f_lut_idx_map (
