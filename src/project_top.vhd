@@ -2,10 +2,6 @@
 -- =============================================================
 -- PROJECT_TOP
 -- Instantiates all the sub-blocks and performs some simple logic
-
--- TODO
--- replace all the AXIS naming to something more appropriate
-
 -- =============================================================
 library ieee;
 use ieee.std_logic_1164.all;
@@ -97,24 +93,27 @@ architecture rtl of project_top is
     ----------------------
     -- Signals
     ----------------------
+    -- Windowing 
+    signal w_window_data_i_out : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_window_data_q_out : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_window_valid_out  : std_logic;
     -- FFT
-    -- TODO rename all axis crap
-    signal r_fft_tlast_out        : std_logic := '0';
-    signal r_fft_tlast_out_d1     : std_logic := '0';
-    signal r_fft_tlast_out_d2     : std_logic := '0';
-    signal r_fft_tlast_out_d3     : std_logic := '0';
-    signal w_fft_tvalid_out       : std_logic;
-    signal r_fft_tvalid_out       : std_logic := '0';
-    signal r_fft_tvalid_out_d1    : std_logic := '0';
-    signal w_xk_index             : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-    signal r_xk_index             : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-    signal r_xk_index_d1          : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
-    signal w_axis_tready_xfft_out : std_logic;
-    signal w_axis_tdata_xfft_in   : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_axis_tvalid_xfft_in  : std_logic;
-    signal w_axis_tlast_xfft_in   : std_logic;
-    signal w_fft_tdata_out_re     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_fft_tdata_out_im     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal r_fft_tlast_out     : std_logic := '0';
+    signal r_fft_tlast_out_d1  : std_logic := '0';
+    signal r_fft_tlast_out_d2  : std_logic := '0';
+    signal r_fft_tlast_out_d3  : std_logic := '0';
+    signal w_fft_tvalid_out    : std_logic;
+    signal r_fft_tvalid_out    : std_logic := '0';
+    signal r_fft_tvalid_out_d1 : std_logic := '0';
+    signal w_xk_index          : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
+    signal r_xk_index          : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
+    signal r_xk_index_d1       : std_logic_vector (C_NFFT_LOG2 - 1 downto 0);
+    signal w_fft_ready_out     : std_logic;
+    signal w_muxed_src_data    : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_muxed_src_valid   : std_logic;
+    signal w_muxed_src_last    : std_logic;
+    signal w_fft_tdata_out_re  : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_fft_tdata_out_im  : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
 
     -- FFT Magnitude Calculation & Log2
     signal r_fft_tdata_pow2_re : signed(2 * G_FFT_BIT_SIZE - 1 downto 0)       := (others => '0');
@@ -128,16 +127,16 @@ architecture rtl of project_top is
     signal w_100ms_strb : std_logic;
 
     -- Sig Gen to FFT
-    signal w_axis_tready_xfft_to_sig_gen : std_logic;
-    signal w_axis_tdata_sig_gen_to_xfft  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_axis_tvalid_sig_gen_to_xfft : std_logic;
-    signal w_axis_tlast_sig_gen_to_xfft  : std_logic;
+    signal w_muxed_src_to_sig_gen_ready : std_logic;
+    signal w_signal_generator_data_out  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_signal_generator_valid_out : std_logic;
+    signal w_signal_generator_last_out  : std_logic;
 
     -- Audio Capture to FFT
-    signal w_axis_tready_xfft_to_audio : std_logic;
-    signal w_axis_tdata_audio_to_xfft  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_axis_tvalid_audio_to_xfft : std_logic;
-    signal w_axis_tlast_audio_to_xfft  : std_logic;
+    signal w_muxed_src_to_audio_ready : std_logic;
+    signal w_audio_data_out           : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_audio_valid_out          : std_logic;
+    signal w_audio_last_out           : std_logic;
 
     -- Audio Capture to Trigger
     signal w_audio_to_capture_tdata  : std_logic_vector(15 downto 0);
@@ -225,12 +224,33 @@ begin
             i_ms_strobe  => w_ms_strobe,
             o_100ms_strb => w_100ms_strb,
             o_reset      => open,
-            i_iq_ready   => w_axis_tready_xfft_to_sig_gen,
-            o_iq_data    => w_axis_tdata_sig_gen_to_xfft,
-            o_iq_valid   => w_axis_tvalid_sig_gen_to_xfft,
-            o_iq_last    => w_axis_tlast_sig_gen_to_xfft
+            i_iq_ready   => w_muxed_src_to_sig_gen_ready,
+            o_iq_data    => w_signal_generator_data_out,
+            o_iq_valid   => w_signal_generator_valid_out,
+            o_iq_last    => w_signal_generator_last_out
         );
-
+    -- ============================================================================ 
+    window_function_time_inst : entity work.window_function_time
+        generic map(
+            G_INPUT_DATA_WIDTH  => G_FFT_BIT_SIZE,
+            G_INPUT_DATA_DEPTH  => G_NFFT,
+            G_WINDOW_DATA_WIDTH => 16,
+            G_INIT_FILE         => "filter/windowing/window_coefficients.txt"
+        )
+        port map
+        (
+            clk => i_clk_100,
+            -- Input
+            i_data_i => w_muxed_src_data(G_FFT_BIT_SIZE - 1 downto 0),
+            i_data_q => w_muxed_src_data(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
+            i_valid  => w_muxed_src_valid,
+            i_last   => '0', -- kept track of within this entity
+            -- Output
+            o_data_i => w_window_data_i_out,
+            o_data_q => w_window_data_q_out,
+            o_valid  => w_window_valid_out,
+            o_last   => open
+        );
     -- ============================================================================ 
     fft_inst : entity work.fft
         generic map(
@@ -243,10 +263,10 @@ begin
         (
             clk        => i_clk_100,
             reset      => '0',
-            i_tdata_re => w_axis_tdata_xfft_in(G_FFT_BIT_SIZE - 1 downto 0),
-            i_tdata_im => w_axis_tdata_xfft_in(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
-            i_tvalid   => w_axis_tvalid_xfft_in,
-            o_tready   => w_axis_tready_xfft_out,
+            i_tdata_re => w_window_data_i_out,
+            i_tdata_im => w_window_data_q_out,
+            i_tvalid   => w_window_valid_out,
+            o_tready   => w_fft_ready_out,
             o_tdata_re => w_fft_tdata_out_re,
             o_tdata_im => w_fft_tdata_out_im,
             o_xk_index => w_xk_index,
@@ -537,10 +557,10 @@ begin
             o_raw_tdata  => w_audio_to_capture_tdata,
             o_raw_tvalid => w_audio_to_capture_tvalid,
             -- FFT IF
-            o_tdata  => w_axis_tdata_audio_to_xfft,
-            o_tvalid => w_axis_tvalid_audio_to_xfft,
-            o_tlast  => w_axis_tlast_audio_to_xfft,
-            i_tready => w_axis_tready_xfft_to_audio
+            o_tdata  => w_audio_data_out,
+            o_tvalid => w_audio_valid_out,
+            o_tlast  => w_audio_last_out,
+            i_tready => w_muxed_src_to_audio_ready
         );
     -- ============================================================================ 
     -- DAC Output Mute, Active Low
@@ -577,26 +597,26 @@ begin
                     end if;
                     -- -----------------------------------------------------------
                 when AUDIO_WAITING =>
-                    if (w_axis_tvalid_xfft_in = '1') then
+                    if (w_muxed_src_valid = '1') then
                         s_state_drain_guard <= AUDIO_DRAINING;
                     elsif (w_capture_en = '0') then
                         s_state_drain_guard <= GENERATOR_WAITING;
                     end if;
                     -- -----------------------------------------------------------
                 when AUDIO_DRAINING =>
-                    if (w_axis_tlast_xfft_in = '1') then
+                    if (w_muxed_src_last = '1') then
                         s_state_drain_guard <= AUDIO_WAITING;
                     end if;
                     -- -----------------------------------------------------------
                 when GENERATOR_WAITING =>
-                    if (w_axis_tvalid_xfft_in = '1') then
+                    if (w_muxed_src_valid = '1') then
                         s_state_drain_guard <= GENERATOR_DRAINING;
                     elsif (w_capture_en = '1') then
                         s_state_drain_guard <= AUDIO_WAITING;
                     end if;
                     -- -----------------------------------------------------------
                 when GENERATOR_DRAINING =>
-                    if (w_axis_tlast_xfft_in = '1') then
+                    if (w_muxed_src_last = '1') then
                         s_state_drain_guard <= GENERATOR_WAITING;
                     end if;
                     -- -----------------------------------------------------------
@@ -610,30 +630,30 @@ begin
     -- Combinatorial source mux
     p_sample_src_mux : process (
         s_state_drain_guard,
-        w_axis_tdata_audio_to_xfft,
-        w_axis_tvalid_audio_to_xfft,
-        w_axis_tlast_audio_to_xfft,
-        w_axis_tready_xfft_out,
-        w_axis_tdata_sig_gen_to_xfft,
-        w_axis_tvalid_sig_gen_to_xfft,
-        w_axis_tlast_sig_gen_to_xfft
+        w_audio_data_out,
+        w_audio_valid_out,
+        w_audio_last_out,
+        w_fft_ready_out,
+        w_signal_generator_data_out,
+        w_signal_generator_valid_out,
+        w_signal_generator_last_out
         )
     begin
-        w_axis_tdata_xfft_in          <= (others => 'X');
-        w_axis_tvalid_xfft_in         <= '0';
-        w_axis_tlast_xfft_in          <= '0';
-        w_axis_tready_xfft_to_audio   <= '0';
-        w_axis_tready_xfft_to_sig_gen <= '0';
+        w_muxed_src_data             <= (others => 'X');
+        w_muxed_src_valid            <= '0';
+        w_muxed_src_last             <= '0';
+        w_muxed_src_to_audio_ready   <= '0';
+        w_muxed_src_to_sig_gen_ready <= '0';
         if (s_state_drain_guard = AUDIO_WAITING) or (s_state_drain_guard = AUDIO_DRAINING) then
-            w_axis_tdata_xfft_in        <= w_axis_tdata_audio_to_xfft;
-            w_axis_tvalid_xfft_in       <= w_axis_tvalid_audio_to_xfft;
-            w_axis_tlast_xfft_in        <= w_axis_tlast_audio_to_xfft;
-            w_axis_tready_xfft_to_audio <= w_axis_tready_xfft_out;
+            w_muxed_src_data           <= w_audio_data_out;
+            w_muxed_src_valid          <= w_audio_valid_out;
+            w_muxed_src_last           <= w_audio_last_out;
+            w_muxed_src_to_audio_ready <= w_fft_ready_out;
         elsif (s_state_drain_guard = GENERATOR_WAITING) or (s_state_drain_guard = GENERATOR_DRAINING) then
-            w_axis_tdata_xfft_in          <= w_axis_tdata_sig_gen_to_xfft;
-            w_axis_tvalid_xfft_in         <= w_axis_tvalid_sig_gen_to_xfft;
-            w_axis_tlast_xfft_in          <= w_axis_tlast_sig_gen_to_xfft;
-            w_axis_tready_xfft_to_sig_gen <= w_axis_tready_xfft_out;
+            w_muxed_src_data             <= w_signal_generator_data_out;
+            w_muxed_src_valid            <= w_signal_generator_valid_out;
+            w_muxed_src_last             <= w_signal_generator_last_out;
+            w_muxed_src_to_sig_gen_ready <= w_fft_ready_out;
         end if;
     end process p_sample_src_mux;
     -- ============================================================================ 

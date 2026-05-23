@@ -28,7 +28,6 @@ architecture bench of window_function_time_tb is
     signal i_data_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal i_valid  : std_logic := '0';
     signal i_last   : std_logic := '0';
-    signal o_ready  : std_logic;
     signal o_data_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_data_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_valid  : std_logic;
@@ -36,6 +35,7 @@ architecture bench of window_function_time_tb is
     -- Testbench
     signal tb_auto_set       : boolean := false;
     signal tb_auto_test_done : boolean := false;
+    signal tb_output_cntr    : integer := 0;
     file tb_write_file       : text;
     -- Procedure
     procedure wait_clock (clk_ticks : integer) is
@@ -53,30 +53,38 @@ begin
         variable v_line        : line;
         variable v_input_slv_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
         variable v_input_slv_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
+        variable v_idx         : natural := 0;
     begin
         tb_auto_test_done <= false;
         wait until tb_auto_set = true;
         file_open(v_read_file, output_path(runner_cfg) & "/input_data.txt", read_mode);
         while not endfile(v_read_file) loop
-            wait_clock(1);
             readline(v_read_file, v_line);
             BINARY_READ(v_line, v_input_slv_i);
             BINARY_READ(v_line, v_input_slv_q);
-            -- Ready
-            if (o_ready = '0') then
-                wait until o_ready = '1';
-            end if;
             i_data_i <= v_input_slv_i;
             i_data_q <= v_input_slv_q;
             i_valid  <= '1';
+            if (v_idx = G_INPUT_DATA_DEPTH - 1) then
+                -- i_last <= '1';
+                v_idx := 0;
+            else
+                i_last <= '0';
+                v_idx := v_idx + 1;
+            end if;
             wait_clock(1);
             i_data_i <= (others => '0');
             i_data_q <= (others => '0');
             i_valid  <= '0';
+            wait_clock(13);
             --   
         end loop;
         file_close(v_read_file);
         tb_auto_test_done <= true;
+        i_data_i          <= (others => '0');
+        i_data_q          <= (others => '0');
+        i_valid           <= '0';
+        i_last            <= '0';
         wait;
     end process p_read_file;
     -- ================================================================
@@ -94,6 +102,19 @@ begin
         wait;
     end process;
     -- ================================================================
+    p_last_assert : process (clk)
+    begin
+        if rising_edge(clk) then
+            if (o_valid = '1') then
+                tb_output_cntr <= tb_output_cntr + 1;
+                if (tb_output_cntr >= G_INPUT_DATA_DEPTH - 1) then
+                    tb_output_cntr <= 0;
+                    assert o_last = '1' report "o_last should be '1' at the last output sample" severity error;
+                end if;
+            end if;
+        end if;
+    end process p_last_assert;
+    -- ================================================================
     window_function_time_inst : entity work.window_function_time
         generic map(
             G_INPUT_DATA_WIDTH  => G_INPUT_DATA_WIDTH,
@@ -108,7 +129,6 @@ begin
             i_data_q => i_data_q,
             i_valid  => i_valid,
             i_last   => i_last,
-            o_ready  => o_ready,
             o_data_i => o_data_i,
             o_data_q => o_data_q,
             o_valid  => o_valid,

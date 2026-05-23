@@ -1,7 +1,8 @@
 ## ########################################################
 ## TODO
 - Set max/min for tone_generator.vhd
-- Oscilloscope feature
+- Let tone_generator be controlled by UART
+- Remove audio buffer
 
 ## ########################################################
 ## Design

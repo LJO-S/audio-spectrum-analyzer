@@ -10,7 +10,7 @@ entity window_function_time is
         G_INPUT_DATA_WIDTH  : natural := 16;
         G_INPUT_DATA_DEPTH  : natural := 1024;
         G_WINDOW_DATA_WIDTH : natural := 16;
-        G_INIT_FILE         : string
+        G_INIT_FILE         : string  := "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/filter/windowing/window_coefficients.txt"
     );
     port (
         clk : in std_logic;
@@ -19,7 +19,6 @@ entity window_function_time is
         i_data_q : in std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
         i_valid  : in std_logic;
         i_last   : in std_logic;
-        o_ready  : out std_logic;
         -- Ouput
         o_data_i : out std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
         o_data_q : out std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
@@ -62,25 +61,31 @@ architecture rtl of window_function_time is
     -- Signals
     --------------------
     signal r_window_mem               : t_array_slv(0 to G_INPUT_DATA_DEPTH - 1)(G_WINDOW_DATA_WIDTH - 1 downto 0) := f_init_from_file;
-    signal r_data_ready_out           : std_logic                                                                  := '0';
+    signal r_data_i                   : signed(G_INPUT_DATA_WIDTH - 1 downto 0)                                    := (others => '0');
+    signal r_data_q                   : signed(G_INPUT_DATA_WIDTH - 1 downto 0)                                    := (others => '0');
     signal r_window_product_i         : signed(G_INPUT_DATA_WIDTH + G_WINDOW_DATA_WIDTH - 1 downto 0)              := (others => '0');
     signal r_window_product_q         : signed(G_INPUT_DATA_WIDTH + G_WINDOW_DATA_WIDTH - 1 downto 0)              := (others => '0');
     signal r_window_product_shifted_i : signed(G_INPUT_DATA_WIDTH - 1 downto 0)                                    := (others => '0');
     signal r_window_product_shifted_q : signed(G_INPUT_DATA_WIDTH - 1 downto 0)                                    := (others => '0');
     signal r_window_value             : std_logic_vector(G_WINDOW_DATA_WIDTH - 1 downto 0)                         := (others => '0');
+    signal r_window_value_even        : std_logic_vector(G_WINDOW_DATA_WIDTH - 1 downto 0)                         := (others => '0');
+    signal r_window_value_odd         : std_logic_vector(G_WINDOW_DATA_WIDTH - 1 downto 0)                         := (others => '0');
+    signal r_valid                    : std_logic                                                                  := '0';
     signal r_window_product_valid     : std_logic                                                                  := '0';
     signal r_window_product_valid_d1  : std_logic                                                                  := '0';
     signal r_data_last                : std_logic                                                                  := '0';
     signal r_data_last_d1             : std_logic                                                                  := '0';
+    signal r_data_last_d2             : std_logic                                                                  := '0';
     signal r_window_raddr             : unsigned(integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))) - 1 downto 0)       := (others => '0');
+    signal r_window_raddr_even        : unsigned(integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))) - 1 downto 0)       := to_unsigned(0, integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))));
+    signal r_window_raddr_odd         : unsigned(integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))) - 1 downto 0)       := to_unsigned(1, integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))));
 begin
     -- =======================================================================
     -- Combinatorial
     o_data_i <= std_logic_vector(r_window_product_shifted_i);
     o_data_q <= std_logic_vector(r_window_product_shifted_q);
     o_valid  <= r_window_product_valid_d1;
-    o_last   <= r_data_last_d1;
-    o_ready  <= r_data_ready_out;
+    o_last   <= r_data_last_d2;
     -- =======================================================================
     -- Apply window coefficient and shift
     -- Note: BRAM has 1cc read latency
@@ -88,20 +93,33 @@ begin
     begin
         if rising_edge(clk) then
             ----------------
-            -- PIPE 0
+            -- PIPE 0 
             ----------------
-            r_data_ready_out       <= not(i_valid); -- handle 1cc read latency
-            r_window_product_i     <= resize(signed(i_data_i) * signed(r_window_value), r_window_product_i'length);
-            r_window_product_q     <= resize(signed(i_data_q) * signed(r_window_value), r_window_product_q'length);
-            r_window_product_valid <= i_valid and r_data_ready_out;
+            if (r_window_raddr(0) = '0') then
+                -- Even
+                r_window_value <= r_window_value_even;
+            else
+                -- Odd
+                r_window_value <= r_window_value_odd;
+            end if;
+            r_valid  <= i_valid;
+            r_data_i <= signed(i_data_i);
+            r_data_q <= signed(i_data_q);
             ----------------
             -- PIPE 1
+            ----------------
+            r_window_product_i     <= resize(signed(r_data_i) * signed(r_window_value), r_window_product_i'length);
+            r_window_product_q     <= resize(signed(r_data_q) * signed(r_window_value), r_window_product_q'length);
+            r_window_product_valid <= r_valid;
+            r_data_last_d1         <= r_data_last;
+            ----------------
+            -- PIPE 2
             ----------------
             -- Shift
             r_window_product_shifted_i <= resize(shift_right(r_window_product_i, G_WINDOW_DATA_WIDTH - 1), r_window_product_shifted_i'length);
             r_window_product_shifted_q <= resize(shift_right(r_window_product_q, G_WINDOW_DATA_WIDTH - 1), r_window_product_shifted_q'length);
             r_window_product_valid_d1  <= r_window_product_valid;
-            r_data_last_d1             <= r_data_last;
+            r_data_last_d2             <= r_data_last_d1;
         end if;
     end process p_apply_window;
     -- =======================================================================
@@ -110,10 +128,22 @@ begin
         if rising_edge(clk) then
             r_data_last <= '0';
             if (i_valid = '1') then
+                -- This piece of logic allows streaming data
+                if (r_window_raddr(0) = '0') then
+                    -- Even
+                    r_window_raddr_even <= r_window_raddr_even + 2;
+                else
+                    -- Odd
+                    r_window_raddr_odd <= r_window_raddr_odd + 2;
+                end if;
+
+                -- Last
                 r_window_raddr <= r_window_raddr + 1;
                 if (i_last = '1') or (r_window_raddr >= G_INPUT_DATA_DEPTH - 1) then
-                    r_data_last    <= '1';
-                    r_window_raddr <= (others => '0');
+                    r_data_last         <= '1';
+                    r_window_raddr      <= (others => '0');
+                    r_window_raddr_even <= to_unsigned(0, integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))));
+                    r_window_raddr_odd  <= to_unsigned(1, integer(ceil(log2(real(G_INPUT_DATA_DEPTH)))));
                 end if;
             end if;
         end if;
@@ -122,7 +152,8 @@ begin
     p_bram : process (clk)
     begin
         if rising_edge(clk) then
-            r_window_value <= r_window_mem(to_integer(r_window_raddr));
+            r_window_value_even <= r_window_mem(to_integer(r_window_raddr_even));
+            r_window_value_odd  <= r_window_mem(to_integer(r_window_raddr_odd));
         end if;
     end process p_bram;
     -- =======================================================================
