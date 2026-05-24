@@ -7,5 +7,5 @@ vitis/
 **/__pycache__
 .venv
 test/vivado/
-**/vivado.log
-**/vivado.jou
+**/*vivado*.log
+**/*vivado*.jou
