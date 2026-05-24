@@ -27,10 +27,11 @@ architecture bench of window_function_time_tb is
     signal i_data_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal i_data_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal i_valid  : std_logic := '0';
-    signal i_last   : std_logic := '0';
     signal o_data_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_data_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_valid  : std_logic;
+    signal o_ready  : std_logic;
+    signal i_ready  : std_logic;
     signal o_last   : std_logic;
     -- Testbench
     signal tb_auto_set       : boolean := false;
@@ -65,11 +66,12 @@ begin
             i_data_i <= v_input_slv_i;
             i_data_q <= v_input_slv_q;
             i_valid  <= '1';
+            if o_ready = '0' then
+                wait until o_ready = '1';
+            end if;
             if (v_idx = G_INPUT_DATA_DEPTH - 1) then
-                -- i_last <= '1';
                 v_idx := 0;
             else
-                i_last <= '0';
                 v_idx := v_idx + 1;
             end if;
             wait_clock(1);
@@ -84,9 +86,26 @@ begin
         i_data_i          <= (others => '0');
         i_data_q          <= (others => '0');
         i_valid           <= '0';
-        i_last            <= '0';
         wait;
     end process p_read_file;
+    -- ================================================================
+    process
+        variable v_idx : natural := 0;
+    begin
+        while true loop
+            wait until rising_edge(clk);
+            i_ready <= '1';
+            if (o_valid = '1') then
+                v_idx := v_idx + 1;
+            end if;
+            -- Mimic i_ready hiccups
+            if (v_idx = G_INPUT_DATA_DEPTH - 1) then
+                v_idx := 0;
+                i_ready <= '0';
+                wait_clock(100);
+            end if;
+        end loop;
+    end process;
     -- ================================================================
     p_write_file : process
         variable v_line : line;
@@ -128,10 +147,11 @@ begin
             i_data_i => i_data_i,
             i_data_q => i_data_q,
             i_valid  => i_valid,
-            i_last   => i_last,
+            o_ready  => o_ready,
             o_data_i => o_data_i,
             o_data_q => o_data_q,
             o_valid  => o_valid,
+            i_ready  => i_ready,
             o_last   => o_last
         );
     -- ================================================================

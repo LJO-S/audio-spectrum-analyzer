@@ -16,7 +16,7 @@ end;
 
 architecture bench of trigger_capture_tb is
     -- Types
-    type t_capture_state is (IDLE, ARMED, CAPTURE, HOLD_OFF);
+    type t_capture_state is (SETUP, ARMED, CAPTURE, HOLD_OFF);
     type t_testbench_check_state is (INIT, WAIT_1, WAIT_2, COMPARE, INCREMENT_RADDR, FINISH_HOLD_OFF);
     -- Clock period
     constant clk_period : time := 5 ns;
