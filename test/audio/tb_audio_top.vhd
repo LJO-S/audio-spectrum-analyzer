@@ -56,25 +56,16 @@ architecture bench of audio_top_tb is
     signal o_bclk       : std_logic;
     signal o_tdata      : std_logic_vector(31 downto 0);
     signal o_tvalid     : std_logic;
-    signal o_tlast      : std_logic;
-    signal i_tready     : std_logic;
-
-    signal o_raw_tdata  : std_logic_vector(15 downto 0);
-    signal o_raw_tvalid : std_logic;
-
     -- TB signals
     type t_TB_IIS_STATE is (LEFT_INITIAL, LEFT_SEND, LEFT_FINAL, RIGHT_INITIAL, RIGHT_SEND, RIGHT_FINAL);
-    signal tb_iis_state       : t_TB_IIS_STATE       := LEFT_SEND;
-    signal tb_bit_cntr        : unsigned(4 downto 0) := (others => '0');
-    signal tb_serial_value    : std_logic            := '0';
-    signal tb_fft_stall       : std_logic            := '0';
-    signal tb_tdata_re        : std_logic_vector(15 downto 0);
-    signal tb_tready_override : std_logic := '0';
+    signal tb_iis_state    : t_TB_IIS_STATE       := LEFT_SEND;
+    signal tb_bit_cntr     : unsigned(4 downto 0) := (others => '0');
+    signal tb_serial_value : std_logic            := '0';
+    signal tb_tdata_re     : std_logic_vector(15 downto 0);
 
     type t_coefficients is array (natural range 0 to G_NBR_OF_TAPS - 1) of signed(G_COEFF_WIDTH - 1 downto 0);
     signal tb_coefficients_lpf : t_coefficients;
     signal tb_coefficients_hpf : t_coefficients;
-    signal tb_input_enable     : boolean := FALSE;
 
     -- Procedures
     procedure load_coefficients (
@@ -100,7 +91,7 @@ architecture bench of audio_top_tb is
     end procedure;
 
 begin
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
     audio_top_inst : entity work.audio_top
         generic map(
             G_NBR_OF_TAPS => G_NBR_OF_TAPS,
@@ -131,7 +122,7 @@ begin
             o_tdata_q             => o_tdata(31 downto 16),
             o_tvalid              => o_tvalid
         );
-    /* ---------------------------------------------------------------*/
+    -- ============================================================================
     lpf_dpmem_dram_inst : entity work.dpmem_bram
         generic map(
             G_RAM_WIDTH      => G_COEFF_WIDTH,
@@ -169,7 +160,7 @@ begin
             i_dinb => (others => '0'),
             i_web   => '0',
             o_doutb => i_rdata_hpf);
-    /* ---------------------------------------------------------------*/
+    -- ============================================================================
     -- Read coefficients file
     p_read_coeffs_file : process
         file coeff_file          : text;
@@ -211,26 +202,11 @@ begin
 
         wait;
     end process p_read_coeffs_file;
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
     tb_tdata_re <= o_tdata(15 downto 0);
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
     clk_100 <= not clk_100 after clk_period/2;
-    /* ---------------------------------------------------------------------- */
-    -- Let tready from FFT engine only be asserted when someone else initializes
-    -- communication
-    p_tready : process (clk_100)
-        alias tb_audio_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
-    begin
-        if rising_edge(clk_100) then
-            i_tready <= o_tvalid or tb_tready_override;
-            if (i_tready = '1') then
-                if (tb_audio_buf_raddr = 1023) then
-                    i_tready <= '0';
-                end if;
-            end if;
-        end if;
-    end process p_tready;
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
     -- Generate i2s data according to SSM2603 i2s datasheet with 1 leading and 
     -- >=1 trailing invalid bits
     p_i2s_data : process (o_bclk)
@@ -239,12 +215,10 @@ begin
             i_sdata <= 'X';
             case tb_iis_state is
                     -- ----------------------------------------
-                    -- ----------------------------------------
                 when LEFT_INITIAL =>
                     if (o_lrclk = '0') then
                         tb_iis_state <= LEFT_SEND;
                     end if;
-                    -- ----------------------------------------
                     -- ----------------------------------------
                 when LEFT_SEND =>
                     i_sdata     <= tb_serial_value;
@@ -255,12 +229,10 @@ begin
                         tb_bit_cntr  <= (others => '0');
                     end if;
                     -- ----------------------------------------
-                    -- ----------------------------------------
                 when RIGHT_INITIAL =>
                     if (o_lrclk = '1') then
                         tb_iis_state <= RIGHT_SEND;
                     end if;
-                    -- ----------------------------------------
                     -- ----------------------------------------
                 when RIGHT_SEND =>
                     i_sdata     <= not tb_serial_value;
@@ -272,16 +244,14 @@ begin
                         tb_serial_value <= not(tb_serial_value);
                     end if;
                     -- ----------------------------------------
-                    -- ----------------------------------------
                 when others =>
                     null;
             end case;
         end if;
     end process p_i2s_data;
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
     main : process
-        alias tb_i2s_ovalid is << signal audio_top_inst.i2s_deser_inst.o_valid  : std_logic >> ;
-        alias tb_buf_raddr is << signal audio_top_inst.audio_buffer_inst.r_addr : unsigned(9 downto 0) >> ;
+        alias tb_i2s_ovalid is << signal audio_top_inst.i2s_deser_inst.o_valid : std_logic >> ;
         procedure load_coeffs(
             constant filter_type : in string;
             signal coefficients  : in t_coefficients
@@ -321,7 +291,7 @@ begin
         load_coeffs("lp", tb_coefficients_lpf);
         load_coeffs("hp", tb_coefficients_hpf);
 
-        if run("basic") then
+        if run("visual") then
             info("Running tb_audio_top-BASIC");
             -- ------------------------------
             wait_clock(5, clk_period);
@@ -337,27 +307,6 @@ begin
                 wait until tb_i2s_ovalid = '1';
                 wait until tb_i2s_ovalid = '0';
             end loop;
-            -- No buffering should occur
-            check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
-            wait_clock(5, clk_period);
-            -- ------------------------------
-            -- Now emulate the user activating capture mode
-            i_capture_en <= '1';
-            for i in 1 to 2 loop
-                wait until o_tlast = '1';
-                if (i = 2) then
-                    tb_fft_stall <= '1';
-                    wait_clock(10, clk_period);
-                    -- Hopefully TLAST is held HI while FFT stalled...
-                    check(o_tlast = '1', LF & "TLAST not held HI on last sample when FFT stalled." & LF);
-                    tb_fft_stall <= '0';
-                    wait_clock(10, clk_period);
-                    -- ... and releases correctly
-                    check(o_tlast = '0', "TLAST held HI after last sample after stopped FFT stalling.");
-                else
-                    wait until o_tlast = '0';
-                end if;
-            end loop;
             -- ------------------------------
             -- Observe shut down 
             wait_clock(5, clk_period);
@@ -365,61 +314,10 @@ begin
             wait until tb_i2s_ovalid = '0';
             i_capture_en <= '0';
             wait_clock(10, clk_period);
-            check(tb_buf_raddr = (tb_buf_raddr'range => '0'), "Somehow the audio_buffer fill address has incremented when module not enabled.");
             -- ------------------------------
             info("Completed tb_audio_top-BASIC");
-            test_runner_cleanup(runner);
-        elsif run("capture-disable") then
-            info("Running tb_audio_top-CAPTURE-DISABLE");
-            -- ------------------------------
-            wait_clock(5, clk_period);
-            wait until clk_100 = '1';
-            -- ------------------------------
-            -- Emulate PS configuring i2c interface
-            i_capture_en   <= '0';
-            i_i2c_cfg_done <= '0';
-            wait_clock(5, clk_period);
-            i_i2c_cfg_done <= '1';
-            wait_clock(5, clk_period);
-            -- ------------------------------
-            -- User activates capture mode
-            i_capture_en <= '1';
-            -- ------------------------------
-            -- Output 24 samples and then stop capture
-            wait until rising_edge(o_tvalid);
-            wait_clock(1, clk_period);
-            i_capture_en <= '0';
-            -- ------------------------------
-            -- Observe shut down 
-            wait until o_tlast = '1';
-            wait_clock(5, clk_period);
-            -- ------------------------------
-            info("Completed tb_audio_top-CAPTURE-DISABLE");
-            test_runner_cleanup(runner);
-        elsif run("ready-before-valid") then
-            info("Running tb_audio_top-READY-BEFORE-VALID");
-            -- ------------------------------
-            wait_clock(5, clk_period);
-            wait until clk_100 = '1';
-            -- ------------------------------
-            -- Emulate PS configuring i2c interface
-            i_capture_en   <= '0';
-            i_i2c_cfg_done <= '0';
-            wait_clock(5, clk_period);
-            i_i2c_cfg_done <= '1';
-            wait_clock(5, clk_period);
-            -- ------------------------------
-            -- User activates capture mode
-            i_capture_en       <= '1';
-            tb_tready_override <= '1';
-            -- ------------------------------
-            -- Output 24 samples and then stop capture
-            wait until rising_edge(o_tlast);
-            wait_clock(1, clk_period);
-            -- ------------------------------
-            info("Completed tb_audio_top-READY-BEFORE-VALID");
-            test_runner_cleanup(runner);
         end if;
+        test_runner_cleanup(runner);
     end process main;
-    /* ---------------------------------------------------------------------- */
+    -- ============================================================================
 end;

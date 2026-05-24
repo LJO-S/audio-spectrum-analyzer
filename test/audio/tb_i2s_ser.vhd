@@ -24,7 +24,7 @@ architecture bench of i2s_ser_tb is
 
     -- Generics
     -- Ports
-    signal clk_100  : std_logic := '0';
+    signal clk_100 : std_logic := '0';
     signal i_pbclk : std_logic := '0';
     signal i_bclk  : std_logic := '0';
     signal i_en    : std_logic := '0';
@@ -55,7 +55,7 @@ begin
         end if;
     end process p_subclk_generator;
     i_pbclk <= tb_counter(10); -- /2048 ~ 48 kHz
-    i_bclk  <= tb_counter(4); -- /32 = 3.125 MHz
+    i_bclk  <= tb_counter(4);  -- /32 = 3.125 MHz
     -- ===============================================================
     process (clk_100)
         variable seed1, seed2 : positive := 999;
@@ -98,7 +98,7 @@ begin
     i2s_ser_inst : entity work.i2s_ser
         port map
         (
-            clk_100   => clk_100,
+            clk_100  => clk_100,
             i_pbclk  => tb_pbclk_d2,
             i_bclk   => tb_bclk_d2,
             i_tdata  => tb_tdata,
@@ -110,7 +110,7 @@ begin
     i2s_deser_inst : entity work.i2s_deser
         port map
         (
-            clk_100        => clk_100,
+            clk_100       => clk_100,
             i_lrclk       => tb_pbclk_d2,
             i_bclk        => tb_bclk_d2,
             i_serial_data => o_pbdat,
@@ -122,7 +122,7 @@ begin
     main : process
     begin
         test_runner_setup(runner, runner_cfg);
-        if run("basic") then
+        if run("auto-basic") then
 
             info("Running tb_i2s_ser-BASIC");
 
@@ -151,7 +151,7 @@ begin
 
             end loop;
             info("Done tb_i2s_ser-BASIC");
-        elsif run("deserializer") then
+        elsif run("auto-deserializer") then
 
             info("Running tb_i2s_ser-DESERIALIZER");
 

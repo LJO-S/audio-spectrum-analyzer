@@ -110,8 +110,8 @@ begin
         alias rdata is << signal i2s_deser_inst.r_rdata : std_logic_vector(15 downto 0) >> ;
     begin
         test_runner_setup(runner, runner_cfg);
-        if run("basic") then
-            info("Running tb_i2s_deser-BASIC");
+        if run("auto") then
+            info("Running tb_i2s_deser-AUTO");
             tb_enable <= '0';
             wait_clock(25, clk_period);
             wait until clk_100 = '1';
@@ -128,7 +128,7 @@ begin
                     severity error;
             end loop;
             wait_clock(25, clk_period);
-            info("Complete tb_i2s_deser-BASIC");
+            info("Complete tb_i2s_deser-AUTO");
             test_runner_cleanup(runner);
         end if;
     end process main;
