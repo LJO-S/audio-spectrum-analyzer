@@ -36,14 +36,10 @@ entity audio_top is
         o_lrclk : out std_logic; -- left/right clk
         o_bclk  : out std_logic; -- bit clk
         o_pbdat : out std_logic; -- serialized data
-        -- Raw output
-        o_raw_tdata  : out std_logic_vector(15 downto 0);
-        o_raw_tvalid : out std_logic;
         -- FFT i/f
-        o_tdata  : out std_logic_vector(31 downto 0);
-        o_tvalid : out std_logic;
-        o_tlast  : out std_logic;
-        i_tready : in std_logic
+        o_tdata_i : out std_logic_vector(15 downto 0);
+        o_tdata_q : out std_logic_vector(15 downto 0);
+        o_tvalid  : out std_logic
     );
 end entity audio_top;
 
@@ -58,15 +54,9 @@ architecture rtl of audio_top is
 
     signal w_filter_bank_data_out  : std_logic_vector(15 downto 0);
     signal w_filter_bank_valid_out : std_logic;
-
-    signal w_buffer_to_top_data : std_logic_vector(15 downto 0);
-
-    signal w_audio_buffer_draining : std_logic;
-    signal w_capture_en            : std_logic;
 begin
-    /* ------------------------------------------------------ */
-    --  Combinatorial assignments
-
+    -- ============================================================================
+    --  Combinatorial
     -- Master clk 
     o_mclk <= r_clk_counter(1); -- 25 MHz
 
@@ -80,22 +70,17 @@ begin
     o_bclk <= w_bclk;
 
     -- Fill Imaginary part with 0s and Real part with capture data
-    o_tdata <= x"0000" & w_buffer_to_top_data;
-
-    o_raw_tdata  <= w_filter_bank_data_out;
-    o_raw_tvalid <= w_filter_bank_valid_out;
-    /* ------------------------------------------------------ */
+    o_tdata_i <= w_filter_bank_data_out;
+    o_tdata_q <= (others => '0');
+    o_tvalid  <= w_filter_bank_valid_out;
+    -- ============================================================================
     p_clk_counter : process (clk_100)
     begin
         if rising_edge(clk_100) then
             r_clk_counter <= r_clk_counter + 1;
         end if;
     end process p_clk_counter;
-    /* ------------------------------------------------------ */
-    -- Capture disable guard, to allow for full 1024-sample offload
-    -- before shutting down module
-    w_capture_en <= i_capture_en or w_audio_buffer_draining;
-    /* ------------------------------------------------------ */
+    -- ============================================================================
     -- I2S Deserializer
     i2s_deser_inst : entity work.i2s_deser
         port map
@@ -108,8 +93,7 @@ begin
             o_data        => w_i2s_to_filter_data,
             o_valid       => w_i2s_to_filter_valid
         );
-    /* ------------------------------------------------------ */
-
+    -- ============================================================================
     -- Filter Bank 
     filter_bank_inst : entity work.filter_bank
         generic map(
@@ -141,26 +125,7 @@ begin
             o_tvalid => w_filter_bank_valid_out,
             o_tdata  => w_filter_bank_data_out
         );
-    /* ------------------------------------------------------ */
-    -- Audio Buffer
-    -- Buffers 1024 audio samples and then outputs them to FFT engine.
-    -- Might miss 1 or 2 audio samples, negligable. If FFT engine temporarily 
-    -- halts we might miss more.
-    audio_buffer_inst : entity work.audio_buffer
-        port map
-        (
-            clk_100      => clk_100,
-            i_capture_en => w_capture_en,
-            o_draining   => w_audio_buffer_draining,
-            i_pdata      => w_filter_bank_data_out,
-            i_valid      => w_filter_bank_valid_out,
-            i_tready     => i_tready,
-            o_tdata      => w_buffer_to_top_data,
-            o_tvalid     => o_tvalid,
-            o_tlast      => o_tlast
-        );
-
-    /* ------------------------------------------------------ */
+    -- ============================================================================
     -- I2S Serializer
     -- Data is streamed (no backpressure) from the deserialized input via
     -- the filter bank and out again. 
@@ -168,12 +133,12 @@ begin
         port map
         (
             clk_100  => clk_100,
-            i_en     => w_capture_en,
+            i_en     => i_capture_en,
             i_pbclk  => w_lrclk,
             i_bclk   => w_bclk,
             i_tdata  => w_filter_bank_data_out,
             i_tvalid => w_filter_bank_valid_out,
             o_pbdat  => o_pbdat
         );
-    /* ------------------------------------------------------ */
+    -- ============================================================================
 end architecture;

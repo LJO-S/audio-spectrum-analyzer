@@ -148,7 +148,6 @@ begin
             G_FFT_BIT_SIZE         => G_FFT_BIT_SIZE,
             G_NFFT                 => G_NFFT,
             G_FFT_TW_QFORMAT       => G_FFT_TW_QFORMAT,
-            G_100MS_CYCLES         => G_100MS_CYCLES,
             G_DEBOUNCE_LIMIT       => G_DEBOUNCE_LIMIT,
             G_PRELOAD_DIRECTIVE    => G_PRELOAD_DIRECTIVE,
             G_DEBUG                => G_DEBUG

@@ -20,8 +20,6 @@ entity project_top is
         G_FFT_BIT_SIZE   : natural := 16;
         G_NFFT           : natural := 1024;
         G_FFT_TW_QFORMAT : natural := 15;
-        -- FFT refresh period
-        G_100MS_CYCLES : natural := 10_000_000;
         -- Debouncers config
         G_DEBOUNCE_LIMIT : natural := 1_000_000;
         -- Debug (set preload to "build" or "testbench")
@@ -93,7 +91,7 @@ architecture rtl of project_top is
     ----------------------
     -- Signals
     ----------------------
-    -- Windowing 
+    -- Windowing
     signal w_window_data_i_out : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
     signal w_window_data_q_out : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
     signal w_window_valid_out  : std_logic;
@@ -111,7 +109,6 @@ architecture rtl of project_top is
     signal w_fft_ready_out     : std_logic;
     signal w_muxed_src_data    : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
     signal w_muxed_src_valid   : std_logic;
-    signal w_muxed_src_last    : std_logic;
     signal w_fft_tdata_out_re  : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
     signal w_fft_tdata_out_im  : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
 
@@ -127,20 +124,12 @@ architecture rtl of project_top is
     signal w_100ms_strb : std_logic;
 
     -- Sig Gen to FFT
-    signal w_muxed_src_to_sig_gen_ready : std_logic;
-    signal w_signal_generator_data_out  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_signal_generator_valid_out : std_logic;
-    signal w_signal_generator_last_out  : std_logic;
+    signal w_sig_gen_data_out  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_sig_gen_valid_out : std_logic;
 
     -- Audio Capture to FFT
-    signal w_muxed_src_to_audio_ready : std_logic;
-    signal w_audio_data_out           : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
-    signal w_audio_valid_out          : std_logic;
-    signal w_audio_last_out           : std_logic;
-
-    -- Audio Capture to Trigger
-    signal w_audio_to_capture_tdata  : std_logic_vector(15 downto 0);
-    signal w_audio_to_capture_tvalid : std_logic;
+    signal w_audio_data_out  : std_logic_vector(2 * G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_audio_valid_out : std_logic;
 
     -- Video-FrameBufMem IF
     signal w_rd_addr_X              : std_logic_vector(9 downto 0);
@@ -154,26 +143,25 @@ architecture rtl of project_top is
     signal w_frame_buf_data_linear  : std_logic_vector(2 ** (C_FFT_LOG2_DATA_WIDTH - C_FFT_LOG2_QFORMAT) - 1 downto 0);
 
     -- GPIO
-    signal w_dds_ctrl               : std_logic_vector(3 downto 0);
-    signal w_lpf_en                 : std_logic;
-    signal w_lpf_incr               : std_logic;
-    signal w_lpf_incr_to_video      : std_logic;
-    signal w_lpf_decr               : std_logic;
-    signal w_lpf_decr_to_video      : std_logic;
-    signal w_hpf_en                 : std_logic;
-    signal w_hpf_incr               : std_logic;
-    signal w_hpf_incr_to_video      : std_logic;
-    signal w_hpf_decr               : std_logic;
-    signal w_hpf_decr_to_video      : std_logic;
-    signal w_oscilloscope_en        : std_logic;
-    signal w_waterfall_en           : std_logic;
-    signal w_sel_up_lo              : std_logic;
-    signal w_capture_en             : std_logic;
-    signal w_capture_en_drain_guard : std_logic;
-    signal w_updating_coeffs_lpf    : std_logic;
-    signal w_updating_coeffs_hpf    : std_logic;
-    signal w_new_data_strobe_lpf    : std_logic;
-    signal w_new_data_strobe_hpf    : std_logic;
+    signal w_dds_ctrl            : std_logic_vector(3 downto 0);
+    signal w_lpf_en              : std_logic;
+    signal w_lpf_incr            : std_logic;
+    signal w_lpf_incr_to_video   : std_logic;
+    signal w_lpf_decr            : std_logic;
+    signal w_lpf_decr_to_video   : std_logic;
+    signal w_hpf_en              : std_logic;
+    signal w_hpf_incr            : std_logic;
+    signal w_hpf_incr_to_video   : std_logic;
+    signal w_hpf_decr            : std_logic;
+    signal w_hpf_decr_to_video   : std_logic;
+    signal w_oscilloscope_en     : std_logic;
+    signal w_waterfall_en        : std_logic;
+    signal w_sel_up_lo           : std_logic;
+    signal w_capture_en          : std_logic;
+    signal w_updating_coeffs_lpf : std_logic;
+    signal w_updating_coeffs_hpf : std_logic;
+    signal w_new_data_strobe_lpf : std_logic;
+    signal w_new_data_strobe_hpf : std_logic;
 
     -- Filters
     signal w_raddr_hpf : unsigned(8 downto 0);
@@ -182,8 +170,6 @@ architecture rtl of project_top is
     signal w_rdata_lpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
 
     -- Drain Guard
-    type t_drain_guard is (IDLE, AUDIO_WAITING, GENERATOR_WAITING, GENERATOR_DRAINING, AUDIO_DRAINING);
-    signal s_state_drain_guard : t_drain_guard := IDLE;
 
     -- Sampling Clocks
     signal w_lrclk     : std_logic;
@@ -217,17 +203,16 @@ begin
         port map
         (
             clk          => i_clk_100,
-            i_en         => not(w_capture_en_drain_guard),
+            i_en         => not(w_capture_en),
             i_pbuttons   => w_dds_ctrl,
             i_sel_up_lo  => w_sel_up_lo,
             i_fs_clk     => w_lrclk,
             i_ms_strobe  => w_ms_strobe,
             o_100ms_strb => w_100ms_strb,
             o_reset      => open,
-            i_iq_ready   => w_muxed_src_to_sig_gen_ready,
-            o_iq_data    => w_signal_generator_data_out,
-            o_iq_valid   => w_signal_generator_valid_out,
-            o_iq_last    => w_signal_generator_last_out
+            o_iq_data    => w_sig_gen_data_out,
+            o_iq_valid   => w_sig_gen_valid_out,
+            o_iq_last    => open
         );
     -- ============================================================================ 
     window_function_time_inst : entity work.window_function_time
@@ -235,7 +220,7 @@ begin
             G_INPUT_DATA_WIDTH  => G_FFT_BIT_SIZE,
             G_INPUT_DATA_DEPTH  => G_NFFT,
             G_WINDOW_DATA_WIDTH => 16,
-            G_INIT_FILE         => "filter/windowing/window_coefficients.txt"
+            G_INIT_FILE         => "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/filter/windowing/window_coefficients.txt"
         )
         port map
         (
@@ -244,11 +229,12 @@ begin
             i_data_i => w_muxed_src_data(G_FFT_BIT_SIZE - 1 downto 0),
             i_data_q => w_muxed_src_data(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
             i_valid  => w_muxed_src_valid,
-            i_last   => '0', -- kept track of within this entity
+            o_ready  => open, -- Note: accepts the possible data drop
             -- Output
             o_data_i => w_window_data_i_out,
             o_data_q => w_window_data_q_out,
             o_valid  => w_window_valid_out,
+            i_ready  => w_fft_ready_out,
             o_last   => open
         );
     -- ============================================================================ 
@@ -261,12 +247,14 @@ begin
         )
         port map
         (
-            clk        => i_clk_100,
-            reset      => '0',
+            clk   => i_clk_100,
+            reset => '0',
+            -- Input
             i_tdata_re => w_window_data_i_out,
             i_tdata_im => w_window_data_q_out,
             i_tvalid   => w_window_valid_out,
             o_tready   => w_fft_ready_out,
+            -- Output
             o_tdata_re => w_fft_tdata_out_re,
             o_tdata_im => w_fft_tdata_out_im,
             o_xk_index => w_xk_index,
@@ -422,7 +410,7 @@ begin
             -- Strobe
             i_100ms_strb => w_100ms_strb,
             -- GUI configuration
-            i_capture_en      => w_capture_en_drain_guard,
+            i_capture_en      => w_capture_en,
             i_lpf_en          => w_lpf_en,
             i_hpf_en          => w_hpf_en,
             i_lpf_incr        => w_lpf_incr_to_video,
@@ -517,8 +505,8 @@ begin
         (
             clk           => i_clk_100,
             i_ms_strobe   => w_ms_strobe,
-            i_audio_data  => w_audio_to_capture_tdata,
-            i_audio_valid => w_audio_to_capture_tvalid,
+            i_audio_data  => w_muxed_src_data(G_FFT_BIT_SIZE - 1 downto 0),
+            i_audio_valid => w_muxed_src_valid,
             i_video_raddr => w_video_to_trigger_capture_raddr,
             o_video_rdata => w_trigger_capture_to_video_rdata
         );
@@ -547,20 +535,16 @@ begin
             i_lpf_en    => w_lpf_en,
             i_hpf_en    => w_hpf_en,
 
-            i_capture_en => w_capture_en_drain_guard,
+            i_capture_en => w_capture_en,
             i_sdata      => i_sdata,
             o_mclk       => o_mclk,
             o_lrclk      => w_lrclk,
             o_bclk       => o_bclk,
             o_pbdat      => o_pbdat,
-            -- Raw output
-            o_raw_tdata  => w_audio_to_capture_tdata,
-            o_raw_tvalid => w_audio_to_capture_tvalid,
-            -- FFT IF
-            o_tdata  => w_audio_data_out,
-            o_tvalid => w_audio_valid_out,
-            o_tlast  => w_audio_last_out,
-            i_tready => w_muxed_src_to_audio_ready
+            -- Output
+            o_tdata_i => w_audio_data_out(G_FFT_BIT_SIZE - 1 downto 0),
+            o_tdata_q => w_audio_data_out(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
+            o_tvalid  => w_audio_valid_out
         );
     -- ============================================================================ 
     -- DAC Output Mute, Active Low
@@ -574,86 +558,24 @@ begin
 
     o_raddr_hpf <= std_logic_vector(resize('0' & w_raddr_hpf, o_raddr_hpf'length));
     w_rdata_hpf <= i_rdata_hpf(G_FIR_COEFF_WIDTH - 1 downto 0);
-    -- ============================================================================
-    -- This capture_en will only switch ON when a state declares that we are dealing with audio data
-    -- This capture_en will only switch OFF when a state declares that we are not currently sending audio data  
-    w_capture_en_drain_guard <= '1' when (s_state_drain_guard = AUDIO_WAITING) or (s_state_drain_guard = AUDIO_DRAINING) else
-        '0';
-
-    -- This FSM keeps track of internal/capture mode determined by GPIOs.
-    -- If TVALID='1' for Generator/Audio, the data mux will not change the data source if capture_en should toggle. This 
-    -- holds until we have seen a TLAST. This allows the XFFT to always receive 1024 samples correctly without unexpected interrupts. 
-    -- In other words, never change the data source when draining.
-    p_drain_guard : process (i_clk_100)
-    begin
-        if rising_edge(i_clk_100) then
-            case s_state_drain_guard is
-                    -- -----------------------------------------------------------
-                when IDLE =>
-                    if (w_capture_en = '1') then
-                        s_state_drain_guard <= AUDIO_WAITING;
-                    else
-                        s_state_drain_guard <= GENERATOR_WAITING;
-                    end if;
-                    -- -----------------------------------------------------------
-                when AUDIO_WAITING =>
-                    if (w_muxed_src_valid = '1') then
-                        s_state_drain_guard <= AUDIO_DRAINING;
-                    elsif (w_capture_en = '0') then
-                        s_state_drain_guard <= GENERATOR_WAITING;
-                    end if;
-                    -- -----------------------------------------------------------
-                when AUDIO_DRAINING =>
-                    if (w_muxed_src_last = '1') then
-                        s_state_drain_guard <= AUDIO_WAITING;
-                    end if;
-                    -- -----------------------------------------------------------
-                when GENERATOR_WAITING =>
-                    if (w_muxed_src_valid = '1') then
-                        s_state_drain_guard <= GENERATOR_DRAINING;
-                    elsif (w_capture_en = '1') then
-                        s_state_drain_guard <= AUDIO_WAITING;
-                    end if;
-                    -- -----------------------------------------------------------
-                when GENERATOR_DRAINING =>
-                    if (w_muxed_src_last = '1') then
-                        s_state_drain_guard <= GENERATOR_WAITING;
-                    end if;
-                    -- -----------------------------------------------------------
-                when others =>
-                    s_state_drain_guard <= IDLE;
-                    -- -----------------------------------------------------------
-            end case;
-        end if;
-    end process p_drain_guard;
     -- ============================================================================ 
     -- Combinatorial source mux
     p_sample_src_mux : process (
-        s_state_drain_guard,
+        w_capture_en,
         w_audio_data_out,
         w_audio_valid_out,
-        w_audio_last_out,
-        w_fft_ready_out,
-        w_signal_generator_data_out,
-        w_signal_generator_valid_out,
-        w_signal_generator_last_out
+        w_sig_gen_data_out,
+        w_sig_gen_valid_out
         )
     begin
-        w_muxed_src_data             <= (others => 'X');
-        w_muxed_src_valid            <= '0';
-        w_muxed_src_last             <= '0';
-        w_muxed_src_to_audio_ready   <= '0';
-        w_muxed_src_to_sig_gen_ready <= '0';
-        if (s_state_drain_guard = AUDIO_WAITING) or (s_state_drain_guard = AUDIO_DRAINING) then
-            w_muxed_src_data           <= w_audio_data_out;
-            w_muxed_src_valid          <= w_audio_valid_out;
-            w_muxed_src_last           <= w_audio_last_out;
-            w_muxed_src_to_audio_ready <= w_fft_ready_out;
-        elsif (s_state_drain_guard = GENERATOR_WAITING) or (s_state_drain_guard = GENERATOR_DRAINING) then
-            w_muxed_src_data             <= w_signal_generator_data_out;
-            w_muxed_src_valid            <= w_signal_generator_valid_out;
-            w_muxed_src_last             <= w_signal_generator_last_out;
-            w_muxed_src_to_sig_gen_ready <= w_fft_ready_out;
+        w_muxed_src_data  <= (others => 'X');
+        w_muxed_src_valid <= '0';
+        if (w_capture_en = '1') then
+            w_muxed_src_data  <= w_audio_data_out;
+            w_muxed_src_valid <= w_audio_valid_out;
+        else
+            w_muxed_src_data  <= w_sig_gen_data_out;
+            w_muxed_src_valid <= w_sig_gen_valid_out;
         end if;
     end process p_sample_src_mux;
     -- ============================================================================ 

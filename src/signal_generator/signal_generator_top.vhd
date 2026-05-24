@@ -32,7 +32,6 @@ entity signal_generator_top is
         o_100ms_strb : out std_logic;
         o_reset      : out std_logic;
         -- FFT
-        i_iq_ready : in std_logic;
         o_iq_data  : out std_logic_vector(2 * G_DATA_WIDTH - 1 downto 0);
         o_iq_valid : out std_logic;
         o_iq_last  : out std_logic

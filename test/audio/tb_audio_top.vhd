@@ -127,12 +127,9 @@ begin
             o_mclk                => o_mclk,
             o_lrclk               => o_lrclk,
             o_bclk                => o_bclk,
-            o_raw_tdata           => o_raw_tdata,
-            o_raw_tvalid          => o_raw_tvalid,
-            o_tdata               => o_tdata,
-            o_tvalid              => o_tvalid,
-            o_tlast               => o_tlast,
-            i_tready              => (i_tready and not(tb_fft_stall))
+            o_tdata_i             => o_tdata(15 downto 0),
+            o_tdata_q             => o_tdata(31 downto 16),
+            o_tvalid              => o_tvalid
         );
     /* ---------------------------------------------------------------*/
     lpf_dpmem_dram_inst : entity work.dpmem_bram
