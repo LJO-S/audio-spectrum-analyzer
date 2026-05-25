@@ -1,3 +1,10 @@
+---------------------------------------------------------------------------
+-- Title       : Hann Window Function (Time Domain)
+-- Design      : window_function_time
+-- Description : Implements a Hann window function in the time domain for signal processing applications.
+--               The window coefficients are stored in a BRAM and applied to the input data stream. 
+--               The output is the windowed data stream, which can be used for further processing such as FFT.
+---------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
