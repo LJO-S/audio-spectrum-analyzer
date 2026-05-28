@@ -2,7 +2,7 @@
 -- Title       : Decimation Bank
 -- Design      : decimation_bank
 -- Author      : Ludvig Snihs
--- Description : Top-level module for multiple decimate-by-2 halfband filters to achieve decimation by 2, 4, 8, or 16.
+-- Description : Top-level module for multiple decimate-by-2 halfband filters to achieve decimation by 2, 4, 8,
 ---------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -18,7 +18,7 @@ entity decimation_bank is
     port (
         clk : in std_logic;
         -- Configuration
-        i_cfg_decimation_factor : in std_logic_vector(3 downto 0); -- 2, 4, 8, 16 (0 = bypass)
+        i_cfg_decimation_factor : in std_logic_vector(2 downto 0); -- 2, 4, 8 (0 = bypass)
         i_cfg_valid             : in std_logic;
         -- Input
         i_data_i     : in std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
@@ -44,13 +44,12 @@ architecture rtl of decimation_bank is
     --------------------
     -- Signals
     --------------------
-    signal r_cfg_decimation_factor : std_logic_vector(3 downto 0) := (others => '0');
-    -- signal r_decimate_active_slv   : std_logic_vector(3 downto 0) := (others => '0');
+    signal r_cfg_decimation_factor : std_logic_vector(2 downto 0) := (others => '0');
 
-    signal w_decimate_data_i_in  : t_array_slv(0 to 4)(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => (others => '0'));
-    signal w_decimate_valid_i_in : std_logic_vector(0 to 4)                             := (others => '0');
-    signal w_decimate_data_q_in  : t_array_slv(0 to 4)(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => (others => '0'));
-    signal w_decimate_valid_q_in : std_logic_vector(0 to 4)                             := (others => '0');
+    signal w_decimate_data_i_in  : t_array_slv(0 to 3)(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => (others => '0'));
+    signal w_decimate_valid_i_in : std_logic_vector(0 to 3)                             := (others => '0');
+    signal w_decimate_data_q_in  : t_array_slv(0 to 3)(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => (others => '0'));
+    signal w_decimate_valid_q_in : std_logic_vector(0 to 3)                             := (others => '0');
 
     signal r_decimate_data_i_out : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal r_decimate_data_q_out : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
@@ -79,36 +78,27 @@ begin
             -- Mux
             -------------------------
             case r_cfg_decimation_factor is
-                when "0001" =>
+                when "001" =>
                     r_decimate_data_i_out <= w_decimate_data_i_in(1);
                     r_decimate_data_q_out <= w_decimate_data_q_in(1);
                     r_decimate_valid_out  <= w_decimate_valid_i_in(1) and w_decimate_valid_q_in(1);
-                    -- r_decimate_active_slv <= "0001";
-                when "0010" =>
+                when "010" =>
                     r_decimate_data_i_out <= w_decimate_data_i_in(2);
                     r_decimate_data_q_out <= w_decimate_data_q_in(2);
                     r_decimate_valid_out  <= w_decimate_valid_i_in(2) and w_decimate_valid_q_in(2);
-                    -- r_decimate_active_slv <= "0011";
-                when "0100" =>
+                when "100" =>
                     r_decimate_data_i_out <= w_decimate_data_i_in(3);
                     r_decimate_data_q_out <= w_decimate_data_q_in(3);
                     r_decimate_valid_out  <= w_decimate_valid_i_in(3) and w_decimate_valid_q_in(3);
-                    -- r_decimate_active_slv <= "0111";
-                when "1000" =>
-                    r_decimate_data_i_out <= w_decimate_data_i_in(4);
-                    r_decimate_data_q_out <= w_decimate_data_q_in(4);
-                    r_decimate_valid_out  <= w_decimate_valid_i_in(4) and w_decimate_valid_q_in(4);
-                    -- r_decimate_active_slv <= "1111";
                 when others                      =>
                     r_decimate_data_i_out <= (others => '0');
                     r_decimate_data_q_out <= (others => '0');
                     r_decimate_valid_out  <= '0';
-                    -- r_decimate_active_slv <= (others => '0');
             end case;
         end if;
     end process p_output_mux;
     -- =========================================================================
-    g_generate_decimators : for i in 0 to 3 generate
+    g_generate_decimators : for i in 0 to 2 generate
         signal w_decimate_data_i_out  : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
         signal w_decimate_valid_i_out : std_logic;
         signal w_decimate_data_q_out  : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);

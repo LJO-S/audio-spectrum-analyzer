@@ -19,6 +19,7 @@ from scripts.models.dds import dds
 from scripts.synth_and_test.dds import dds_checker
 from scripts.synth_and_test.window import window_checker
 from scripts.synth_and_test.decimation import decimation_checker
+from scripts.synth_and_test.zoom_top import zoom_top_checker
 
 
 # ============================================================
@@ -282,7 +283,7 @@ test = testbench.test("auto")
 FS = 48.8e3
 
 checker = decimation_checker(a_fpass=100, a_atten_db=60, a_fs=int(FS))
-for factor in [2, 4, 8, 16]:
+for factor in [2, 4, 8]:
     test.add_config(
         name=f"div_{factor}",
         generics=dict(G_MULTIRATE_FACTOR=factor),
@@ -297,9 +298,33 @@ test.add_config(
 )
 
 # ----------------------------
-# Another testbench...
+# Zoom Top
 # ----------------------------
-# And another testbench etc.
+# The input is a complex tone at F_SIGNAL_HZ; the DDS is configured with
+# G_MIXER_FREQUENCY_SHIFT = -F_SIGNAL_HZ so the mixer shifts that tone to DC.
+# Post-check verifies the FFT peak lands at bin 0 and the output length
+# matches n_samples / decimation_factor (within 15 %).
+testbench = lib.entity("zoom_top_tb")
+test = testbench.test("auto")
+
+F_SIGNAL_HZ = 29000  # Hz relative to effective TB sample rate (100 MHz / 2 = 50 MHz)
+N_SAMPLES = 8192
+
+zoom_checker = zoom_top_checker(a_f_signal_hz=F_SIGNAL_HZ)
+
+for factor in [2, 4, 8]:
+    test.add_config(
+        name=f"div_{factor}_shift_{F_SIGNAL_HZ}hz",
+        generics=dict(
+            G_MULTIRATE_FACTOR=factor,
+            # Negative value: DDS at -F_SIGNAL_HZ brings +F_SIGNAL_HZ tone to DC
+            G_MIXER_FREQUENCY_SHIFT=-F_SIGNAL_HZ,
+        ),
+        pre_config=zoom_checker.pre_config_wrapper(a_n_samples=N_SAMPLES),
+        post_check=zoom_checker.post_check_wrapper(
+            a_decimation_factor=factor, a_n_samples=N_SAMPLES
+        ),
+    )
 
 # ============================================================
 VU.add_compile_option("modelsim.vcom_flags", ["+acc=npr", '+cover="sbcef'])

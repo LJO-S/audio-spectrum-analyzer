@@ -1,9 +1,8 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
--- 
+--
 use std.textio.all;
 --
 library vunit_lib;
@@ -11,9 +10,11 @@ context vunit_lib.vunit_context;
 
 entity zoom_top_tb is
     generic (
-        runner_cfg              : string;
-        G_MULTIRATE_FACTOR      : natural := 2;
-        G_MIXER_FREQUENCY_SHIFT : integer := 0
+        runner_cfg         : string;
+        G_MULTIRATE_FACTOR : natural := 2;
+        -- Signed frequency word passed to the DDS (Hz at 100 MHz clock).
+        -- Use a negative value to downmix a complex tone at |G_MIXER_FREQUENCY_SHIFT| Hz to DC.
+        G_MIXER_FREQUENCY_SHIFT : integer := - 15000
     );
 end;
 
@@ -24,14 +25,15 @@ architecture bench of zoom_top_tb is
     constant G_INPUT_DATA_WIDTH : positive := 16;
     constant G_COEFF_DATA_WIDTH : positive := 16;
     constant G_INIT_FILE        : string   := output_path(runner_cfg) & "../../../../src/zoom/decimate/HBF_16";
+    constant G_DDS_INIT_FILE    : string   := output_path(runner_cfg) & "../../../../src/signal_generator/dds/dds_lut.txt";
     -- Ports
-    signal clk                     : std_logic := '0';
-    signal i_cfg_decimation_factor : std_logic_vector(3 downto 0);
-    signal i_cfg_frequency_shift   : std_logic_vector(15 downto 0);
-    signal i_cfg_valid             : std_logic;
-    signal i_data_i                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
-    signal i_data_q                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
-    signal i_data_valid            : std_logic;
+    signal clk                     : std_logic                                         := '0';
+    signal i_cfg_decimation_factor : std_logic_vector(2 downto 0)                      := (others => '0');
+    signal i_cfg_frequency_shift   : std_logic_vector(15 downto 0)                     := (others => '0');
+    signal i_cfg_valid             : std_logic                                         := '0';
+    signal i_data_i                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal i_data_q                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
+    signal i_data_valid            : std_logic                                         := '0';
     signal o_data_i                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_data_q                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal o_data_valid            : std_logic;
@@ -54,20 +56,24 @@ begin
         generic map(
             G_INPUT_DATA_WIDTH => G_INPUT_DATA_WIDTH,
             G_COEFF_DATA_WIDTH => G_COEFF_DATA_WIDTH,
-            G_INIT_FILE        => G_INIT_FILE
+            G_INIT_FILE        => G_INIT_FILE,
+            G_DDS_INIT_FILE    => G_DDS_INIT_FILE
         )
         port map
         (
-            clk                     => clk,
+            clk => clk,
+            -- Config
             i_cfg_decimation_factor => i_cfg_decimation_factor,
             i_cfg_frequency_shift   => i_cfg_frequency_shift,
             i_cfg_valid             => i_cfg_valid,
-            i_data_i                => i_data_i,
-            i_data_q                => i_data_q,
-            i_data_valid            => i_data_valid,
-            o_data_i                => o_data_i,
-            o_data_q                => o_data_q,
-            o_data_valid            => o_data_valid
+            -- Input
+            i_data_i     => i_data_i,
+            i_data_q     => i_data_q,
+            i_data_valid => i_data_valid,
+            -- Output
+            o_data_i     => o_data_i,
+            o_data_q     => o_data_q,
+            o_data_valid => o_data_valid
         );
     -- =========================================================================
     p_read_file : process
@@ -75,7 +81,6 @@ begin
         variable v_line        : line;
         variable v_input_slv_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
         variable v_input_slv_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
-        variable v_idx         : natural := 0;
     begin
         tb_auto_test_done <= false;
         wait until tb_auto_set = true;
@@ -91,14 +96,12 @@ begin
             i_data_i     <= (others => '0');
             i_data_q     <= (others => '0');
             i_data_valid <= '0';
-            wait_clock(4);
-            --   
+            wait_clock(1);
         end loop;
         file_close(v_read_file);
+        -- Wait for the pipeline (halfband filter bank + mixer latency) to flush
+        wait_clock(300);
         tb_auto_test_done <= true;
-        i_data_i          <= (others => '0');
-        i_data_q          <= (others => '0');
-        i_data_valid      <= '0';
         wait;
     end process p_read_file;
     -- =========================================================================
@@ -117,39 +120,34 @@ begin
     end process;
     -- =========================================================================
     main : process
-        procedure set_decimate_cfg is
+        -- Apply decimation factor and frequency shift in a single config pulse so both
+        -- sticky enables (r_mixer_en, r_decimate_en) latch correctly inside zoom_top.
+        procedure set_zoom_cfg is
         begin
             if G_MULTIRATE_FACTOR = 2 then
-                i_cfg_decimation_factor <= "0001"; -- Decimate by 2
+                i_cfg_decimation_factor <= "001";
             elsif G_MULTIRATE_FACTOR = 4 then
-                i_cfg_decimation_factor <= "0010"; -- Decimate by 4
+                i_cfg_decimation_factor <= "010";
             elsif G_MULTIRATE_FACTOR = 8 then
-                i_cfg_decimation_factor <= "0100"; -- Decimate by 8
-            elsif G_MULTIRATE_FACTOR = 16 then
-                i_cfg_decimation_factor <= "1000"; -- Decimate by 16
+                i_cfg_decimation_factor <= "100";
             else
                 assert FALSE report "Unsupported decimation factor for testbench!" severity FAILURE;
             end if;
-            i_cfg_valid <= '1';
-            wait_clock(1);
-            i_cfg_decimation_factor <= (others => '0');
-            i_cfg_valid             <= '0';
-        end procedure;
-        procedure set_mixer_cfg is
-        begin
             i_cfg_frequency_shift <= std_logic_vector(to_signed(G_MIXER_FREQUENCY_SHIFT, i_cfg_frequency_shift'length));
             i_cfg_valid           <= '1';
             wait_clock(1);
-            i_cfg_frequency_shift <= (others => '0');
-            i_cfg_valid           <= '0';
+            i_cfg_decimation_factor <= (others => '0');
+            i_cfg_frequency_shift   <= (others => '0');
+            i_cfg_valid             <= '0';
         end procedure;
     begin
         test_runner_setup(runner, runner_cfg);
         if run("auto") then
             file_open(tb_write_file, output_path(runner_cfg) & "/output_data.txt", write_mode);
             wait until clk = '1';
-            set_decimate_cfg;
-            set_mixer_cfg;
+            set_zoom_cfg;
+            -- Allow the DDS tuning-word pipeline (3 stages) to settle before first sample
+            wait_clock(20);
             tb_auto_set <= true;
             wait until tb_auto_test_done = true;
             file_close(tb_write_file);

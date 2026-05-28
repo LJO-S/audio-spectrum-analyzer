@@ -13,14 +13,15 @@ entity zoom_top is
     generic (
         G_INPUT_DATA_WIDTH : positive := 16;
         G_COEFF_DATA_WIDTH : positive := 16;
-        G_INIT_FILE        : string   := "src/zoom/decimate/HBF_16"
+        G_INIT_FILE        : string   := "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/zoom/decimate/HBF_16";
+        G_DDS_INIT_FILE    : string   := "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/signal_generator/dds/dds_lut.txt"
     );
     port (
         clk : in std_logic;
         -------------------------
         -- Input configuration
         -------------------------
-        i_cfg_decimation_factor : in std_logic_vector(3 downto 0); -- 1, 2, 4, 8, 16 (0 = bypass)
+        i_cfg_decimation_factor : in std_logic_vector(2 downto 0); -- 1, 2, 4, 8 (0 = bypass)
         i_cfg_frequency_shift   : in std_logic_vector(15 downto 0);
         i_cfg_valid             : in std_logic;
         -------------------------
@@ -52,18 +53,17 @@ architecture rtl of zoom_top is
     -- Signals
     --------------------
     -- Configuration registers
-    signal r_cfg_decimation_factor : std_logic_vector(3 downto 0)  := (others => '0');
+    signal r_cfg_decimation_factor : std_logic_vector(2 downto 0)  := (others => '0');
     signal r_cfg_frequency_shift   : std_logic_vector(15 downto 0) := (others => '0');
-    signal r_cfg_frequency_valid   : std_logic                     := '0';
     signal r_cfg_valid             : std_logic                     := '0';
     -- Control signals for mixer and decimator
     signal r_mixer_active    : std_logic := '0';
     signal r_decimate_active : std_logic := '0';
     signal r_mixer_en        : std_logic := '0';
     signal r_decimate_en     : std_logic := '0';
-    -- Latched configuration for timing alignment
-    signal r_cfg_frequency_shift_d1   : std_logic_vector(15 downto 0) := (others => '0');
-    signal r_cfg_decimation_factor_d1 : std_logic_vector(3 downto 0)  := (others => '0');
+    -- Latched DDS frequency word: persists after the one-shot config pulse so the
+    -- DDS can run continuously (one accumulator step per clock) as a free-running NCO.
+    signal r_dds_freq_latch : std_logic_vector(15 downto 0) := (others => '0');
     -- Input data registers
     signal r_input_data_i     : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal r_input_data_q     : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
@@ -77,9 +77,9 @@ architecture rtl of zoom_top is
     signal r_input_valid_d4  : std_logic                                         := '0';
     signal r_input_valid_d5  : std_logic                                         := '0';
     signal r_input_valid_d6  : std_logic                                         := '0';
-    -- Mixer output registers
-    signal w_mixer_data_i_out : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
-    signal w_mixer_data_q_out : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
+    -- Mixer output registers (full-width from complex_mult: G_WIDTH_A+G_WIDTH_B downto 0 = 33 bits)
+    signal w_mixer_data_i_out : std_logic_vector(G_INPUT_DATA_WIDTH * 2 downto 0);
+    signal w_mixer_data_q_out : std_logic_vector(G_INPUT_DATA_WIDTH * 2 downto 0);
     signal r_mixer_mux_data_i : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal r_mixer_mux_data_q : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal r_mixer_mux_valid  : std_logic                                         := '0';
@@ -107,13 +107,9 @@ begin
     p_configuration : process (clk)
     begin
         if rising_edge(clk) then
-            -- Default
-            r_cfg_frequency_valid <= '0';
-
             -------------------
             -- PIPE 0
             -------------------
-            -- Latch the configuration inputs
             r_mixer_active <= '1' when ( or (i_cfg_frequency_shift) = '1') else
                 '0'; -- Bypass mixer if frequency shift is 0
             r_decimate_active <= '1' when ( or (i_cfg_decimation_factor) = '1') else
@@ -124,12 +120,16 @@ begin
             -------------------
             -- PIPE 1
             -------------------
-            -- Only enable mixer if frequency + decimation is active, otherwise bypass everything 
-            r_mixer_en                 <= r_cfg_valid and r_mixer_active and r_decimate_active;
-            r_decimate_en              <= r_cfg_valid and r_decimate_active;
-            r_cfg_frequency_valid      <= r_cfg_valid and r_mixer_active;
-            r_cfg_frequency_shift_d1   <= r_cfg_frequency_shift;
-            r_cfg_decimation_factor_d1 <= r_cfg_decimation_factor;
+            -- Latch enables on the config pulse so they persist across samples
+            if (r_cfg_valid = '1') then
+                r_mixer_en    <= r_mixer_active and r_decimate_active;
+                r_decimate_en <= r_decimate_active;
+                -- Latch the frequency word so the DDS can run continuously after
+                -- the one-shot config pulse clears.
+                if (r_mixer_active = '1') then
+                    r_dds_freq_latch <= r_cfg_frequency_shift;
+                end if;
+            end if;
         end if;
     end process p_configuration;
     -- ============================================================================
@@ -140,14 +140,15 @@ begin
             G_ACCUMULATOR_WIDTH => C_DDS_ACCUMULATOR_WIDTH,
             G_LUT_ADDR_WIDTH    => C_DDS_LUT_ADDR_WIDTH,
             G_SYS_CLK_HZ        => 100_000_000, -- 100 MHz
-            G_INIT_FILE         => "dds_init.txt"
+            G_INIT_FILE         => G_DDS_INIT_FILE
         )
         port map
         (
             clk => clk,
-            -- Configuration
-            i_cfg_freq  => r_cfg_frequency_shift,
-            i_cfg_valid => r_cfg_frequency_valid,
+            -- Configuration: r_dds_freq_latch holds the frequency word indefinitely;
+            -- r_mixer_en is a sticky enable so the DDS runs every clock after config.
+            i_cfg_freq  => r_dds_freq_latch,
+            i_cfg_valid => r_mixer_en,
             -- I/Q output for mixing with input signal
             o_data_i => w_dds_data_i_out,
             o_data_q => w_dds_data_q_out,
@@ -165,11 +166,9 @@ begin
                 r_input_data_q     <= i_data_q;
                 r_input_data_valid <= '1';
             end if;
-            -- Output
-            if (w_dds_valid_out = '1') then
-                r_dds_data_i_out <= w_dds_data_i_out;
-                r_dds_data_q_out <= w_dds_data_q_out;
-            end if;
+            -- Output: latch every clock so complex_mult sees registered DDS inputs
+            r_dds_data_i_out <= w_dds_data_i_out;
+            r_dds_data_q_out <= w_dds_data_q_out;
 
             -- Pipe for bypass
             -------------------
@@ -225,10 +224,10 @@ begin
     begin
         if rising_edge(clk) then
             if (r_mixer_en = '1') then
-                -- Fetch from DDS
-                r_mixer_mux_data_i <= w_mixer_data_i_out;
-                r_mixer_mux_data_q <= w_mixer_data_q_out;
-                r_mixer_mux_valid  <= r_input_valid_d6; -- TODO double check latency
+                -- Fetch from DDS; truncate Q30 product to Q14 by keeping top 16 bits [31:16]
+                r_mixer_mux_data_i <= w_mixer_data_i_out(G_INPUT_DATA_WIDTH * 2 - 1 downto G_INPUT_DATA_WIDTH);
+                r_mixer_mux_data_q <= w_mixer_data_q_out(G_INPUT_DATA_WIDTH * 2 - 1 downto G_INPUT_DATA_WIDTH);
+                r_mixer_mux_valid  <= r_input_valid_d6;
             else
                 -- Bypass
                 r_mixer_mux_data_i <= r_input_data_i;

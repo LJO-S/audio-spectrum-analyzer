@@ -24,7 +24,7 @@ architecture bench of decimation_bank_tb is
     constant G_INIT_FILE        : string  := output_path(runner_cfg) & "../../../../src/zoom/decimate/HBF_16";
     -- Ports
     signal clk                     : std_logic := '0';
-    signal i_cfg_decimation_factor : std_logic_vector(3 downto 0);
+    signal i_cfg_decimation_factor : std_logic_vector(2 downto 0);
     signal i_cfg_valid             : std_logic;
     signal i_data_i                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
     signal i_data_q                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0);
@@ -116,13 +116,11 @@ begin
         procedure set_decimate_cfg is
         begin
             if G_MULTIRATE_FACTOR = 2 then
-                i_cfg_decimation_factor <= "0001"; -- Decimate by 2
+                i_cfg_decimation_factor <= "001"; -- Decimate by 2
             elsif G_MULTIRATE_FACTOR = 4 then
-                i_cfg_decimation_factor <= "0010"; -- Decimate by 4
+                i_cfg_decimation_factor <= "010"; -- Decimate by 4
             elsif G_MULTIRATE_FACTOR = 8 then
-                i_cfg_decimation_factor <= "0100"; -- Decimate by 8
-            elsif G_MULTIRATE_FACTOR = 16 then
-                i_cfg_decimation_factor <= "1000"; -- Decimate by 16
+                i_cfg_decimation_factor <= "100"; -- Decimate by 8
             else
                 assert FALSE report "Unsupported decimation factor for testbench!" severity FAILURE;
             end if;
@@ -146,7 +144,7 @@ begin
             ---------------
             -- Bypass
             ---------------
-            i_cfg_decimation_factor <= "0000"; -- Bypass
+            i_cfg_decimation_factor <= "000"; -- Bypass
             i_cfg_valid             <= '1';
             wait_clock(1);
             i_cfg_decimation_factor <= (others => '0');
@@ -155,7 +153,7 @@ begin
             ---------------
             -- Decimate by 2
             ---------------
-            i_cfg_decimation_factor <= "0001"; -- Decimate by 2
+            i_cfg_decimation_factor <= "001"; -- Decimate by 2
             i_cfg_valid             <= '1';
             wait_clock(1);
             i_cfg_decimation_factor <= (others => '0');
@@ -164,7 +162,7 @@ begin
             ---------------
             -- Decimate by 4
             ---------------
-            i_cfg_decimation_factor <= "0010"; -- Decimate by 4
+            i_cfg_decimation_factor <= "010"; -- Decimate by 4
             i_cfg_valid             <= '1';
             wait_clock(1);
             i_cfg_decimation_factor <= (others => '0');
@@ -173,16 +171,7 @@ begin
             ---------------
             -- Decimate by 8
             ---------------
-            i_cfg_decimation_factor <= "0100"; -- Decimate by 8
-            i_cfg_valid             <= '1';
-            wait_clock(1);
-            i_cfg_decimation_factor <= (others => '0');
-            i_cfg_valid             <= '0';
-            wait_clock(100);
-            ---------------
-            -- Decimate by 16
-            ---------------
-            i_cfg_decimation_factor <= "1000"; -- Decimate by 16
+            i_cfg_decimation_factor <= "100"; -- Decimate by 8
             i_cfg_valid             <= '1';
             wait_clock(1);
             i_cfg_decimation_factor <= (others => '0');
