@@ -283,7 +283,7 @@ test = testbench.test("auto")
 FS = 48.8e3
 
 checker = decimation_checker(a_fpass=100, a_atten_db=60, a_fs=int(FS))
-for factor in [2, 4, 8]:
+for factor in [2, 4]:
     test.add_config(
         name=f"div_{factor}",
         generics=dict(G_MULTIRATE_FACTOR=factor),
@@ -312,7 +312,7 @@ N_SAMPLES = 8192
 
 zoom_checker = zoom_top_checker(a_f_signal_hz=F_SIGNAL_HZ)
 
-for factor in [2, 4, 8]:
+for factor in [2, 4]:
     test.add_config(
         name=f"div_{factor}_shift_{F_SIGNAL_HZ}hz",
         generics=dict(

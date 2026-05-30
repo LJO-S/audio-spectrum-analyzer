@@ -21,7 +21,7 @@ entity zoom_top is
         -------------------------
         -- Input configuration
         -------------------------
-        i_cfg_decimation_factor : in std_logic_vector(2 downto 0); -- 1, 2, 4, 8 (0 = bypass)
+        i_cfg_decimation_factor : in std_logic_vector(1 downto 0); -- 2, 4 (0 = bypass)
         i_cfg_frequency_shift   : in std_logic_vector(15 downto 0);
         i_cfg_valid             : in std_logic;
         -------------------------
@@ -53,7 +53,7 @@ architecture rtl of zoom_top is
     -- Signals
     --------------------
     -- Configuration registers
-    signal r_cfg_decimation_factor : std_logic_vector(2 downto 0)  := (others => '0');
+    signal r_cfg_decimation_factor : std_logic_vector(1 downto 0)  := (others => '0');
     signal r_cfg_frequency_shift   : std_logic_vector(15 downto 0) := (others => '0');
     signal r_cfg_valid             : std_logic                     := '0';
     -- Control signals for mixer and decimator
@@ -69,14 +69,11 @@ architecture rtl of zoom_top is
     signal r_input_data_q     : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
     signal r_input_data_valid : std_logic                                         := '0';
     -- Data registers for pipelining and timing alignment
-    signal r_input_data_i_d1 : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal r_input_data_q_d1 : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
-    signal r_input_valid_d1  : std_logic                                         := '0';
-    signal r_input_valid_d2  : std_logic                                         := '0';
-    signal r_input_valid_d3  : std_logic                                         := '0';
-    signal r_input_valid_d4  : std_logic                                         := '0';
-    signal r_input_valid_d5  : std_logic                                         := '0';
-    signal r_input_valid_d6  : std_logic                                         := '0';
+    signal r_input_valid_d1 : std_logic := '0';
+    signal r_input_valid_d2 : std_logic := '0';
+    signal r_input_valid_d3 : std_logic := '0';
+    signal r_input_valid_d4 : std_logic := '0';
+    signal r_input_valid_d5 : std_logic := '0';
     -- Mixer output registers (full-width from complex_mult: G_WIDTH_A+G_WIDTH_B downto 0 = 33 bits)
     signal w_mixer_data_i_out : std_logic_vector(G_INPUT_DATA_WIDTH * 2 downto 0);
     signal w_mixer_data_q_out : std_logic_vector(G_INPUT_DATA_WIDTH * 2 downto 0);
@@ -127,7 +124,7 @@ begin
                 -- Latch the frequency word so the DDS can run continuously after
                 -- the one-shot config pulse clears.
                 if (r_mixer_active = '1') then
-                    r_dds_freq_latch <= r_cfg_frequency_shift;
+                    r_dds_freq_latch <= std_logic_vector(-signed(r_cfg_frequency_shift));
                 end if;
             end if;
         end if;
@@ -174,9 +171,7 @@ begin
             -------------------
             -- PIPE 1
             -------------------
-            r_input_data_i_d1 <= r_input_data_i;
-            r_input_data_q_d1 <= r_input_data_q;
-            r_input_valid_d1  <= r_input_data_valid;
+            r_input_valid_d1 <= r_input_data_valid;
             -------------------
             -- PIPE 2
             -------------------
@@ -193,10 +188,6 @@ begin
             -- PIPE 5
             -------------------
             r_input_valid_d5 <= r_input_valid_d4;
-            -------------------
-            -- PIPE 6
-            -------------------
-            r_input_valid_d6 <= r_input_valid_d5;
         end if;
     end process p_data_input_latch;
     -- ============================================================================
@@ -227,7 +218,7 @@ begin
                 -- Fetch from DDS; truncate Q30 product to Q14 by keeping top 16 bits [31:16]
                 r_mixer_mux_data_i <= w_mixer_data_i_out(G_INPUT_DATA_WIDTH * 2 - 1 downto G_INPUT_DATA_WIDTH);
                 r_mixer_mux_data_q <= w_mixer_data_q_out(G_INPUT_DATA_WIDTH * 2 - 1 downto G_INPUT_DATA_WIDTH);
-                r_mixer_mux_valid  <= r_input_valid_d6;
+                r_mixer_mux_valid  <= r_input_valid_d5;
             else
                 -- Bypass
                 r_mixer_mux_data_i <= r_input_data_i;

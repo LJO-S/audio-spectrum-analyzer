@@ -28,7 +28,7 @@ architecture bench of zoom_top_tb is
     constant G_DDS_INIT_FILE    : string   := output_path(runner_cfg) & "../../../../src/signal_generator/dds/dds_lut.txt";
     -- Ports
     signal clk                     : std_logic                                         := '0';
-    signal i_cfg_decimation_factor : std_logic_vector(2 downto 0)                      := (others => '0');
+    signal i_cfg_decimation_factor : std_logic_vector(1 downto 0)                      := (others => '0');
     signal i_cfg_frequency_shift   : std_logic_vector(15 downto 0)                     := (others => '0');
     signal i_cfg_valid             : std_logic                                         := '0';
     signal i_data_i                : std_logic_vector(G_INPUT_DATA_WIDTH - 1 downto 0) := (others => '0');
@@ -125,11 +125,9 @@ begin
         procedure set_zoom_cfg is
         begin
             if G_MULTIRATE_FACTOR = 2 then
-                i_cfg_decimation_factor <= "001";
+                i_cfg_decimation_factor <= "01";
             elsif G_MULTIRATE_FACTOR = 4 then
-                i_cfg_decimation_factor <= "010";
-            elsif G_MULTIRATE_FACTOR = 8 then
-                i_cfg_decimation_factor <= "100";
+                i_cfg_decimation_factor <= "10";
             else
                 assert FALSE report "Unsupported decimation factor for testbench!" severity FAILURE;
             end if;

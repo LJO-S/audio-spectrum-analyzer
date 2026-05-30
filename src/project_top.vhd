@@ -143,25 +143,28 @@ architecture rtl of project_top is
     signal w_frame_buf_data_linear  : std_logic_vector(2 ** (C_FFT_LOG2_DATA_WIDTH - C_FFT_LOG2_QFORMAT) - 1 downto 0);
 
     -- GPIO
-    signal w_dds_ctrl            : std_logic_vector(3 downto 0);
-    signal w_lpf_en              : std_logic;
-    signal w_lpf_incr            : std_logic;
-    signal w_lpf_incr_to_video   : std_logic;
-    signal w_lpf_decr            : std_logic;
-    signal w_lpf_decr_to_video   : std_logic;
-    signal w_hpf_en              : std_logic;
-    signal w_hpf_incr            : std_logic;
-    signal w_hpf_incr_to_video   : std_logic;
-    signal w_hpf_decr            : std_logic;
-    signal w_hpf_decr_to_video   : std_logic;
-    signal w_oscilloscope_en     : std_logic;
-    signal w_waterfall_en        : std_logic;
-    signal w_sel_up_lo           : std_logic;
-    signal w_capture_en          : std_logic;
-    signal w_updating_coeffs_lpf : std_logic;
-    signal w_updating_coeffs_hpf : std_logic;
-    signal w_new_data_strobe_lpf : std_logic;
-    signal w_new_data_strobe_hpf : std_logic;
+    signal w_dds_ctrl                   : std_logic_vector(3 downto 0);
+    signal w_lpf_en                     : std_logic;
+    signal w_lpf_incr                   : std_logic;
+    signal w_lpf_incr_to_video          : std_logic;
+    signal w_lpf_decr                   : std_logic;
+    signal w_lpf_decr_to_video          : std_logic;
+    signal w_hpf_en                     : std_logic;
+    signal w_hpf_incr                   : std_logic;
+    signal w_hpf_incr_to_video          : std_logic;
+    signal w_hpf_decr                   : std_logic;
+    signal w_hpf_decr_to_video          : std_logic;
+    signal w_oscilloscope_en            : std_logic;
+    signal w_waterfall_en               : std_logic;
+    signal w_sel_up_lo                  : std_logic;
+    signal w_capture_en                 : std_logic;
+    signal w_updating_coeffs_lpf        : std_logic;
+    signal w_updating_coeffs_hpf        : std_logic;
+    signal w_new_data_strobe_lpf        : std_logic;
+    signal w_new_data_strobe_hpf        : std_logic;
+    signal w_uart_cfg_decimation_factor : std_logic_vector(1 downto 0);
+    signal w_uart_cfg_frequency_shift   : std_logic_vector(15 downto 0);
+    signal w_uart_cfg_valid             : std_logic;
 
     -- Filters
     signal w_raddr_hpf : unsigned(8 downto 0);
@@ -169,7 +172,10 @@ architecture rtl of project_top is
     signal w_raddr_lpf : unsigned(8 downto 0);
     signal w_rdata_lpf : std_logic_vector(G_FIR_COEFF_WIDTH - 1 downto 0);
 
-    -- Drain Guard
+    -- Zoom
+    signal w_zoom_data_i_out     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_zoom_data_q_out     : std_logic_vector(G_FFT_BIT_SIZE - 1 downto 0);
+    signal w_zoom_data_valid_out : std_logic;
 
     -- Sampling Clocks
     signal w_lrclk     : std_logic;
@@ -215,6 +221,30 @@ begin
             o_iq_last    => open
         );
     -- ============================================================================ 
+    zoom_top_inst : entity work.zoom_top
+        generic map(
+            G_INPUT_DATA_WIDTH => G_FFT_BIT_SIZE,
+            G_COEFF_DATA_WIDTH => 16,
+            G_INIT_FILE        => "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/zoom/decimate/HBF_16",
+            G_DDS_INIT_FILE    => "/mnt/tools/projects/fpga/audio-spectrum-analyzer/src/signal_generator/dds/dds_lut.txt"
+        )
+        port map
+        (
+            clk => i_clk_100,
+            -- Config   
+            i_cfg_decimation_factor => w_uart_cfg_decimation_factor,
+            i_cfg_frequency_shift   => w_uart_cfg_frequency_shift,
+            i_cfg_valid             => w_uart_cfg_valid,
+            -- Input
+            i_data_i     => w_muxed_src_data(G_FFT_BIT_SIZE - 1 downto 0),
+            i_data_q     => w_muxed_src_data(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
+            i_data_valid => w_muxed_src_valid,
+            -- Output
+            o_data_i     => w_zoom_data_i_out,
+            o_data_q     => w_zoom_data_q_out,
+            o_data_valid => w_zoom_data_valid_out
+        );
+    -- ============================================================================ 
     window_function_time_inst : entity work.window_function_time
         generic map(
             G_INPUT_DATA_WIDTH  => G_FFT_BIT_SIZE,
@@ -226,9 +256,9 @@ begin
         (
             clk => i_clk_100,
             -- Input
-            i_data_i => w_muxed_src_data(G_FFT_BIT_SIZE - 1 downto 0),
-            i_data_q => w_muxed_src_data(2 * G_FFT_BIT_SIZE - 1 downto G_FFT_BIT_SIZE),
-            i_valid  => w_muxed_src_valid,
+            i_data_i => w_zoom_data_i_out,
+            i_data_q => w_zoom_data_q_out,
+            i_valid  => w_zoom_data_valid_out,
             o_ready  => open, -- Note: accepts the possible data drop
             -- Output
             o_data_i => w_window_data_i_out,
@@ -464,7 +494,11 @@ begin
             -- OSCILLOSCOPE
             o_oscilloscope_en => w_oscilloscope_en,
             -- Capture/Internal
-            o_capture_en => w_capture_en
+            o_capture_en => w_capture_en,
+            -- UART Config
+            o_uart_cfg_decimation_factor => w_uart_cfg_decimation_factor,
+            o_uart_cfg_frequency_shift   => w_uart_cfg_frequency_shift,
+            o_uart_cfg_valid             => w_uart_cfg_valid
         );
     -- ============================================================================ 
     gpio_ps_interface_inst : entity work.gpio_ps_interface

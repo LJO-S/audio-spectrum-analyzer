@@ -30,7 +30,11 @@ entity gpio_ctrl is
         o_oscilloscope_en : out std_logic;
         o_waterfall_en    : out std_logic;
         o_sel_up_lo       : out std_logic;
-        o_capture_en      : out std_logic
+        o_capture_en      : out std_logic;
+        -- UART ctrl
+        o_uart_cfg_decimation_factor : out std_logic_vector(1 downto 0);
+        o_uart_cfg_frequency_shift   : out std_logic_vector(15 downto 0);
+        o_uart_cfg_valid             : out std_logic
     );
 end entity gpio_ctrl;
 
@@ -75,6 +79,12 @@ architecture rtl of gpio_ctrl is
 
     -- UART SLV 0
     signal w_oscilloscope_en : std_logic;
+    -- UART SLV 1-2: decimation factor (0=2, 1=4, None=Bypass)
+    signal w_uart_cfg_decimation_factor : std_logic_vector(1 downto 0);
+    -- UART SLV 3-18: frequency shift (Q15)
+    signal w_uart_cfg_frequency_shift : std_logic_vector(15 downto 0);
+    -- UART SLV 19: config valid strobe
+    signal w_uart_cfg_valid : std_logic;
 
 begin
     /* ------------------------------------------------------------------ */ 
@@ -91,8 +101,11 @@ begin
             o_hpf_decr  <= '0';
             o_sel_up_lo <= '0';
 
-            o_capture_en      <= w_capture_en;
-            o_oscilloscope_en <= w_oscilloscope_en;
+            o_capture_en                 <= w_capture_en;
+            o_oscilloscope_en            <= w_oscilloscope_en;
+            o_uart_cfg_decimation_factor <= w_uart_cfg_decimation_factor;
+            o_uart_cfg_frequency_shift   <= w_uart_cfg_frequency_shift;
+            o_uart_cfg_valid             <= w_uart_cfg_valid;
 
             if (w_capture_en = '1') then
                 -- Mode B: capture 
@@ -188,6 +201,9 @@ begin
     w_capture_en   <= w_dip_debounce(3);
     /* ------------------------------------------------------------------ */ 
     -- UART vector
-    w_oscilloscope_en <= i_uart_gpio_if(0);
+    w_oscilloscope_en            <= i_uart_gpio_if(0);
+    w_uart_cfg_decimation_factor <= i_uart_gpio_if(2 downto 1);
+    w_uart_cfg_frequency_shift   <= i_uart_gpio_if(18 downto 3);
+    w_uart_cfg_valid             <= i_uart_gpio_if(19);
     /* ------------------------------------------------------------------ */ 
 end architecture;
