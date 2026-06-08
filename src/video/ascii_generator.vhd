@@ -38,6 +38,10 @@ end entity ascii_generator;
 
 architecture rtl of ascii_generator is
     ----------------------------------------------------
+    -- Constants
+    constant C_KHZ_RECIPROCAL : unsigned(11 downto 0) := to_unsigned(2098, 12);
+
+    ----------------------------------------------------
     signal w_col_count_div_1_2   : unsigned(8 downto 0);                            -- 80
     signal w_row_count_div_1_2   : unsigned(8 downto 0);                            -- 60
     signal w_col_addr            : std_logic_vector(2 downto 0) := (others => '0'); -- [0-7] X
@@ -56,20 +60,20 @@ architecture rtl of ascii_generator is
     signal r_draw_capture        : std_logic                    := '0';
     signal r_draw_internal       : std_logic                    := '0';
     -- Variable frequency tilemaps
-    signal r_tilemap_freq_max     : t_tilemap_short      := (37, 0, 0, 37);
-    signal r_freq_max_1000s       : unsigned(6 downto 0) := (others => '0');
-    signal r_tilemap_freq_lpf     : t_tilemap_short      := (37, 0, 0, 37);
-    signal r_freq_lpf_1000s       : unsigned(6 downto 0) := (others => '0');
-    signal r_tilemap_freq_hpf     : t_tilemap_short      := (37, 0, 0, 37);
-    signal r_freq_hpf_1000s       : unsigned(6 downto 0) := (others => '0');
-    signal r_tilemap_zoom         : t_tilemap_long       := (36, 25, 25, 23, 10, 37, 37, 37); -- "ZOOM:   "
-    signal r_freq_shift_khz       : unsigned(4 downto 0) := (others => '0');
-    signal r_tick_base_khz        : unsigned(5 downto 0) := (others => '0');
-    signal r_t1, r_t2, r_t3, r_t4 : unsigned(5 downto 0) := (others => '0');
-    signal r_tilemap_tick_1       : t_tilemap_minimal    := (37, 5);
-    signal r_tilemap_tick_2       : t_tilemap_minimal    := (1, 0);
-    signal r_tilemap_tick_3       : t_tilemap_minimal    := (1, 5);
-    signal r_tilemap_tick_4       : t_tilemap_minimal    := (2, 0);
+    signal r_tilemap_freq_max     : t_tilemap_short                := (37, 0, 0, 37);
+    signal r_freq_max_1000s       : unsigned(6 downto 0)           := (others => '0');
+    signal r_tilemap_freq_lpf     : t_tilemap_short                := (37, 0, 0, 37);
+    signal r_freq_lpf_1000s       : unsigned(6 downto 0)           := (others => '0');
+    signal r_tilemap_freq_hpf     : t_tilemap_short                := (37, 0, 0, 37);
+    signal r_freq_hpf_1000s       : unsigned(6 downto 0)           := (others => '0');
+    signal r_tilemap_zoom         : t_tilemap_long                 := (36, 25, 25, 23, 10, 37, 37, 37); -- "ZOOM:   "
+    signal r_freq_shift_khz_mult  : unsigned(15 + 12 - 1 downto 0) := (others => '0');
+    signal r_tick_base_khz        : unsigned(5 downto 0)           := (others => '0');
+    signal r_t1, r_t2, r_t3, r_t4 : unsigned(5 downto 0)           := (others => '0');
+    signal r_tilemap_tick_1       : t_tilemap_minimal              := (37, 5);
+    signal r_tilemap_tick_2       : t_tilemap_minimal              := (1, 0);
+    signal r_tilemap_tick_3       : t_tilemap_minimal              := (1, 5);
+    signal r_tilemap_tick_4       : t_tilemap_minimal              := (2, 0);
 
     signal r_font_line : std_logic_vector(7 downto 0) := (others => '0');
 begin
@@ -261,34 +265,37 @@ begin
             -- ------------------
             -- ZOOM
             -- ------------------
-            -- Frequency Shift
+
+            -- Frequency shift
+            -- PIPE 0:  multiply frequency shift by reciprocal of 1000 (in fixed point)
             if (i_frequency_shift(i_frequency_shift'high) /= '1') then
-                r_freq_shift_khz <= unsigned(i_frequency_shift(i_frequency_shift'high - 1 downto 10)) + 1;
+                r_freq_shift_khz_mult <= unsigned(i_frequency_shift(i_frequency_shift'high - 1 downto 0)) * C_KHZ_RECIPROCAL;
             else
-                r_freq_shift_khz <= (others => '0');
+                r_freq_shift_khz_mult <= (others => '0');
             end if;
+            -- PIPE 1: convert to integer kHz
+            r_tick_base_khz <= resize(shift_right(r_freq_shift_khz_mult, 21), r_tick_base_khz'length);
+
             -- Decimation Factor
             case i_decimation_factor is
                 when "01" =>
                     r_tilemap_zoom(5 to 7) <= (37, 2, 34);
-                    r_tick_base_khz <= resize(r_freq_shift_khz, r_tick_base_khz'length);
-                    r_t1            <= r_tick_base_khz + 2;
-                    r_t2            <= r_tick_base_khz + 4;
-                    r_t3            <= r_tick_base_khz + 6;
-                    r_t4            <= r_tick_base_khz + 8;
+                    r_t1                   <= r_tick_base_khz + 2;
+                    r_t2                   <= r_tick_base_khz + 5;
+                    r_t3                   <= r_tick_base_khz + 8;
+                    r_t4                   <= r_tick_base_khz + 10;
                 when "10" =>
                     r_tilemap_zoom(5 to 7) <= (37, 4, 34);
-                    r_tick_base_khz <= resize(r_freq_shift_khz, r_tick_base_khz'length);
-                    r_t1            <= r_tick_base_khz + 1;
-                    r_t2            <= r_tick_base_khz + 2;
-                    r_t3            <= r_tick_base_khz + 3;
-                    r_t4            <= r_tick_base_khz + 4;
+                    r_t1                   <= r_tick_base_khz + 1;
+                    r_t2                   <= r_tick_base_khz + 3;
+                    r_t3                   <= r_tick_base_khz + 4;
+                    r_t4                   <= r_tick_base_khz + 5;
                 when others =>
                     r_tilemap_zoom(5 to 7) <= (37, 37, 37);
-                    r_t1 <= to_unsigned(5, r_t1'length);
-                    r_t2 <= to_unsigned(10, r_t2'length);
-                    r_t3 <= to_unsigned(15, r_t3'length);
-                    r_t4 <= to_unsigned(20, r_t4'length);
+                    r_t1                   <= to_unsigned(5, r_t1'length);
+                    r_t2                   <= to_unsigned(10, r_t2'length);
+                    r_t3                   <= to_unsigned(15, r_t3'length);
+                    r_t4                   <= to_unsigned(20, r_t4'length);
             end case;
             if (r_t1 < 10) then
                 r_tilemap_tick_1(0) <= 37;
@@ -301,9 +308,9 @@ begin
                 r_tilemap_tick_2(0) <= to_integer(r_t2 / 10);
             end if;
             if (r_t3 < 10) then
-                r_tilemap_tick_3(0) <= 37;
+                r_tilemap_tick_3(1) <= 37;
             else
-                r_tilemap_tick_3(0) <= to_integer(r_t3 / 10);
+                r_tilemap_tick_3(1) <= to_integer(r_t3 / 10);
             end if;
             if (r_t4 < 10) then
                 r_tilemap_tick_4(0) <= 37;
@@ -312,7 +319,7 @@ begin
             end if;
             r_tilemap_tick_1(1) <= to_integer(r_t1 mod 10);
             r_tilemap_tick_2(1) <= to_integer(r_t2 mod 10);
-            r_tilemap_tick_3(1) <= to_integer(r_t3 mod 10);
+            r_tilemap_tick_3(0) <= to_integer(r_t3 mod 10);
             r_tilemap_tick_4(1) <= to_integer(r_t4 mod 10);
         end if;
     end process p_dynamic_ascii;
@@ -375,9 +382,9 @@ begin
                     end if;
                 elsif (r_draw_zoom = '1') then
                     if (r_font_line(to_integer(unsigned(not(r_col_addr)))) = '1') then
-                        o_video_red <= (others => or(i_decimation_factor));
-                        o_video_grn <= (others => or(i_decimation_factor));
-                        o_video_blu <= (others => or(i_decimation_factor));
+                        o_video_red <= (others => nor(i_decimation_factor));
+                        o_video_grn <= (others => nor(i_decimation_factor));
+                        o_video_blu <= (others => nor(i_decimation_factor));
                     elsif ( or (i_decimation_factor) = '1') then
                         o_video_red <= (others => '1');
                         o_video_grn <= (others => '1');
