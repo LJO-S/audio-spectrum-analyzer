@@ -20,18 +20,18 @@ entity image_generator is
         o_rd_addr_X : out std_logic_vector(9 downto 0);
         o_rd_addr_Y : out std_logic_vector(9 downto 0);
         -- GUI config
-        i_100ms_strb      : in std_logic;
-        i_capture_on      : in std_logic;
-        i_lpf_on          : in std_logic;
-        i_lpf_incr        : in std_logic;
-        i_lpf_decr        : in std_logic;
-        i_bpf_on          : in std_logic;
-        i_bpf_cutoff      : in unsigned(16 downto 0) := (others => '0');
-        i_hpf_on          : in std_logic;
-        i_hpf_incr        : in std_logic;
-        i_hpf_decr        : in std_logic;
-        i_waterfall_on    : in std_logic;
-        i_oscilloscope_en : in std_logic;
+        i_100ms_strb        : in std_logic;
+        i_capture_on        : in std_logic;
+        i_lpf_on            : in std_logic;
+        i_lpf_incr          : in std_logic;
+        i_lpf_decr          : in std_logic;
+        i_hpf_on            : in std_logic;
+        i_hpf_incr          : in std_logic;
+        i_hpf_decr          : in std_logic;
+        i_waterfall_on      : in std_logic;
+        i_oscilloscope_en   : in std_logic;
+        i_decimation_factor : in std_logic_vector(1 downto 0);
+        i_frequency_shift   : in std_logic_vector(15 downto 0);
         -- TMDS
         o_HSYNC : out std_logic;
         o_VSYNC : out std_logic;
@@ -444,26 +444,26 @@ begin
     ascii_generator_inst : entity work.ascii_generator
         port map
         (
-            clk_100           => clk_100,
-            i_ce              => i_ce,
-            i_counter_X       => r_counter_X_d1,
-            i_counter_Y       => r_counter_Y_d1,
-            i_max_freq        => r_max_freq,
-            i_capture_on      => i_capture_on,
-            i_lpf_on          => i_lpf_on,
-            i_lpf_cutoff      => r_lpf_cutoff,
-            i_bpf_on          => i_bpf_on,
-            i_bpf_cutoff      => i_bpf_cutoff,
-            i_hpf_on          => i_hpf_on,
-            i_hpf_cutoff      => r_hpf_cutoff,
-            i_waterfall_on    => i_waterfall_on,
-            i_oscilloscope_en => i_oscilloscope_en,
-            o_freq_lpf_1000s  => w_freq_lpf_1000s,
-            o_freq_hpf_1000s  => w_freq_hpf_1000s,
-            o_glyph_active    => w_ascii_draw,
-            o_video_red       => w_video_red_ascii,
-            o_video_grn       => w_video_grn_ascii,
-            o_video_blu       => w_video_blu_ascii
+            clk_100             => clk_100,
+            i_ce                => i_ce,
+            i_counter_X         => r_counter_X_d1,
+            i_counter_Y         => r_counter_Y_d1,
+            i_max_freq          => r_max_freq,
+            i_capture_on        => i_capture_on,
+            i_lpf_on            => i_lpf_on,
+            i_lpf_cutoff        => r_lpf_cutoff,
+            i_hpf_on            => i_hpf_on,
+            i_hpf_cutoff        => r_hpf_cutoff,
+            i_waterfall_on      => i_waterfall_on,
+            i_oscilloscope_en   => i_oscilloscope_en,
+            i_decimation_factor => i_decimation_factor,
+            i_frequency_shift   => i_frequency_shift,
+            o_freq_lpf_1000s    => w_freq_lpf_1000s,
+            o_freq_hpf_1000s    => w_freq_hpf_1000s,
+            o_glyph_active      => w_ascii_draw,
+            o_video_red         => w_video_red_ascii,
+            o_video_grn         => w_video_grn_ascii,
+            o_video_blu         => w_video_blu_ascii
         );
     -- ============================================================================ 
     -- Holds colormap for waterfall

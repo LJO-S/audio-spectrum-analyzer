@@ -18,13 +18,13 @@ entity ascii_generator is
         -- From Filters
         i_lpf_on     : in std_logic;
         i_lpf_cutoff : in unsigned(16 downto 0);
-        i_bpf_on     : in std_logic;
-        i_bpf_cutoff : in unsigned(16 downto 0) := (others => '0');
         i_hpf_on     : in std_logic;
         i_hpf_cutoff : in unsigned(16 downto 0);
         -- Misc
-        i_waterfall_on    : in std_logic;
-        i_oscilloscope_en : in std_logic;
+        i_waterfall_on      : in std_logic;
+        i_oscilloscope_en   : in std_logic;
+        i_decimation_factor : in std_logic_vector(1 downto 0);
+        i_frequency_shift   : in std_logic_vector(15 downto 0);
         -- 
         o_freq_lpf_1000s : out unsigned(6 downto 0);
         o_freq_hpf_1000s : out unsigned(6 downto 0);
@@ -49,22 +49,29 @@ architecture rtl of ascii_generator is
     signal w_row_addr            : unsigned(3 downto 0)         := (others => '0'); -- [0-15] Y
     signal r_draw                : std_logic                    := '0';
     signal r_draw_lpf            : std_logic                    := '0';
-    signal r_draw_bpf            : std_logic                    := '0';
+    signal r_draw_zoom           : std_logic                    := '0';
     signal r_draw_hpf            : std_logic                    := '0';
     signal r_draw_waterfall      : std_logic                    := '0';
     signal r_draw_oscilloscope   : std_logic                    := '0';
     signal r_draw_capture        : std_logic                    := '0';
     signal r_draw_internal       : std_logic                    := '0';
     -- Variable frequency tilemaps
-    signal r_tilemap_freq_max : t_tilemap_short              := (37, 0, 0, 37);
-    signal r_freq_max_1000s   : unsigned(6 downto 0)         := (others => '0');
-    signal r_tilemap_freq_lpf : t_tilemap_short              := (37, 0, 0, 37);
-    signal r_freq_lpf_1000s   : unsigned(6 downto 0)         := (others => '0');
-    signal r_tilemap_freq_bpf : t_tilemap_short              := (37, 0, 0, 37);
-    signal r_freq_bpf_1000s   : unsigned(6 downto 0)         := (others => '0');
-    signal r_tilemap_freq_hpf : t_tilemap_short              := (37, 0, 0, 37);
-    signal r_freq_hpf_1000s   : unsigned(6 downto 0)         := (others => '0');
-    signal r_font_line        : std_logic_vector(7 downto 0) := (others => '0');
+    signal r_tilemap_freq_max     : t_tilemap_short      := (37, 0, 0, 37);
+    signal r_freq_max_1000s       : unsigned(6 downto 0) := (others => '0');
+    signal r_tilemap_freq_lpf     : t_tilemap_short      := (37, 0, 0, 37);
+    signal r_freq_lpf_1000s       : unsigned(6 downto 0) := (others => '0');
+    signal r_tilemap_freq_hpf     : t_tilemap_short      := (37, 0, 0, 37);
+    signal r_freq_hpf_1000s       : unsigned(6 downto 0) := (others => '0');
+    signal r_tilemap_zoom         : t_tilemap_long       := (36, 25, 25, 23, 10, 37, 37, 37); -- "ZOOM:   "
+    signal r_freq_shift_khz       : unsigned(4 downto 0) := (others => '0');
+    signal r_tick_base_khz        : unsigned(5 downto 0) := (others => '0');
+    signal r_t1, r_t2, r_t3, r_t4 : unsigned(5 downto 0) := (others => '0');
+    signal r_tilemap_tick_1       : t_tilemap_minimal    := (37, 5);
+    signal r_tilemap_tick_2       : t_tilemap_minimal    := (1, 0);
+    signal r_tilemap_tick_3       : t_tilemap_minimal    := (1, 5);
+    signal r_tilemap_tick_4       : t_tilemap_minimal    := (2, 0);
+
+    signal r_font_line : std_logic_vector(7 downto 0) := (others => '0');
 begin
     --============================================================================
     --============================================================================
@@ -92,7 +99,7 @@ begin
             if (i_ce = '1') then
                 r_draw              <= '0';
                 r_draw_lpf          <= '0';
-                r_draw_bpf          <= '0';
+                r_draw_zoom         <= '0';
                 r_draw_hpf          <= '0';
                 r_draw_oscilloscope <= '0';
                 r_draw_waterfall    <= '0';
@@ -144,22 +151,6 @@ begin
                     end if;
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 208) and (i_counter_Y < 224) then
-                    -- "BPF:" & "XX" & "KHZ"
-                    if (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < (C_WORD_X_LEFT + 32)) then
-                        -- "BPF:"
-                        v_tilemap_index := C_TILEMAP_BPF(to_integer(unsigned(w_col_addr_1_8_half)));
-                        r_draw_bpf <= '1';
-                    elsif (i_counter_X >= C_WORD_X_LEFT + 32) and (i_counter_X < C_WORD_X_LEFT + 64) then
-                        -- numbers
-                        v_tilemap_index := r_tilemap_freq_bpf(to_integer(unsigned(w_col_addr_1_8_half)));
-                        r_draw_bpf <= '1';
-                    elsif (i_counter_X >= C_WORD_X_LEFT + 64) and (i_counter_X < C_WORD_X_LEFT + 96) then
-                        -- "KHZ"
-                        v_tilemap_index := C_TILEMAP_KHZ(to_integer(unsigned(w_col_addr_1_8_half)));
-                        r_draw_bpf <= '1';
-                    end if;
-                    ------------------------------------------------------------------------------
-                elsif (i_counter_Y >= 256) and (i_counter_Y < 272) then
                     -- "HPF:" & "XX" & " KHZ"
                     if (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < (C_WORD_X_LEFT + 32)) then
                         -- "HPF:"
@@ -174,6 +165,12 @@ begin
                         v_tilemap_index := C_TILEMAP_KHZ(to_integer(unsigned(w_col_addr_1_8_half)));
                         r_draw_hpf <= '1';
                     end if;
+                    ------------------------------------------------------------------------------
+                elsif (i_counter_Y >= 256) and (i_counter_Y < 272) and
+                    (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < (C_WORD_X_LEFT + 64)) then
+                    -- ZOOM: <none>/2X /4X
+                    v_tilemap_index := r_tilemap_zoom(to_integer(unsigned(w_col_addr_1_8)));
+                    r_draw_zoom <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 304) and (i_counter_Y < 320) and
                     (i_counter_X >= C_WORD_X_LEFT) and (i_counter_X < C_WORD_X_LEFT + 72) then
@@ -194,22 +191,22 @@ begin
                     r_draw <= '1';
                     ------------------------------------------------------------------------------
                 elsif (i_counter_Y >= 416) and (i_counter_Y < 432) then
-                    -- "10, 20, 30, 40"
+                    -- Ticks
                     if (i_counter_X >= 96) and (i_counter_X < 112) then
                         -- "10:"
-                        v_tilemap_index := C_TILEMAP_10(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                        v_tilemap_index := r_tilemap_tick_1(to_integer(unsigned(w_col_addr_1_8_eighth)));
                         r_draw <= '1';
                     elsif (i_counter_X >= 208) and (i_counter_X < 224) then
                         -- "20"
-                        v_tilemap_index := C_TILEMAP_20(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                        v_tilemap_index := r_tilemap_tick_2(to_integer(unsigned(w_col_addr_1_8_eighth)));
                         r_draw <= '1';
                     elsif (i_counter_X >= 312) and (i_counter_X < 328) then
                         -- "30"
-                        v_tilemap_index := C_TILEMAP_30(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                        v_tilemap_index := r_tilemap_tick_3(to_integer(unsigned(w_col_addr_1_8_eighth)));
                         r_draw <= '1';
                     elsif (i_counter_X >= 416) and (i_counter_X < 432) then
                         -- "40"
-                        v_tilemap_index := C_TILEMAP_40(to_integer(unsigned(w_col_addr_1_8_eighth)));
+                        v_tilemap_index := r_tilemap_tick_4(to_integer(unsigned(w_col_addr_1_8_eighth)));
                         r_draw <= '1';
                     end if;
                 elsif (i_counter_Y >= 432) and (i_counter_Y < 448) and
@@ -235,7 +232,7 @@ begin
     end process p_pipeline;
     --============================================================================
     --============================================================================
-    p_freq_into_ascii : process (clk_100)
+    p_dynamic_ascii : process (clk_100)
     begin
         if rising_edge(clk_100) then
             -- "Division by 1000"
@@ -256,19 +253,69 @@ begin
             r_tilemap_freq_lpf(1) <= to_integer(r_freq_lpf_1000s / 10);
             r_tilemap_freq_lpf(2) <= to_integer(r_freq_lpf_1000s mod 10);
             -- ------------------
-            -- BPF
-            -- ------------------
-            r_freq_bpf_1000s      <= i_bpf_cutoff(i_bpf_cutoff'high downto 10) + i_bpf_cutoff(i_bpf_cutoff'high downto 15) + 1;
-            r_tilemap_freq_bpf(1) <= to_integer(r_freq_bpf_1000s / 10);
-            r_tilemap_freq_bpf(2) <= to_integer(r_freq_bpf_1000s mod 10);
-            -- ------------------
             -- HPF
             -- ------------------
             r_freq_hpf_1000s      <= i_hpf_cutoff(i_hpf_cutoff'high downto 10) + i_hpf_cutoff(i_hpf_cutoff'high downto 15) + 1;
             r_tilemap_freq_hpf(1) <= to_integer(r_freq_hpf_1000s / 10);
             r_tilemap_freq_hpf(2) <= to_integer(r_freq_hpf_1000s mod 10);
+            -- ------------------
+            -- ZOOM
+            -- ------------------
+            -- Frequency Shift
+            if (i_frequency_shift(i_frequency_shift'high) /= '1') then
+                r_freq_shift_khz <= unsigned(i_frequency_shift(i_frequency_shift'high - 1 downto 10)) + 1;
+            else
+                r_freq_shift_khz <= (others => '0');
+            end if;
+            -- Decimation Factor
+            case i_decimation_factor is
+                when "01" =>
+                    r_tilemap_zoom(5 to 7) <= (37, 2, 34);
+                    r_tick_base_khz <= resize(r_freq_shift_khz, r_tick_base_khz'length);
+                    r_t1            <= r_tick_base_khz + 2;
+                    r_t2            <= r_tick_base_khz + 4;
+                    r_t3            <= r_tick_base_khz + 6;
+                    r_t4            <= r_tick_base_khz + 8;
+                when "10" =>
+                    r_tilemap_zoom(5 to 7) <= (37, 4, 34);
+                    r_tick_base_khz <= resize(r_freq_shift_khz, r_tick_base_khz'length);
+                    r_t1            <= r_tick_base_khz + 1;
+                    r_t2            <= r_tick_base_khz + 2;
+                    r_t3            <= r_tick_base_khz + 3;
+                    r_t4            <= r_tick_base_khz + 4;
+                when others =>
+                    r_tilemap_zoom(5 to 7) <= (37, 37, 37);
+                    r_t1 <= to_unsigned(5, r_t1'length);
+                    r_t2 <= to_unsigned(10, r_t2'length);
+                    r_t3 <= to_unsigned(15, r_t3'length);
+                    r_t4 <= to_unsigned(20, r_t4'length);
+            end case;
+            if (r_t1 < 10) then
+                r_tilemap_tick_1(0) <= 37;
+            else
+                r_tilemap_tick_1(0) <= to_integer(r_t1 / 10);
+            end if;
+            if (r_t2 < 10) then
+                r_tilemap_tick_2(0) <= 37;
+            else
+                r_tilemap_tick_2(0) <= to_integer(r_t2 / 10);
+            end if;
+            if (r_t3 < 10) then
+                r_tilemap_tick_3(0) <= 37;
+            else
+                r_tilemap_tick_3(0) <= to_integer(r_t3 / 10);
+            end if;
+            if (r_t4 < 10) then
+                r_tilemap_tick_4(0) <= 37;
+            else
+                r_tilemap_tick_4(0) <= to_integer(r_t4 / 10);
+            end if;
+            r_tilemap_tick_1(1) <= to_integer(r_t1 mod 10);
+            r_tilemap_tick_2(1) <= to_integer(r_t2 mod 10);
+            r_tilemap_tick_3(1) <= to_integer(r_t3 mod 10);
+            r_tilemap_tick_4(1) <= to_integer(r_t4 mod 10);
         end if;
-    end process;
+    end process p_dynamic_ascii;
     o_freq_lpf_1000s <= r_freq_lpf_1000s;
     o_freq_hpf_1000s <= r_freq_hpf_1000s;
     --============================================================================
@@ -285,7 +332,7 @@ begin
                     r_draw_capture or
                     r_draw_internal or
                     r_draw_lpf or
-                    r_draw_bpf or
+                    r_draw_zoom or
                     r_draw_hpf or
                     r_draw_waterfall or
                     r_draw_oscilloscope);
@@ -326,12 +373,12 @@ begin
                         o_video_grn <= (others => '1');
                         o_video_blu <= (others => '0');
                     end if;
-                elsif (r_draw_bpf = '1') then
+                elsif (r_draw_zoom = '1') then
                     if (r_font_line(to_integer(unsigned(not(r_col_addr)))) = '1') then
-                        o_video_red <= (others => not(i_bpf_on));
-                        o_video_grn <= (others => not(i_bpf_on));
-                        o_video_blu <= (others => not(i_bpf_on));
-                    elsif (i_bpf_on = '1') then
+                        o_video_red <= (others => or(i_decimation_factor));
+                        o_video_grn <= (others => or(i_decimation_factor));
+                        o_video_blu <= (others => or(i_decimation_factor));
+                    elsif ( or (i_decimation_factor) = '1') then
                         o_video_red <= (others => '1');
                         o_video_grn <= (others => '1');
                         o_video_blu <= (others => '0');

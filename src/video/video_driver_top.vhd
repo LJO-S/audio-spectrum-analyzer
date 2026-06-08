@@ -20,6 +20,9 @@ entity video_driver_top is
         i_lpf_decr : in std_logic;
         i_hpf_incr : in std_logic;
         i_hpf_decr : in std_logic;
+        -- Zoom Cfg
+        i_decimation_factor : in std_logic_vector(1 downto 0);
+        i_frequency_shift   : in std_logic_vector(15 downto 0);
         -- Display Settings
         i_waterfall_en    : in std_logic;
         i_oscilloscope_en : in std_logic;
@@ -140,18 +143,18 @@ begin
             o_rd_addr_X => o_rd_addr_X,
             o_rd_addr_Y => o_rd_addr_Y,
             -- Video configurations
-            i_100ms_strb      => i_100ms_strb,
-            i_capture_on      => i_capture_en,
-            i_lpf_on          => i_lpf_en,
-            i_lpf_incr        => i_lpf_incr,
-            i_lpf_decr        => i_lpf_decr,
-            i_bpf_on          => '0',
-            i_bpf_cutoff => (others => '0'),
-            i_hpf_on          => i_hpf_en,
-            i_hpf_incr        => i_hpf_incr,
-            i_hpf_decr        => i_hpf_decr,
-            i_waterfall_on    => i_waterfall_en,
-            i_oscilloscope_en => i_oscilloscope_en,
+            i_100ms_strb        => i_100ms_strb,
+            i_capture_on        => i_capture_en,
+            i_lpf_on            => i_lpf_en,
+            i_lpf_incr          => i_lpf_incr,
+            i_lpf_decr          => i_lpf_decr,
+            i_hpf_on            => i_hpf_en,
+            i_hpf_incr          => i_hpf_incr,
+            i_hpf_decr          => i_hpf_decr,
+            i_waterfall_on      => i_waterfall_en,
+            i_oscilloscope_en   => i_oscilloscope_en,
+            i_decimation_factor => i_decimation_factor,
+            i_frequency_shift   => i_frequency_shift,
             -- Video signals
             o_HSYNC     => w_HSYNC,
             o_VSYNC     => w_VSYNC,
