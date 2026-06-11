@@ -23,6 +23,7 @@ static XUartPs Uart;
 static char line_buf[LINE_MAX];
 static size_t line_len = 0;
 static XGpio GpioOut;
+static uint32_t s_gpio_shadow = 0;
 
 /******************************************************************************/
 /**
@@ -172,5 +173,30 @@ void uart_printf(const char *fmt, ...)
  */
 void uart_set_osc(int on)
 {
-    XGpio_DiscreteWrite(&GpioOut, 1, on ? 0x1 : 0x0);
+    if (on)
+        s_gpio_shadow |= 0x1u;
+    else
+        s_gpio_shadow &= ~0x1u;
+    XGpio_DiscreteWrite(&GpioOut, 1, s_gpio_shadow);
+}
+
+/******************************************************************************/
+/**
+ *
+ * UART set zoom
+ *
+ * Set zoom <decimation> <freq_khz>
+ *
+ * @return	Status
+ *
+ *
+ */
+void uart_set_zoom(uint8_t a_dec_enc, uint16_t a_freq_khz)
+{
+    s_gpio_shadow &= ~(0x3u << 1);
+    s_gpio_shadow &= ~(0xFFFFu << 3);
+    s_gpio_shadow |= (uint32_t)(a_dec_enc & 0x3u) << 1;
+    s_gpio_shadow |= (uint32_t)(a_freq_khz * 1000u) << 3;
+    XGpio_DiscreteWrite(&GpioOut, 1, s_gpio_shadow | (1u << 19));
+    XGpio_DiscreteWrite(&GpioOut, 1, s_gpio_shadow);
 }

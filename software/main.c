@@ -1,6 +1,9 @@
 /*******************************************************************************
  * Main
 /***************************** Include Files **********************************/
+// Standard
+#include <stdio.h>
+#include <string.h>
 // Own
 #include "irq.h"
 #include "bram.h"
@@ -184,6 +187,36 @@ static int service_uart_line(const char *line)
     if (!strcmp(line, "osc off"))
     {
         uart_set_osc(0);
+        return XST_SUCCESS;
+    }
+    unsigned factor, freq_khz;
+    if (sscanf(line, "zoom %u %u", &factor, &freq_khz) == 2)
+    {
+        if (factor != 0 && factor != 2 && factor != 4)
+        {
+            uart_print("zoom: factor must be 0, 2, 4 \r\n");
+            return XST_SUCCESS;
+        }
+        if (factor == 0 && freq_khz > 0)
+        {
+            uart_print("zoom: freq shift requires decimation factor > 0\r\n");
+            return XST_SUCCESS;
+        }
+        if (freq_khz > 24)
+        {
+            uart_print("zoom: freq must be 0-24 kHz\r\n");
+            return XST_SUCCESS;
+        }
+        uint8_t dec_enc = (factor == 2) ? 0x1 : (factor == 4) ? 0x2
+                                                              : 0x0;
+        uart_set_zoom(dec_enc, (uint16_t)freq_khz);
+        uart_printf("zoom: x%u @ %u kHz\r\n", factor, freq_khz);
+        return XST_SUCCESS;
+    }
+    if (!strcmp(line, "zoom off"))
+    {
+        uart_set_zoom(0, 0);
+        uart_print("zoom: off\r\n");
         return XST_SUCCESS;
     }
     uart_print("?\r\n");

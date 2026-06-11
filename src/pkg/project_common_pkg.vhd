@@ -120,6 +120,7 @@ package project_common_pkg is
     2 => 16, -- F
     3 => 10  -- :
     );
+
     -- "O-SCOPE "
     constant C_TILEMAP_OSCILLOSCOPE : t_tilemap_long := (
     0 => 25, -- O
@@ -150,23 +151,6 @@ package project_common_pkg is
     13 => 37, -- 
     14 => 37, -- 
     15 => 37  -- 
-    );
-
-    constant C_TILEMAP_10 : t_tilemap_minimal := (
-    0 => 37, -- 0
-    1 => 5   -- 5
-    );
-    constant C_TILEMAP_20 : t_tilemap_minimal := (
-    0 => 1, -- 1
-    1 => 0  -- 0
-    );
-    constant C_TILEMAP_30 : t_tilemap_minimal := (
-    0 => 5, -- 1
-    1 => 1  -- 5
-    );
-    constant C_TILEMAP_40 : t_tilemap_minimal := (
-    0 => 2, -- 2
-    1 => 0  -- 0
     );
 
     type t_font_glyph is array (0 to 15) of std_logic_vector(7 downto 0);
