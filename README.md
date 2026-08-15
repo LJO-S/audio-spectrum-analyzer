@@ -3,7 +3,7 @@
 
 Click for video demonstration:
 <p align="center">
-  <a href="[https://www.youtube.com/watch?v=OWQmLbjGhkA](https://www.youtube.com/watch?v=XASKmPDUobE)">
+  <a href="https://www.youtube.com/watch?v=OWQmLbjGhkA">
     <img src="https://github.com/user-attachments/assets/3fdea9d1-b1d0-4540-86a3-05621593b919" width="900" alt="Watch the video">
   </a>
 </p>
